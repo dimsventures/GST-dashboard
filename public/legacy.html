@@ -369,11 +369,14 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .mclose{background:none;border:none;color:var(--text3);cursor:pointer;font-size:17px;padding:2px 6px;border-radius:4px;transition:all .15s;}
 .mclose:hover{color:var(--red);background:var(--red-bg);}
 .mbody{padding:18px 22px;}
-.fsec{font-family:'Poppins',sans-serif;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);font-weight:600;margin:16px 0 10px;padding-top:14px;border-top:1px solid var(--border);}
+.fsec{font-family:'Poppins',sans-serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text);font-weight:800;margin:16px 0 10px;padding-top:14px;border-top:1px solid var(--border);}
 .fsec:first-child{margin-top:0;padding-top:0;border-top:none;}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
 .frow.one{grid-template-columns:1fr;}
-.flbl{font-size:10px;font-weight:600;color:var(--text2);margin-bottom:3px;display:block;}
+.flbl{font-size:10px;font-weight:400;color:var(--text3);margin-bottom:3px;display:block;}
+.sc-wrap{display:flex;align-items:center;gap:6px;}
+.finp-num{width:50px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:5px 6px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--text);text-align:center;outline:none;transition:border-color .15s;}
+.finp-num:focus{border-color:var(--red);}
 .finp,.fsel,.fta{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 9px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--text);outline:none;transition:border-color .15s;}
 .finp:focus,.fsel:focus,.fta:focus{border-color:var(--red);}
 .fsel option{background:#fff;}
@@ -636,40 +639,49 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
     <div class="mbody">
       <div class="fsec" style="margin-top:0;padding-top:0;border-top:none;">Religion</div>
       <div class="frow">
-        <div><label class="flbl">Aktivitas</label><input type="text" id="frel" class="finp" placeholder="e.g. Qobliyah, Ngaji"></div>
+        <div><label class="flbl">What u've done today?</label><input type="text" id="frel" class="finp" placeholder="e.g. Qobliyah, Ngaji"></div>
         <div><label class="flbl">Intensitas</label>
-          <div class="sc-row" id="screl">
-            <div class="scopt" data-v="0" onclick="sc('screl',0)">0</div><div class="scopt" data-v="1" onclick="sc('screl',1)">1</div>
-            <div class="scopt" data-v="2" onclick="sc('screl',2)">2</div><div class="scopt" data-v="3" onclick="sc('screl',3)">3</div>
-            <div class="scopt" data-v="4" onclick="sc('screl',4)">4</div><div class="scopt" data-v="5" onclick="sc('screl',5)">5</div>
+          <div class="sc-wrap">
+            <div class="sc-row" id="screl">
+              <div class="scopt" data-v="0" onclick="sc('screl',0)">0</div><div class="scopt" data-v="1" onclick="sc('screl',1)">1</div>
+              <div class="scopt" data-v="2" onclick="sc('screl',2)">2</div><div class="scopt" data-v="3" onclick="sc('screl',3)">3</div>
+              <div class="scopt" data-v="4" onclick="sc('screl',4)">4</div><div class="scopt" data-v="5" onclick="sc('screl',5)">5</div>
+            </div>
+            <input type="number" min="0" id="ms-screl" class="finp-num" placeholder="—" oninput="scManual('screl',this.value)">
           </div>
         </div>
       </div>
       <div class="fsec">Working Stage</div>
       <div class="frow">
-        <div><label class="flbl">Kegiatan</label><input type="text" id="fwork" class="finp" placeholder="e.g. Rekon BMD, Kuliah"></div>
-        <div><label class="flbl">Intensitas (1–5)</label>
-          <div class="sc-row" id="scwork">
-            <div class="scopt" data-v="0" onclick="sc('scwork',0)">0</div><div class="scopt" data-v="1" onclick="sc('scwork',1)">1</div>
-            <div class="scopt" data-v="2" onclick="sc('scwork',2)">2</div><div class="scopt" data-v="3" onclick="sc('scwork',3)">3</div>
-            <div class="scopt" data-v="4" onclick="sc('scwork',4)">4</div><div class="scopt" data-v="5" onclick="sc('scwork',5)">5</div>
+        <div><label class="flbl">What u've done today?</label><input type="text" id="fwork" class="finp" placeholder="e.g. Rekon BMD, Kuliah"></div>
+        <div><label class="flbl">Intensitas</label>
+          <div class="sc-wrap">
+            <div class="sc-row" id="scwork">
+              <div class="scopt" data-v="0" onclick="sc('scwork',0)">0</div><div class="scopt" data-v="1" onclick="sc('scwork',1)">1</div>
+              <div class="scopt" data-v="2" onclick="sc('scwork',2)">2</div><div class="scopt" data-v="3" onclick="sc('scwork',3)">3</div>
+              <div class="scopt" data-v="4" onclick="sc('scwork',4)">4</div><div class="scopt" data-v="5" onclick="sc('scwork',5)">5</div>
+            </div>
+            <input type="number" min="0" id="ms-scwork" class="finp-num" placeholder="—" oninput="scManual('scwork',this.value)">
           </div>
         </div>
       </div>
-      <div class="fsec">Market / Finance / AI</div>
+      <div class="fsec">Personal Wish</div>
       <div class="frow">
-        <div><label class="flbl">Aktivitas</label><input type="text" id="fmkt" class="finp" placeholder="e.g. Trading, Deep in macro"></div>
-        <div><label class="flbl">Intensitas (1–5)</label>
-          <div class="sc-row" id="scmkt">
-            <div class="scopt" data-v="0" onclick="sc('scmkt',0)">0</div><div class="scopt" data-v="1" onclick="sc('scmkt',1)">1</div>
-            <div class="scopt" data-v="2" onclick="sc('scmkt',2)">2</div><div class="scopt" data-v="3" onclick="sc('scmkt',3)">3</div>
-            <div class="scopt" data-v="4" onclick="sc('scmkt',4)">4</div><div class="scopt" data-v="5" onclick="sc('scmkt',5)">5</div>
+        <div><label class="flbl">What u've done today?</label><input type="text" id="fmkt" class="finp" placeholder="e.g. Trading, Deep in macro"></div>
+        <div><label class="flbl">Intensitas</label>
+          <div class="sc-wrap">
+            <div class="sc-row" id="scmkt">
+              <div class="scopt" data-v="0" onclick="sc('scmkt',0)">0</div><div class="scopt" data-v="1" onclick="sc('scmkt',1)">1</div>
+              <div class="scopt" data-v="2" onclick="sc('scmkt',2)">2</div><div class="scopt" data-v="3" onclick="sc('scmkt',3)">3</div>
+              <div class="scopt" data-v="4" onclick="sc('scmkt',4)">4</div><div class="scopt" data-v="5" onclick="sc('scmkt',5)">5</div>
+            </div>
+            <input type="number" min="0" id="ms-scmkt" class="finp-num" placeholder="—" oninput="scManual('scmkt',this.value)">
           </div>
         </div>
       </div>
-      <div class="fsec">Physical</div>
+      <div class="fsec">Exercise</div>
       <div class="frow">
-        <div><label class="flbl">Jenis</label><input type="text" id="fphy" class="finp" placeholder="e.g. Push day, Lari, Padel"></div>
+        <div><label class="flbl">What u're move today?</label><input type="text" id="fphy" class="finp" placeholder="e.g. Push day, Lari, Padel"></div>
         <div><label class="flbl">Done?</label>
           <div class="sc-row two" id="scphy">
             <div class="scopt" data-v="0" onclick="sc('scphy',0)">✗ Skip</div>
@@ -1188,6 +1200,7 @@ function openLogDate(dstr){
   logDate=dstr;
   document.getElementById('mdbadge').textContent=fmtFull(dstr);
   Object.keys(mscores).forEach(k=>{mscores[k]=0;sc(k,0);});
+  ['ms-screl','ms-scwork','ms-scmkt'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['frel','fwork','fmkt','fphy','fsoc','fext','fles'].forEach(id=>document.getElementById(id).value='');
   const e=entries.find(x=>x.date===dstr);
   if(e){
@@ -1239,6 +1252,15 @@ document.getElementById('gmo').addEventListener('click',function(e){if(e.target=
 function sc(gid,val){
   mscores[gid]=val;
   document.querySelectorAll(`#${gid} .scopt`).forEach(el=>el.classList.toggle('active',parseInt(el.dataset.v)===val));
+  const mi=document.getElementById('ms-'+gid);
+  if(mi) mi.value=val;
+}
+function scManual(gid,val){
+  const v=parseInt(val);
+  if(!isNaN(v)&&v>=0){
+    mscores[gid]=v;
+    document.querySelectorAll(`#${gid} .scopt`).forEach(el=>el.classList.toggle('active',parseInt(el.dataset.v)===v));
+  }
 }
 async function saveEntry(){
   const dstr=logDate||todayStr();
