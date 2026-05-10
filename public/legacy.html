@@ -689,42 +689,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 
 <script>
 // ── DATA ──
-const PRE=[
-  {date:'2025-01-01',rel:'Qoblyah',rs:1,work:'Diskusi gemii',ws:1,mkt:'',ms:1,phy:'Trail',ps:1,soc:'Guiding',lesson:''},
-  {date:'2025-01-02',rel:'Qoblyah',rs:1,work:'Kuliah, Olahraga, Kerja penyusutan, Rekap 2025',ws:4,mkt:'Trade, Diskusi gemini',ms:2,phy:'',ps:0,soc:'Darjo',lesson:''},
-  {date:'2025-01-04',rel:'',rs:0,work:'',ws:0,mkt:'Deep in macro',ms:1,phy:'',ps:0,soc:'Darjo',lesson:''},
-  {date:'2025-01-05',rel:'Qobliyah',rs:1,work:'Nyusun kertas kerja',ws:5,mkt:'Trading, Deep in goal',ms:2,phy:'',ps:0,soc:'',lesson:''},
-  {date:'2025-01-06',rel:'',rs:0,work:'Cek entry, Penyusutan BMD',ws:5,mkt:'Trading, Deep in macro',ms:3,phy:'Lari',ps:1,soc:'',lesson:''},
-  {date:'2025-01-07',rel:'',rs:0,work:'Cek puskesmas, Pengelolaan BMD',ws:5,mkt:'Trading, Deep in macro',ms:4,phy:'',ps:0,soc:'',lesson:''},
-  {date:'2025-01-08',rel:'',rs:0,work:'Kerja rekap pengelolaan BMD',ws:5,mkt:'Trading',ms:1,phy:'',ps:0,soc:'Diskusi telpon',lesson:''},
-  {date:'2025-01-09',rel:'',rs:0,work:'Istighiosah, Pimpong, Recap',ws:4,mkt:'Pantau market',ms:1,phy:'',ps:0,soc:'Sharing',lesson:''},
-  {date:'2025-01-10',rel:'',rs:0,work:'Pengelolaan BMD',ws:2,mkt:'',ms:0,phy:'Lari',ps:1,soc:'',lesson:''},
-  {date:'2025-01-11',rel:'',rs:0,work:'Penghapusan BMD',ws:2,mkt:'Deep in global',ms:3,phy:'',ps:0,soc:'Sharing',lesson:''},
-  {date:'2025-01-12',rel:'',rs:0,work:'Penghapusan BMD',ws:5,mkt:'Trading, Deep in narrative',ms:3,phy:'Push day',ps:1,soc:'',lesson:''},
-  {date:'2025-01-13',rel:'',rs:0,work:'Penghapusan, Pengelolaan',ws:5,mkt:'Trading, Deep in narrative',ms:3,phy:'Pull day',ps:1,soc:'',lesson:''},
-  {date:'2025-01-14',rel:'',rs:0,work:'Rekon, Penghapusan',ws:5,mkt:'Deep in global, Trading',ms:3,phy:'',ps:0,soc:'',lesson:''},
-  {date:'2025-01-15',rel:'Qobliyah',rs:1,work:'Rekon, Eksekusi BMD',ws:5,mkt:'Deep in market',ms:2,phy:'',ps:0,soc:'',lesson:''},
-  {date:'2025-01-16',rel:'',rs:0,work:'Kuliah',ws:2,mkt:'Deep in market',ms:2,phy:'Jalan kaki',ps:1,soc:'Darjo',lesson:''},
-  {date:'2025-01-19',rel:'',rs:0,work:'Rekon, Eksekusi BMD',ws:5,mkt:'Trading, Deep in market',ms:4,phy:'',ps:0,soc:'Diskusi market',lesson:''},
-  {date:'2025-01-20',rel:'',rs:0,work:'Rekon, Eksekusi BMD',ws:5,mkt:'Trading, Deep in market',ms:4,phy:'Push day',ps:1,soc:'Diskusi market',lesson:''},
-  {date:'2025-01-26',rel:'',rs:0,work:'Rekon BMD, Eksekusi BMD',ws:5,mkt:'Trading, Deep in market',ms:3,phy:'Push day',ps:1,soc:'',lesson:''},
-  {date:'2025-01-27',rel:'',rs:0,work:'Rekon BMD, Eksekusi BMD',ws:5,mkt:'Trading, Deep in market',ms:3,phy:'Pull day',ps:1,soc:'',lesson:''},
-  {date:'2025-01-29',rel:'',rs:0,work:'Rekon BMD, Eksekusi BMD',ws:5,mkt:'Trading, Deep in market, gainer mass',ms:5,phy:'Legs day',ps:1,soc:'',lesson:''},
-  {date:'2025-02-09',rel:'',rs:0,work:'Cek E-BMD, UAS',ws:5,mkt:'',ms:2,phy:'',ps:0,soc:'',lesson:''},
-  {date:'2025-02-18',rel:'Qobliyah',rs:1,work:'Rapat KDKMP, Cek saldo akhir',ws:5,mkt:'',ms:1,phy:'',ps:0,soc:'',lesson:''},
-  {date:'2025-02-24',rel:'Qobliyah',rs:1,work:'Rekon',ws:5,mkt:'Deep in market',ms:1,phy:'',ps:0,soc:'',lesson:''},
-  {date:'2025-02-26',rel:'Qobliyah',rs:1,work:'Rekon sekda',ws:5,mkt:'Deep in market',ms:3,phy:'',ps:0,soc:'',lesson:''},
-  {date:'2025-03-02',rel:'Qobliyah, Ngaji',rs:2,work:'Uji penyusutan',ws:5,mkt:'Deep in iran US',ms:3,phy:'',ps:0,soc:'',lesson:''},
-  {date:'2025-03-05',rel:'Qobliyah',rs:1,work:'Finalisasi laporan BMD',ws:5,mkt:'Deep in market',ms:3,phy:'',ps:0,soc:'',lesson:''},
-  {date:'2025-03-06',rel:'Qobliyah, Ngaji',rs:2,work:'Rekon dinkes',ws:4,mkt:'Deep In porto',ms:2,phy:'Push day',ps:1,soc:'',lesson:''},
-  {date:'2025-03-08',rel:'Qobliyah',rs:1,work:'',ws:0,mkt:'Deep in digital marketing, Kilas balik progress, Cek bitcoin',ms:4,phy:'',ps:0,soc:'',lesson:'S adalah tempat lo menempa pedang, B adalah tempat lo membangun kerajaan. Jangan sibuk menggambar peta wilayah kalau megang pedang aja lo masih gemetar'},
-  {date:'2025-03-25',rel:'Qobliyah',rs:1,work:'',ws:0,mkt:'Itung IPO, Trading, NEO BDM, AI Trial',ms:5,phy:'Push day',ps:1,soc:'Halal bihalal',lesson:''},
-  {date:'2025-03-26',rel:'Qobliyah, Ngaji',rs:2,work:'Ngitung penyusutan',ws:3,mkt:'Eksekusi Openclaw, Pantau market, AI Execution',ms:4,phy:'Pull day',ps:1,soc:'',lesson:''},
-  {date:'2025-04-01',rel:'Qobliyah',rs:1,work:'Nyiapin penyusutan',ws:4,mkt:'Trading',ms:2,phy:'Push',ps:1,soc:'',lesson:''},
-  {date:'2025-04-02',rel:'Qobliyah',rs:1,work:'Nyiapin penyusutan',ws:4,mkt:'Trading',ms:2,phy:'Pull',ps:1,soc:'Baca: Art of spending, Second chance',lesson:''},
-  {date:'2025-04-06',rel:'Qobliyah',rs:1,work:'Penyusutan GB dan ATB, Paparan',ws:4,mkt:'Google flow, AI Studio',ms:3,phy:'',ps:0,soc:'Traktiran tino',lesson:''},
-  {date:'2025-04-07',rel:'',rs:0,work:'Penyusutan JIJ dan PM',ws:4,mkt:'Trading, Deep in AI',ms:2,phy:'',ps:0,soc:'',lesson:''},
-];
+const PRE=[];
 
 // ── STATE ──
 const SK={e:'d26e',l:'d26l',t:'d26t',g:'d26g'};
