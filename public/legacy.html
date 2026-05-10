@@ -1227,7 +1227,7 @@ function sc(gid,val){
   mscores[gid]=val;
   document.querySelectorAll(`#${gid} .scopt`).forEach(el=>el.classList.toggle('active',parseInt(el.dataset.v)===val));
 }
-function saveEntry(){
+async function saveEntry(){
   const dstr=logDate||todayStr();
   const ne={date:dstr,rel:document.getElementById('frel').value.trim(),rs:mscores.screl,
     work:document.getElementById('fwork').value.trim(),ws:mscores.scwork,
@@ -1240,17 +1240,25 @@ function saveEntry(){
     const li=lessons.findIndex(l=>l.date===dstr);
     if(li>=0)lessons[li].text=ne.lesson;else lessons.push({date:dstr,text:ne.lesson,locked:dstr});
   }
-  // Save entry langsung ke Supabase
-const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4NTIzNDMsImV4cCI6MjA2MjQyODM0M30.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2H1Y';
-const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
-const {id:eid,...erest}=ne;
-fetch(`${SURL}/rest/v1/entries?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(erest)}).catch(console.error);
-if(ne.lesson){
-  const ldata={date:dstr,text:ne.lesson,locked:dstr};
-  fetch(`${SURL}/rest/v1/lessons?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(ldata)}).catch(console.error);
-}
-closeModal();render();
+  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
+  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4NTIzNDMsImV4cCI6MjA2MjQyODM0M30.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2H1Y';
+  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
+  const {id:eid,...erest}=ne;
+  const btn=document.querySelector('.btn-save');
+  btn.textContent='Menyimpan...';btn.disabled=true;
+  try{
+    const r=await fetch(`${SURL}/rest/v1/entries?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(erest)});
+    if(!r.ok){const errText=await r.text();throw new Error('entries: '+r.status+' '+errText);}
+    if(ne.lesson){
+      const ldata={date:dstr,text:ne.lesson,locked:dstr};
+      const r2=await fetch(`${SURL}/rest/v1/lessons?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(ldata)});
+      if(!r2.ok){const errText=await r2.text();throw new Error('lessons: '+r2.status+' '+errText);}
+    }
+    closeModal();render();
+  }catch(err){
+    alert('✗ Gagal simpan ke database:\n'+err.message+'\n\nData tersimpan sementara di memori tapi akan hilang saat reload.');
+    btn.textContent='Simpan & Kunci';btn.disabled=false;
+  }
 }
 
 document.getElementById('mo').addEventListener('click',function(e){if(e.target===this)closeModal();});
