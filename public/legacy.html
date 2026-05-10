@@ -724,7 +724,15 @@ async function init(){
   
   entries=Array.isArray(en)?en:[];
   lessons=Array.isArray(ls)?ls:[];
-  todos=Array.isArray(td)?td.length?td:defTodos():defTodos();
+  if(Array.isArray(td)&&td.length){
+    todos=td.map(t=>({...t,doneDate:t.done_date||null}));
+  }else{
+    todos=defTodos();
+    const _su='https://sxjaqrpjjevmpgswmqbj.supabase.co';
+    const _sk='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
+    const _h={'apikey':_sk,'Authorization':'Bearer '+_sk,'Content-Type':'application/json'};
+    todos.forEach(t=>fetch(`${_su}/rest/v1/todos`,{method:'POST',headers:_h,body:JSON.stringify({id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:null})}).catch(console.error));
+  }
   goals=Array.isArray(gl)?gl.length?gl:defGoals():defGoals();
   
   PRE.forEach(p=>{if(!entries.find(e=>e.date===p.date))entries.push(p);});
@@ -749,12 +757,12 @@ function defGoals(){
   ];
 }
 function defTodos(){return[
-  {id:1,text:'OpenClaw integration — agentic workflow buat content ideation',cat:'AI/Tech',done:false,doneDate:null},
-  {id:2,text:'Stockbit custom screener — foreign accumulation IHSG sebelum breakout',cat:'Market',done:false,doneDate:null},
-  {id:3,text:'n8n + Telegram pipeline buat carousel content @cognithink_',cat:'Content',done:false,doneDate:null},
-  {id:4,text:'CoinGecko + Fear & Greed Index — crypto signal via Telegram',cat:'Market',done:false,doneDate:null},
-  {id:5,text:'Deep dive AI agentic era — bangun produk digital income stream',cat:'AI/Tech',done:false,doneDate:null},
-  {id:6,text:'Finalisasi brand cognithink.vercel.app',cat:'Content',done:false,doneDate:null},
+  {id:'00000000-0000-0000-0000-000000000001',text:'OpenClaw integration — agentic workflow buat content ideation',cat:'AI/Tech',done:false,doneDate:null},
+  {id:'00000000-0000-0000-0000-000000000002',text:'Stockbit custom screener — foreign accumulation IHSG sebelum breakout',cat:'Market',done:false,doneDate:null},
+  {id:'00000000-0000-0000-0000-000000000003',text:'n8n + Telegram pipeline buat carousel content @cognithink_',cat:'Content',done:false,doneDate:null},
+  {id:'00000000-0000-0000-0000-000000000004',text:'CoinGecko + Fear & Greed Index — crypto signal via Telegram',cat:'Market',done:false,doneDate:null},
+  {id:'00000000-0000-0000-0000-000000000005',text:'Deep dive AI agentic era — bangun produk digital income stream',cat:'AI/Tech',done:false,doneDate:null},
+  {id:'00000000-0000-0000-0000-000000000006',text:'Finalisasi brand cognithink.vercel.app',cat:'Content',done:false,doneDate:null},
 ];}
 function save(){
   const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
@@ -771,6 +779,18 @@ function save(){
     const {id,...rest}=l;
     fetch(`${SURL}/rest/v1/lessons?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(rest)}).catch(console.error);
   }
+}
+function saveTodoDB(t){
+  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
+  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
+  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
+  fetch(`${SURL}/rest/v1/todos?on_conflict=id`,{method:'POST',headers:h,body:JSON.stringify({id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:t.doneDate||null})}).catch(console.error);
+}
+function delTodoDB(id){
+  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
+  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
+  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY};
+  fetch(`${SURL}/rest/v1/todos?id=eq.${id}`,{method:'DELETE',headers:h}).catch(console.error);
 }
 // ── TARGET QUOTES ──
 const TARGET_QUOTES=[
@@ -1102,16 +1122,17 @@ function addTodo(){
   const inp=document.getElementById('ti');
   const text=inp.value.trim();if(!text)return;
   const cat=todoCat==='Semua'?'Work':todoCat;
-  todos.push({id:Date.now(),text,cat,done:false,doneDate:null});
-  inp.value='';save();renderTodos();renderStats();
+  const t={id:crypto.randomUUID(),text,cat,done:false,doneDate:null};
+  todos.push(t);saveTodoDB(t);
+  inp.value='';renderTodos();renderStats();
 }
 function toggleTodo(id){
   const t=todos.find(x=>x.id===id);if(!t)return;
   t.done=!t.done;t.doneDate=t.done?todayStr():null;
-  save();render();
+  saveTodoDB(t);render();
 }
 function delTodo(id){
-  todos=todos.filter(x=>x.id!==id);save();renderTodos();renderStats();
+  todos=todos.filter(x=>x.id!==id);delTodoDB(id);renderTodos();renderStats();
 }
 function renderTodos(){
   const list=document.getElementById('todo-list');
