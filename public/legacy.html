@@ -280,6 +280,8 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .dlesn-txt{font-size:11px;color:#78350f;line-height:1.6;font-style:italic;}
 .add-chain-btn{width:100%;background:none;border:1.5px dashed var(--border2);border-radius:var(--r2);padding:8px;color:var(--text3);font-family:'Poppins',sans-serif;font-size:10px;cursor:pointer;transition:all .15s;text-align:center;margin-top:8px;}
 .add-chain-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+.edit-entry-btn{background:none;border:1px solid var(--border2);border-radius:var(--r2);padding:5px 12px;color:var(--text3);font-family:'Poppins',sans-serif;font-size:10px;cursor:pointer;transition:all .15s;margin-top:8px;}
+.edit-entry-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
 .done-in-chain{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--green);padding:2px 0;font-weight:500;}
 .done-in-chain::before{content:'✓';font-weight:700;}
 
@@ -677,6 +679,8 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       </div>
       <div class="fsec">Social / Lainnya</div>
       <div class="frow one"><div><label class="flbl">Catatan</label><input type="text" id="fsoc" class="finp" placeholder="e.g. Diskusi market, Tahlil, dll"></div></div>
+      <div class="fsec">Extra / Overflow <span style="font-size:9px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">— isi jika ada aktivitas tambahan di luar kategori di atas</span></div>
+      <div class="frow one"><div><label class="flbl">Aktivitas Tambahan (optional)</label><textarea id="fext" class="fta" placeholder="e.g. Baca buku, Side project, Ngoding hobby..."></textarea></div></div>
       <div class="fsec">Lesson / Insight</div>
       <div class="frow one"><div><label class="flbl">Pelajaran Hari Ini (optional)</label><textarea id="fles" class="fta" placeholder="Tulis insight yang lo dapet..."></textarea></div></div>
     </div>
@@ -1014,6 +1018,7 @@ function renderChain(){
       if(e.mkt)det+=`<div class="dcard"><div class="dcard-lbl">Market / Finance (${e.ms}/5)</div><div class="dcard-val">${e.mkt}</div></div>`;
       if(e.phy)det+=`<div class="dcard"><div class="dcard-lbl">Physical</div><div class="dcard-val">${e.phy} ✓</div></div>`;
       if(e.soc)det+=`<div class="dcard"><div class="dcard-lbl">Social / Lainnya</div><div class="dcard-val">${e.soc}</div></div>`;
+      if(e.extra)det+=`<div class="dcard" style="grid-column:1/-1"><div class="dcard-lbl">Extra / Overflow</div><div class="dcard-val">${e.extra}</div></div>`;
     }else{
       det+=`<div class="dcard" style="grid-column:1/-1"><div class="dcard-lbl">Status</div><div class="dcard-val empty">${isFuture?'Belum waktunya.':'Belum dicatat hari ini.'}</div></div>`;
     }
@@ -1030,6 +1035,7 @@ function renderChain(){
       doneGoalsDet.forEach(g=>{det+=`<div class="dgoal-row"><span style="flex:1">${g.text}</span><span class="dgoal-scope">${g.scope==='year'?(g.yr||new Date().getFullYear()):'MONTH'}</span></div>`;});
       det+=`</div>`;
     }
+    if(e&&!isFuture)det+=`<button class="edit-entry-btn" onclick="openLogDate('${dstr}')">✎ Edit</button>`;
     if(!e&&!isFuture)det+=`<button class="add-chain-btn" onclick="openLogDate('${dstr}')">+ Log aktivitas ${DN[i]}</button>`;
 
     html+=`
@@ -1147,12 +1153,12 @@ function renderTodos(){
   else{const pend=fil.filter(t=>!t.done);const done=fil.filter(t=>t.done);all=[...pend,...done];}
   if(!all.length){list.innerHTML='<div class="empty-note">'+(todoStatus==='done'?'Belum ada task selesai.':todoStatus==='todo'?'Semua task selesai. 🎉':'Kosong. Tambah task baru.')+'</div>';return;}
   list.innerHTML=all.map(t=>`
-    <div class="titem${t.done?' done':''}" onclick="toggleTodo(${t.id})">
+    <div class="titem${t.done?' done':''}" onclick="toggleTodo('${t.id}')">
       <div class="tcb"></div>
       <div class="ttxt">${t.text}</div>
       <div class="tcat">${t.cat}</div>
       ${t.done?`<div class="tdone-badge">✓ ${t.doneDate?fmtShort(t.doneDate):''}</div>`:''}
-      <button class="tdel" onclick="event.stopPropagation();delTodo(${t.id})">✕</button>
+      <button class="tdel" onclick="event.stopPropagation();delTodo('${t.id}')">✕</button>
     </div>`).join('');
 }
 
@@ -1162,7 +1168,7 @@ function openLogDate(dstr){
   logDate=dstr;
   document.getElementById('mdbadge').textContent=fmtFull(dstr);
   Object.keys(mscores).forEach(k=>{mscores[k]=0;sc(k,0);});
-  ['frel','fwork','fmkt','fphy','fsoc','fles'].forEach(id=>document.getElementById(id).value='');
+  ['frel','fwork','fmkt','fphy','fsoc','fext','fles'].forEach(id=>document.getElementById(id).value='');
   const e=entries.find(x=>x.date===dstr);
   if(e){
     document.getElementById('frel').value=e.rel||'';
@@ -1170,6 +1176,7 @@ function openLogDate(dstr){
     document.getElementById('fmkt').value=e.mkt||'';
     document.getElementById('fphy').value=e.phy||'';
     document.getElementById('fsoc').value=e.soc||'';
+    document.getElementById('fext').value=e.extra||'';
     const l=lessons.find(l=>l.date===dstr);
     document.getElementById('fles').value=l?l.text:'';
     sc('screl',e.rs||0);sc('scwork',e.ws||0);sc('scmkt',e.ms||0);sc('scphy',e.ps||0);
@@ -1219,7 +1226,7 @@ async function saveEntry(){
     work:document.getElementById('fwork').value.trim(),ws:mscores.scwork,
     mkt:document.getElementById('fmkt').value.trim(),ms:mscores.scmkt,
     phy:document.getElementById('fphy').value.trim(),ps:mscores.scphy,
-    soc:document.getElementById('fsoc').value.trim(),lesson:document.getElementById('fles').value.trim()};
+    soc:document.getElementById('fsoc').value.trim(),extra:document.getElementById('fext').value.trim(),lesson:document.getElementById('fles').value.trim()};
   const idx=entries.findIndex(e=>e.date===dstr);
   if(idx>=0)entries[idx]=ne;else entries.push(ne);
   if(ne.lesson){
