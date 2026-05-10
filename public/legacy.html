@@ -737,7 +737,15 @@ async function init(){
     const _h={'apikey':_sk,'Authorization':'Bearer '+_sk,'Content-Type':'application/json'};
     todos.forEach(t=>fetch(`${_su}/rest/v1/todos`,{method:'POST',headers:_h,body:JSON.stringify({id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:null})}).catch(console.error));
   }
-  goals=Array.isArray(gl)?gl.length?gl:defGoals():defGoals();
+  if(Array.isArray(gl)&&gl.length){
+    goals=gl.map(g=>({...g,doneDate:g.done_date||null}));
+  }else{
+    goals=defGoals();
+    const _su='https://sxjaqrpjjevmpgswmqbj.supabase.co';
+    const _sk='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
+    const _h={'apikey':_sk,'Authorization':'Bearer '+_sk,'Content-Type':'application/json'};
+    goals.forEach(g=>fetch(`${_su}/rest/v1/goals`,{method:'POST',headers:_h,body:JSON.stringify({id:g.id,text:g.text,scope:g.scope,yr:g.yr||null,ym:g.ym||null,done:g.done,done_date:null})}).catch(console.error));
+  }
   
   PRE.forEach(p=>{if(!entries.find(e=>e.date===p.date))entries.push(p);});
 
@@ -750,14 +758,14 @@ async function init(){
 function defGoals(){
   const n=new Date();const yr=n.getFullYear();const ymStr=`${yr}-${p2(n.getMonth()+1)}`;
   return[
-    {id:101,text:'Tutup tahun dengan portofolio +35% (compound thinking)',scope:'year',yr,done:false,doneDate:null},
-    {id:102,text:'Launch produk digital — first 100 paid users',scope:'year',yr,done:false,doneDate:null},
-    {id:103,text:'Konsisten 3x workout per minggu, BB target 75kg',scope:'year',yr,done:false,doneDate:null},
-    {id:104,text:'Khatam 2x + lock 1 lesson per minggu',scope:'year',yr,done:false,doneDate:null},
-    {id:201,text:'Rekonsiliasi BMD final & paparan ke pimpinan',scope:'month',ym:ymStr,done:false,doneDate:null},
-    {id:202,text:'Ship MVP cognithink.vercel.app + posting 8x',scope:'month',ym:ymStr,done:false,doneDate:null},
-    {id:203,text:'Deep dive 2 narrative market — entry plan tertulis',scope:'month',ym:ymStr,done:false,doneDate:null},
-    {id:204,text:'12x workout (push/pull/legs rotation)',scope:'month',ym:ymStr,done:false,doneDate:null},
+    {id:'10000000-0000-0000-0000-000000000001',text:'Tutup tahun dengan portofolio +35% (compound thinking)',scope:'year',yr,done:false,doneDate:null},
+    {id:'10000000-0000-0000-0000-000000000002',text:'Launch produk digital — first 100 paid users',scope:'year',yr,done:false,doneDate:null},
+    {id:'10000000-0000-0000-0000-000000000003',text:'Konsisten 3x workout per minggu, BB target 75kg',scope:'year',yr,done:false,doneDate:null},
+    {id:'10000000-0000-0000-0000-000000000004',text:'Khatam 2x + lock 1 lesson per minggu',scope:'year',yr,done:false,doneDate:null},
+    {id:'20000000-0000-0000-0000-000000000001',text:'Rekonsiliasi BMD final & paparan ke pimpinan',scope:'month',ym:ymStr,done:false,doneDate:null},
+    {id:'20000000-0000-0000-0000-000000000002',text:'Ship MVP cognithink.vercel.app + posting 8x',scope:'month',ym:ymStr,done:false,doneDate:null},
+    {id:'20000000-0000-0000-0000-000000000003',text:'Deep dive 2 narrative market — entry plan tertulis',scope:'month',ym:ymStr,done:false,doneDate:null},
+    {id:'20000000-0000-0000-0000-000000000004',text:'12x workout (push/pull/legs rotation)',scope:'month',ym:ymStr,done:false,doneDate:null},
   ];
 }
 function defTodos(){return[
@@ -795,6 +803,18 @@ function delTodoDB(id){
   const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
   const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY};
   fetch(`${SURL}/rest/v1/todos?id=eq.${id}`,{method:'DELETE',headers:h}).catch(console.error);
+}
+function saveGoalDB(g){
+  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
+  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
+  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
+  fetch(`${SURL}/rest/v1/goals?on_conflict=id`,{method:'POST',headers:h,body:JSON.stringify({id:g.id,text:g.text,scope:g.scope,yr:g.yr||null,ym:g.ym||null,done:g.done,done_date:g.doneDate||null})}).catch(console.error);
+}
+function delGoalDB(id){
+  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
+  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
+  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY};
+  fetch(`${SURL}/rest/v1/goals?id=eq.${id}`,{method:'DELETE',headers:h}).catch(console.error);
 }
 // ── TARGET QUOTES ──
 const TARGET_QUOTES=[
@@ -1455,11 +1475,12 @@ function goalNow(){const n=new Date();goalNavY=n.getFullYear();goalNavM=n.getMon
 function addGoal(){
   const inp=document.getElementById('gi');const text=inp.value.trim();if(!text)return;
   const yr=goalNavYr,ym=`${goalNavY}-${p2(goalNavM+1)}`;
-  goals.push({id:Date.now(),text,scope:goalTab,yr:goalTab==='year'?yr:undefined,ym:goalTab==='month'?ym:undefined,done:false,doneDate:null});
-  inp.value='';save();renderGoals();
+  const g={id:crypto.randomUUID(),text,scope:goalTab,yr:goalTab==='year'?yr:null,ym:goalTab==='month'?ym:null,done:false,doneDate:null};
+  goals.push(g);saveGoalDB(g);
+  inp.value='';renderGoals();
 }
-function toggleGoal(id){const g=goals.find(x=>x.id===id);if(!g)return;g.done=!g.done;g.doneDate=g.done?todayStr():null;save();render();}
-function delGoal(id){goals=goals.filter(x=>x.id!==id);save();renderGoals();}
+function toggleGoal(id){const g=goals.find(x=>x.id===id);if(!g)return;g.done=!g.done;g.doneDate=g.done?todayStr():null;saveGoalDB(g);render();}
+function delGoal(id){goals=goals.filter(x=>x.id!==id);delGoalDB(id);renderGoals();}
 function renderGoals(){
   if(goalNavY===null){const n=new Date();goalNavY=n.getFullYear();goalNavM=n.getMonth();goalNavYr=n.getFullYear();}
   const n=new Date();const curYr=n.getFullYear();const curM=n.getMonth();
@@ -1483,13 +1504,13 @@ function renderGoals(){
   if(!list.length){wrap.innerHTML=`<div class="goals-empty">Belum ada goal di ${goalTab==='year'?goalNavYr:MN[goalNavM]+' '+goalNavY}. Tambah di bawah.</div>`;return;}
   const sorted=[...list].sort((a,b)=>(a.done?1:0)-(b.done?1:0));
   wrap.innerHTML=sorted.map(g=>`
-    <div class="gitem${g.done?' done':''}" onclick="toggleGoal(${g.id})">
+    <div class="gitem${g.done?' done':''}" onclick="toggleGoal('${g.id}')">
       <div class="gcb"></div>
       <div style="flex:1">
         <div class="gtxt">${g.text}</div>
         ${g.done&&g.doneDate?`<span class="gdate">✓ ${fmtShort(g.doneDate)}</span>`:''}
       </div>
-      <button class="gdel" onclick="event.stopPropagation();delGoal(${g.id})">✕</button>
+      <button class="gdel" onclick="event.stopPropagation();delGoal('${g.id}')">✕</button>
     </div>`).join('');
 }
 
