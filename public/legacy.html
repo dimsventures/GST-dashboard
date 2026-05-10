@@ -792,12 +792,21 @@ function defTodos(){return[
   {id:6,text:'Finalisasi brand cognithink.vercel.app',cat:'Content',done:false,doneDate:null},
 ];}
 function save(){
-  localStorage.setItem(SK.e,JSON.stringify(entries));
-  localStorage.setItem(SK.l,JSON.stringify(lessons));
-  localStorage.setItem(SK.t,JSON.stringify(todos));
-  localStorage.setItem(SK.g,JSON.stringify(goals));
+  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
+  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4NTIzNDMsImV4cCI6MjA2MjQyODM0M30.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2H1Y';
+  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
+  const dstr=logDate||todayStr();
+  const e=entries.find(x=>x.date===dstr);
+  if(e){
+    const {id,...rest}=e;
+    fetch(`${SURL}/rest/v1/entries?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(rest)}).catch(console.error);
+  }
+  const l=lessons.find(x=>x.date===dstr);
+  if(l){
+    const {id,...rest}=l;
+    fetch(`${SURL}/rest/v1/lessons?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(rest)}).catch(console.error);
+  }
 }
-
 // ── TARGET QUOTES ──
 const TARGET_QUOTES=[
   {t:"No one's gonna make your dream come true. Only you.",by:''},
