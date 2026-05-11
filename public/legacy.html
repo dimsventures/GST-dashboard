@@ -381,7 +381,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .finp:focus,.fsel:focus,.fta:focus{border-color:var(--red);}
 .fsel option{background:#fff;}
 .fta{resize:vertical;min-height:65px;line-height:1.5;}
-.sc-row{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:3px;}
+.sc-row{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;}
 .sc-row.two{grid-template-columns:repeat(2,1fr);}
 .scopt{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);text-align:center;padding:5px 0;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);}
 .scopt:hover{border-color:var(--red);color:var(--red);}
@@ -639,7 +639,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
     <div class="mbody">
       <div class="fsec" style="margin-top:0;padding-top:0;border-top:none;">Religion</div>
       <div class="frow">
-        <div><label class="flbl">What u've done today?</label><input type="text" id="frel" class="finp" placeholder="e.g. Qobliyah, Ngaji"></div>
+        <div><label class="flbl">What u've done today?</label><input type="text" id="frel" class="finp"></div>
         <div><label class="flbl">Intensitas</label>
           <div class="sc-wrap">
             <div class="sc-row" id="screl">
@@ -653,7 +653,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       </div>
       <div class="fsec">Working Stage</div>
       <div class="frow">
-        <div><label class="flbl">What u've done today?</label><input type="text" id="fwork" class="finp" placeholder="e.g. Rekon BMD, Kuliah"></div>
+        <div><label class="flbl">What u've done today?</label><input type="text" id="fwork" class="finp"></div>
         <div><label class="flbl">Intensitas</label>
           <div class="sc-wrap">
             <div class="sc-row" id="scwork">
@@ -667,7 +667,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       </div>
       <div class="fsec">Personal Wish</div>
       <div class="frow">
-        <div><label class="flbl">What u've done today?</label><input type="text" id="fmkt" class="finp" placeholder="e.g. Trading, Deep in macro"></div>
+        <div><label class="flbl">What u've done today?</label><input type="text" id="fmkt" class="finp"></div>
         <div><label class="flbl">Intensitas</label>
           <div class="sc-wrap">
             <div class="sc-row" id="scmkt">
@@ -681,7 +681,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       </div>
       <div class="fsec">Exercise</div>
       <div class="frow">
-        <div><label class="flbl">What u're move today?</label><input type="text" id="fphy" class="finp" placeholder="e.g. Push day, Lari, Padel"></div>
+        <div><label class="flbl">What u're move today?</label><input type="text" id="fphy" class="finp"></div>
         <div><label class="flbl">Done?</label>
           <div class="sc-row two" id="scphy">
             <div class="scopt" data-v="0" onclick="sc('scphy',0)">✗ Skip</div>
@@ -690,11 +690,9 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
         </div>
       </div>
       <div class="fsec">Social / Lainnya</div>
-      <div class="frow one"><div><label class="flbl">Catatan</label><input type="text" id="fsoc" class="finp" placeholder="e.g. Diskusi market, Tahlil, dll"></div></div>
+      <div class="frow one"><div><label class="flbl">Catatan</label><input type="text" id="fsoc" class="finp"></div></div>
       <div class="fsec">Extra / Overflow <span style="font-size:9px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">— isi jika ada aktivitas tambahan di luar kategori di atas</span></div>
-      <div class="frow one"><div><label class="flbl">Aktivitas Tambahan (optional)</label><textarea id="fext" class="fta" placeholder="e.g. Baca buku, Side project, Ngoding hobby..."></textarea></div></div>
-      <div class="fsec">Lesson / Insight</div>
-      <div class="frow one"><div><label class="flbl">Pelajaran Hari Ini (optional)</label><textarea id="fles" class="fta" placeholder="Tulis insight yang lo dapet..."></textarea></div></div>
+      <div class="frow one"><div><label class="flbl">Aktivitas Tambahan (optional)</label><textarea id="fext" class="fta"></textarea></div></div>
     </div>
     <div class="mfooter">
       <button class="btn-cancel" onclick="closeModal()">Batal</button>
@@ -1201,7 +1199,7 @@ function openLogDate(dstr){
   document.getElementById('mdbadge').textContent=fmtFull(dstr);
   Object.keys(mscores).forEach(k=>{mscores[k]=0;sc(k,0);});
   ['ms-screl','ms-scwork','ms-scmkt'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['frel','fwork','fmkt','fphy','fsoc','fext','fles'].forEach(id=>document.getElementById(id).value='');
+  ['frel','fwork','fmkt','fphy','fsoc','fext'].forEach(id=>document.getElementById(id).value='');
   const e=entries.find(x=>x.date===dstr);
   if(e){
     document.getElementById('frel').value=e.rel||'';
@@ -1210,8 +1208,6 @@ function openLogDate(dstr){
     document.getElementById('fphy').value=e.phy||'';
     document.getElementById('fsoc').value=e.soc||'';
     document.getElementById('fext').value=e.extra||'';
-    const l=lessons.find(l=>l.date===dstr);
-    document.getElementById('fles').value=l?l.text:'';
     sc('screl',e.rs||0);sc('scwork',e.ws||0);sc('scmkt',e.ms||0);sc('scphy',e.ps||0);
   }
   document.getElementById('mo').classList.add('open');
@@ -1268,13 +1264,9 @@ async function saveEntry(){
     work:document.getElementById('fwork').value.trim(),ws:mscores.scwork,
     mkt:document.getElementById('fmkt').value.trim(),ms:mscores.scmkt,
     phy:document.getElementById('fphy').value.trim(),ps:mscores.scphy,
-    soc:document.getElementById('fsoc').value.trim(),extra:document.getElementById('fext').value.trim(),lesson:document.getElementById('fles').value.trim()};
+    soc:document.getElementById('fsoc').value.trim(),extra:document.getElementById('fext').value.trim()};
   const idx=entries.findIndex(e=>e.date===dstr);
   if(idx>=0)entries[idx]=ne;else entries.push(ne);
-  if(ne.lesson){
-    const li=lessons.findIndex(l=>l.date===dstr);
-    if(li>=0)lessons[li].text=ne.lesson;else lessons.push({date:dstr,text:ne.lesson,locked:dstr});
-  }
   const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
   const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
   const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
@@ -1284,11 +1276,6 @@ async function saveEntry(){
   try{
     const r=await fetch(`${SURL}/rest/v1/entries?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(erest)});
     if(!r.ok){const errText=await r.text();throw new Error('entries: '+r.status+' '+errText);}
-    if(ne.lesson){
-      const ldata={date:dstr,text:ne.lesson,locked:dstr};
-      const r2=await fetch(`${SURL}/rest/v1/lessons?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(ldata)});
-      if(!r2.ok){const errText=await r2.text();throw new Error('lessons: '+r2.status+' '+errText);}
-    }
     closeModal();render();
   }catch(err){
     alert('✗ Gagal simpan ke database:\n'+err.message+'\n\nData tersimpan sementara di memori tapi akan hilang saat reload.');
