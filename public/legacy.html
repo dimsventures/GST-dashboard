@@ -62,10 +62,10 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .btn-data:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
 .hdr-lessons{position:absolute;left:310px;right:290px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;}
 .hdr-lessons-track{position:relative;width:100%;height:32px;display:flex;align-items:center;justify-content:center;pointer-events:auto;}
-.hdr-lesson-item{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:8px;padding:5px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-family:'Poppins',sans-serif;font-size:11px;color:#14532d;max-width:90%;white-space:nowrap;opacity:0;transition:opacity .6s ease;pointer-events:none;}
+.hdr-lesson-item{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:8px;padding:5px 14px;background:#fff5f5;border:1px solid #fecaca;border-radius:6px;font-family:'Poppins',sans-serif;font-size:11px;color:#7f1d1d;max-width:90%;white-space:nowrap;opacity:0;transition:opacity .6s ease;pointer-events:none;}
 .hdr-lesson-item.visible{opacity:1;pointer-events:auto;}
-.hdr-lesson-item .hdr-lesson-date{font-weight:700;color:#15803d;font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
-.hdr-lesson-item .hdr-lesson-text{color:#166534;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hdr-lesson-item .hdr-lesson-date{font-weight:700;color:var(--red);font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
+.hdr-lesson-item .hdr-lesson-text{color:#991b1b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .hdr-lesson-empty{font-family:'Poppins',sans-serif;font-size:11px;color:var(--text3);font-style:italic;}
 .live-pill{display:flex;align-items:center;gap:6px;font-family:'Poppins',sans-serif;font-size:10px;color:var(--text3);}
 .live-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1.4s ease infinite;}
@@ -156,7 +156,15 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .cday.selweek::after{background:#fff!important;}
 
 /* STATS */
-.stats-wrap{padding:14px 16px 14px;border-bottom:none;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.04);}
+.stats-wrap{padding:14px 16px 14px;border-bottom:none;flex-shrink:0;background:var(--red);border:1px solid var(--red2);border-radius:10px;box-shadow:0 2px 8px rgba(209,43,43,.3);}
+.stats-wrap .sec-lbl{color:#fff;font-size:11px;font-weight:700;letter-spacing:.12em;}
+.stats-wrap .sbox{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);}
+.stats-wrap .sbox:hover{border-color:rgba(255,255,255,.35);transform:translateY(-1px);}
+.stats-wrap .sval{color:#fff;}
+.stats-wrap .sval.red{color:#fff;}
+.stats-wrap .sval.gold{color:#fde68a;}
+.stats-wrap .sval.left-val{color:#fecaca;}
+.stats-wrap .slbl{color:rgba(255,255,255,.7);}
 .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
 .sbox{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:9px 10px 7px;}
 .sval{font-size:19px;font-weight:700;color:var(--text);line-height:1;}
@@ -236,7 +244,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .dpips{display:flex;gap:2px;flex-shrink:0;}
 .pip{width:5px;height:5px;border-radius:1px;background:var(--border);}
 .pip.on{background:var(--red);}
-.dlsn-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+.dlsn-dot{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;}
 .dchev{font-size:10px;color:var(--text4);transition:transform .2s;flex-shrink:0;}
 .drow.open .dchev{transform:rotate(180deg);}
 
@@ -251,9 +259,9 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .dscore{display:flex;gap:3px;margin-top:3px;}
 .sdot{width:5px;height:5px;border-radius:50%;background:var(--border2);}
 .sdot.on{background:var(--red);}
-.dlesn-card{background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--r2);padding:10px 12px;margin-top:4px;}
-.dlesn-lbl{font-family:'Poppins',sans-serif;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:4px;}
-.dlesn-txt{font-size:11px;color:#78350f;line-height:1.6;font-style:italic;}
+.dlesn-card{background:#fff5f5;border:1px solid #fecaca;border-radius:var(--r2);padding:10px 12px;margin-top:4px;}
+.dlesn-lbl{font-family:'Poppins',sans-serif;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);font-weight:600;margin-bottom:4px;}
+.dlesn-txt{font-size:11px;color:#7f1d1d;line-height:1.6;font-style:italic;}
 .add-chain-btn{width:100%;background:none;border:1.5px dashed var(--border2);border-radius:var(--r2);padding:8px;color:var(--text3);font-family:'Poppins',sans-serif;font-size:10px;cursor:pointer;transition:all .15s;text-align:center;margin-top:8px;}
 .add-chain-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
 .edit-entry-btn{background:none;border:1px solid var(--border2);border-radius:var(--r2);padding:5px 12px;color:var(--text3);font-family:'Poppins',sans-serif;font-size:10px;cursor:pointer;transition:all .15s;margin-top:8px;}
@@ -280,9 +288,9 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .lsn-list{overflow-y:auto;padding:10px 16px;max-height:200px;display:flex;flex-direction:column;gap:7px;}
 .lsn-list::-webkit-scrollbar{width:3px;}
 .lsn-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
-.lsn-item{background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--r2);padding:9px 11px;position:relative;}
-.lsn-date{font-family:'Poppins',sans-serif;font-size:8px;letter-spacing:.1em;color:var(--gold);font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:4px;}
-.lsn-txt{font-size:11px;color:#78350f;line-height:1.6;font-style:italic;}
+.lsn-item{background:#fff5f5;border:1px solid #fecaca;border-radius:var(--r2);padding:9px 11px;position:relative;}
+.lsn-date{font-family:'Poppins',sans-serif;font-size:8px;letter-spacing:.1em;color:var(--red);font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:4px;}
+.lsn-txt{font-size:11px;color:#7f1d1d;line-height:1.6;font-style:italic;}
 .lsn-del{position:absolute;top:6px;right:8px;background:none;border:none;color:#d4aa50;cursor:pointer;font-size:11px;padding:2px;transition:color .15s;}
 .lsn-del:hover{color:var(--red);}
 .empty-note{text-align:center;padding:14px;color:var(--text4);font-size:10px;font-style:italic;}
@@ -390,6 +398,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
   </div>
   <div class="hdr-r">
     <div class="live-pill">
+      <canvas id="analog-clock" width="36" height="36" style="border-radius:50%;flex-shrink:0;"></canvas>
       <div class="live-dot"></div>
       <span id="htime" style="font-family: Poppins">06:42:17</span>
     </div>
@@ -407,7 +416,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <div class="sbox"><div class="sval" id="st0">—</div><div class="slbl">Hari</div></div>
       <div class="sbox"><div class="sval red" id="st1">—</div><div class="slbl">Workout</div></div>
       <div class="sbox" style="cursor:pointer;" onclick="openLessonsModal()" title="Lihat semua pelajaran tahun ini"><div class="sval gold" id="st2">—</div><div class="slbl">Lesson</div></div>
-      <div class="sbox" style="cursor:pointer;" onclick="openGoalsModal()" title="Lihat goals yang belum tercapai"><div class="sval" id="st5">—</div><div class="slbl">Left</div></div>
+      <div class="sbox" style="cursor:pointer;" onclick="openGoalsModal()" title="Lihat goals yang belum tercapai"><div class="sval left-val" id="st5">—</div><div class="slbl">Left</div></div>
     </div>
   </div>
 
@@ -477,12 +486,18 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
   <div class="chart-panel" id="panel-bar" style="flex:1;">
     <div class="chart-range-bar" id="range-bar">
       <div class="rchip active" data-r="all" onclick="setRange('bar',this)">All</div>
-      <div class="rchip" data-r="q1" onclick="setRange('bar',this)">Q1</div>
-      <div class="rchip" data-r="q2" onclick="setRange('bar',this)">Q2</div>
-      <div class="rchip" data-r="q3" onclick="setRange('bar',this)">Q3</div>
-      <div class="rchip" data-r="q4" onclick="setRange('bar',this)">Q4</div>
-      <div class="rchip" data-r="30" onclick="setRange('bar',this)">30D</div>
-      <div class="rchip" data-r="90" onclick="setRange('bar',this)">90D</div>
+      <div class="rchip" data-r="m01" onclick="setRange('bar',this)">Jan</div>
+      <div class="rchip" data-r="m02" onclick="setRange('bar',this)">Feb</div>
+      <div class="rchip" data-r="m03" onclick="setRange('bar',this)">Mar</div>
+      <div class="rchip" data-r="m04" onclick="setRange('bar',this)">Apr</div>
+      <div class="rchip" data-r="m05" onclick="setRange('bar',this)">May</div>
+      <div class="rchip" data-r="m06" onclick="setRange('bar',this)">Jun</div>
+      <div class="rchip" data-r="m07" onclick="setRange('bar',this)">Jul</div>
+      <div class="rchip" data-r="m08" onclick="setRange('bar',this)">Aug</div>
+      <div class="rchip" data-r="m09" onclick="setRange('bar',this)">Sep</div>
+      <div class="rchip" data-r="m10" onclick="setRange('bar',this)">Oct</div>
+      <div class="rchip" data-r="m11" onclick="setRange('bar',this)">Nov</div>
+      <div class="rchip" data-r="m12" onclick="setRange('bar',this)">Dec</div>
     </div>
     <div class="chart-section">
       <div class="chart-title">Religion, Working Stage, Personal Wish & Physics</div>
@@ -501,12 +516,18 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
   <div class="chart-panel" id="panel-line" style="flex:1;">
     <div class="chart-range-bar" id="range-line">
       <div class="rchip active" data-r="all" onclick="setRange('line',this)">All</div>
-      <div class="rchip" data-r="q1" onclick="setRange('line',this)">Q1</div>
-      <div class="rchip" data-r="q2" onclick="setRange('line',this)">Q2</div>
-      <div class="rchip" data-r="q3" onclick="setRange('line',this)">Q3</div>
-      <div class="rchip" data-r="q4" onclick="setRange('line',this)">Q4</div>
-      <div class="rchip" data-r="30" onclick="setRange('line',this)">30D</div>
-      <div class="rchip" data-r="90" onclick="setRange('line',this)">90D</div>
+      <div class="rchip" data-r="m01" onclick="setRange('line',this)">Jan</div>
+      <div class="rchip" data-r="m02" onclick="setRange('line',this)">Feb</div>
+      <div class="rchip" data-r="m03" onclick="setRange('line',this)">Mar</div>
+      <div class="rchip" data-r="m04" onclick="setRange('line',this)">Apr</div>
+      <div class="rchip" data-r="m05" onclick="setRange('line',this)">May</div>
+      <div class="rchip" data-r="m06" onclick="setRange('line',this)">Jun</div>
+      <div class="rchip" data-r="m07" onclick="setRange('line',this)">Jul</div>
+      <div class="rchip" data-r="m08" onclick="setRange('line',this)">Aug</div>
+      <div class="rchip" data-r="m09" onclick="setRange('line',this)">Sep</div>
+      <div class="rchip" data-r="m10" onclick="setRange('line',this)">Oct</div>
+      <div class="rchip" data-r="m11" onclick="setRange('line',this)">Nov</div>
+      <div class="rchip" data-r="m12" onclick="setRange('line',this)">Dec</div>
     </div>
     <div class="chart-section">
       <div class="chart-title">Trend Line — Semua Kategori</div>
@@ -887,10 +908,44 @@ function importJSON(ev){
 function startClock(){
   const mn=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
   const dn=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  function drawAnalog(n){
+    const canvas=document.getElementById('analog-clock');
+    if(!canvas)return;
+    const ctx=canvas.getContext('2d');
+    const w=canvas.width,h=canvas.height,cx=w/2,cy=h/2,r=w/2-1.5;
+    ctx.clearRect(0,0,w,h);
+    // Face
+    ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);
+    ctx.fillStyle='#fff';ctx.fill();
+    ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1.5;ctx.stroke();
+    // Hour tick marks
+    for(let i=0;i<12;i++){
+      const a=(i*30)*Math.PI/180;
+      const x1=cx+(r-3)*Math.sin(a),y1=cy-(r-3)*Math.cos(a);
+      const x2=cx+(r-6)*Math.sin(a),y2=cy-(r-6)*Math.cos(a);
+      ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+      ctx.strokeStyle='#d1d5db';ctx.lineWidth=1;ctx.stroke();
+    }
+    const hrs=n.getHours()%12,mins=n.getMinutes(),secs=n.getSeconds();
+    // Hour hand
+    const ha=(hrs*30+mins*0.5)*Math.PI/180;
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+(r*0.52)*Math.sin(ha),cy-(r*0.52)*Math.cos(ha));
+    ctx.strokeStyle='#111827';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();
+    // Minute hand
+    const ma=(mins*6+secs*0.1)*Math.PI/180;
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+(r*0.75)*Math.sin(ma),cy-(r*0.75)*Math.cos(ma));
+    ctx.strokeStyle='#374151';ctx.lineWidth=1.5;ctx.lineCap='round';ctx.stroke();
+    // Center dot
+    ctx.beginPath();ctx.arc(cx,cy,2.5,0,2*Math.PI);
+    ctx.fillStyle='#ef4444';ctx.fill();
+  }
   function tick(){
     const n=new Date();
     document.getElementById('htime').textContent=n.toTimeString().slice(0,8);
     document.getElementById('hdate').textContent=`${dn[n.getDay()]}, ${n.getDate()} ${mn[n.getMonth()]} ${n.getFullYear()}`;
+    drawAnalog(n);
   }
   tick();setInterval(tick,1000);
 }
@@ -1136,19 +1191,7 @@ function renderHdrLessons(){
 }
 
 function renderLessons(){
-  const list=document.getElementById('lsn-list');
-  const today=todayStr();
-  const todayLsn=lessons.find(l=>l.date===today);
-  const items=(todayLsn&&todayLsn.items)||[];
-  if(!items.length){list.style.display='none';return;}
-  const fmtTs=(ts)=>{try{const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}catch(e){return '';}};
-  list.style.display='flex';
-  list.innerHTML=items.map((item,i)=>`
-    <div class="lsn-item">
-      <div class="lsn-date">🔒 Pelajaran ${i+1}${item.ts?' — '+fmtTs(item.ts):''}</div>
-      <div class="lsn-txt">${item.text}</div>
-      <button class="lsn-del" onclick="delLesson('${today}','${item.id}')">✕</button>
-    </div>`).join('');
+  document.getElementById('lsn-list').style.display='none';
 }
 
 // ── TODOS ──
@@ -1350,15 +1393,14 @@ function setRange(type, el){
 // ── FILTER DATA BY RANGE ──
 function filterByRange(data, range){
   const sorted=[...data].sort((a,b)=>a.date.localeCompare(b.date));
-  const today=todayStr();
-  const now=new Date(today+'T00:00:00');
   if(range==='all') return sorted;
-  if(range==='30'){const cut=new Date(now);cut.setDate(cut.getDate()-30);const cs=tds(cut);return sorted.filter(e=>e.date>=cs);}
-  if(range==='90'){const cut=new Date(now);cut.setDate(cut.getDate()-90);const cs=tds(cut);return sorted.filter(e=>e.date>=cs);}
-  if(range==='q1') return sorted.filter(e=>e.date>='2025-01-01'&&e.date<='2025-03-31');
-  if(range==='q2') return sorted.filter(e=>e.date>='2025-04-01'&&e.date<='2025-06-30');
-  if(range==='q3') return sorted.filter(e=>e.date>='2025-07-01'&&e.date<='2025-09-30');
-  if(range==='q4') return sorted.filter(e=>e.date>='2025-10-01'&&e.date<='2025-12-31');
+  if(range.startsWith('m')){
+    const yr=new Date().getFullYear();
+    const mo=parseInt(range.slice(1));
+    const start=`${yr}-${String(mo).padStart(2,'0')}-01`;
+    const end=tds(new Date(yr,mo,0));
+    return sorted.filter(e=>e.date>=start&&e.date<=end);
+  }
   return sorted;
 }
 
@@ -1577,9 +1619,4 @@ init();
 </html>
 
 <style id="__om-edit-overrides">
-#hdr-lessons-track >.hdr-lesson-item { background-color: rgb(0, 0, 0) !important }
-#hdr-lessons-track >.hdr-lesson-item { background-color: rgb(173, 255, 136) !important }
-#hdr-lessons-track >.hdr-lesson-item { background-color: rgb(210, 255, 190) !important }
-#hdr-lessons-track >.hdr-lesson-item { background-color: rgb(240, 253, 244) !important }
-#hdr-lessons-track >.hdr-lesson-item { border-color: rgb(21, 164, 85) !important }
 </style>
