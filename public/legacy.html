@@ -717,46 +717,34 @@ let todoStatus='todo';
 let mscores={screl:0,scwork:0,scmkt:0,scphy:0};
 let logDate=null;
 
+// ── API HELPER ──
+async function api(path,method='GET',body=null){
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(path,opts);
+  if(!r.ok){const t=await r.text();throw new Error(t);}
+  return r.json();
+}
+
 // ── INIT ──
 async function init(){
-  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
-  
-  async function sb(table,extra=''){
-    const r=await fetch(`${SURL}/rest/v1/${table}?select=*${extra}`,{
-      headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}
-    });
-    return r.json();
-  }
-  
-  const [en,ls,td,gl]=await Promise.all([
-    sb('entries','&order=date'),
-    sb('lessons','&order=date'),
-    sb('todos',''),
-    sb('goals','')
-  ]);
-  
+  const {entries:en,lessons:ls,todos:td,goals:gl}=await api('/api/data');
+
   entries=Array.isArray(en)?en:[];
   lessons=Array.isArray(ls)?ls.map(l=>{let items;try{const p=JSON.parse(l.text);items=Array.isArray(p)?p:[{id:crypto.randomUUID(),text:l.text,ts:l.locked||l.date}];}catch(e){items=[{id:crypto.randomUUID(),text:l.text,ts:l.locked||l.date}];}return{...l,items};}):[];
   if(Array.isArray(td)&&td.length){
     todos=td.map(t=>({...t,doneDate:t.done_date||null}));
   }else{
     todos=defTodos();
-    const _su='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-    const _sk='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
-    const _h={'apikey':_sk,'Authorization':'Bearer '+_sk,'Content-Type':'application/json'};
-    todos.forEach(t=>fetch(`${_su}/rest/v1/todos`,{method:'POST',headers:_h,body:JSON.stringify({id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:null})}).catch(console.error));
+    todos.forEach(t=>api('/api/todos','POST',{id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:null}).catch(console.error));
   }
   if(Array.isArray(gl)&&gl.length){
     goals=gl.map(g=>({...g,doneDate:g.done_date||null}));
   }else{
     goals=defGoals();
-    const _su='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-    const _sk='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
-    const _h={'apikey':_sk,'Authorization':'Bearer '+_sk,'Content-Type':'application/json'};
-    goals.forEach(g=>fetch(`${_su}/rest/v1/goals`,{method:'POST',headers:_h,body:JSON.stringify({id:g.id,text:g.text,scope:g.scope,yr:g.yr||null,ym:g.ym||null,done:g.done,done_date:null})}).catch(console.error));
+    goals.forEach(g=>api('/api/goals','POST',{id:g.id,text:g.text,scope:g.scope,yr:g.yr||null,ym:g.ym||null,done:g.done,done_date:null}).catch(console.error));
   }
-  
+
   PRE.forEach(p=>{if(!entries.find(e=>e.date===p.date))entries.push(p);});
 
   const now=new Date();
@@ -787,58 +775,30 @@ function defTodos(){return[
   {id:'00000000-0000-0000-0000-000000000006',text:'Finalisasi brand cognithink.vercel.app',cat:'Content',done:false,doneDate:null},
 ];}
 function save(){
-  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
-  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
   const dstr=logDate||todayStr();
   const e=entries.find(x=>x.date===dstr);
-  if(e){
-    const {id,...rest}=e;
-    fetch(`${SURL}/rest/v1/entries?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(rest)}).catch(console.error);
-  }
+  if(e){const {id,...rest}=e;api('/api/entries','POST',rest).catch(console.error);}
   const l=lessons.find(x=>x.date===dstr);
-  if(l){
-    const payload={date:l.date,text:JSON.stringify(l.items||[]),locked:l.locked||dstr};
-    fetch(`${SURL}/rest/v1/lessons?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(payload)}).catch(console.error);
-  }
+  if(l){api('/api/lessons','POST',{date:l.date,text:JSON.stringify(l.items||[]),locked:l.locked||dstr}).catch(console.error);}
 }
 function saveLessonsForDate(date){
-  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
-  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
   const l=lessons.find(x=>x.date===date);if(!l)return;
-  const payload={date:l.date,text:JSON.stringify(l.items||[]),locked:l.locked||date};
-  fetch(`${SURL}/rest/v1/lessons?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(payload)}).catch(console.error);
+  api('/api/lessons','POST',{date:l.date,text:JSON.stringify(l.items||[]),locked:l.locked||date}).catch(console.error);
 }
 function delLessonDB(date){
-  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
-  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY};
-  fetch(`${SURL}/rest/v1/lessons?date=eq.${date}`,{method:'DELETE',headers:h}).catch(console.error);
+  api('/api/lessons?date='+date,'DELETE').catch(console.error);
 }
 function saveTodoDB(t){
-  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
-  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
-  fetch(`${SURL}/rest/v1/todos?on_conflict=id`,{method:'POST',headers:h,body:JSON.stringify({id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:t.doneDate||null})}).catch(console.error);
+  api('/api/todos','POST',{id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:t.doneDate||null}).catch(console.error);
 }
 function delTodoDB(id){
-  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
-  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY};
-  fetch(`${SURL}/rest/v1/todos?id=eq.${id}`,{method:'DELETE',headers:h}).catch(console.error);
+  api('/api/todos?id='+id,'DELETE').catch(console.error);
 }
 function saveGoalDB(g){
-  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
-  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
-  fetch(`${SURL}/rest/v1/goals?on_conflict=id`,{method:'POST',headers:h,body:JSON.stringify({id:g.id,text:g.text,scope:g.scope,yr:g.yr||null,ym:g.ym||null,done:g.done,done_date:g.doneDate||null})}).catch(console.error);
+  api('/api/goals','POST',{id:g.id,text:g.text,scope:g.scope,yr:g.yr||null,ym:g.ym||null,done:g.done,done_date:g.doneDate||null}).catch(console.error);
 }
 function delGoalDB(id){
-  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
-  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY};
-  fetch(`${SURL}/rest/v1/goals?id=eq.${id}`,{method:'DELETE',headers:h}).catch(console.error);
+  api('/api/goals?id='+id,'DELETE').catch(console.error);
 }
 // ── TARGET QUOTES ──
 const TARGET_QUOTES=[
@@ -1349,15 +1309,10 @@ async function saveEntry(){
     soc:document.getElementById('fsoc').value.trim(),extra:document.getElementById('fext').value.trim()};
   const idx=entries.findIndex(e=>e.date===dstr);
   if(idx>=0)entries[idx]=ne;else entries.push(ne);
-  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
-  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
-  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
-  const {id:eid,...erest}=ne;
   const btn=document.querySelector('.btn-save');
   btn.textContent='Menyimpan...';btn.disabled=true;
   try{
-    const r=await fetch(`${SURL}/rest/v1/entries?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(erest)});
-    if(!r.ok){const errText=await r.text();throw new Error('entries: '+r.status+' '+errText);}
+    await api('/api/entries','POST',ne);
     closeModal();render();
   }catch(err){
     alert('✗ Gagal simpan ke database:\n'+err.message+'\n\nData tersimpan sementara di memori tapi akan hilang saat reload.');
