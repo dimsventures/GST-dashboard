@@ -207,7 +207,10 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .rchip:not(.active):hover{border-color:var(--red);color:var(--red);}
 
 .chart-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
-.cl-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);font-weight:500;}
+.cl-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);font-weight:500;cursor:pointer;user-select:none;transition:opacity .2s;}
+.cl-item:hover{opacity:.7;}
+.cl-item.off{opacity:.3;}
+.cl-item.off .cl-dot{filter:grayscale(1);}
 .cl-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
 
 /* DAY ROW */
@@ -482,13 +485,13 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <div class="rchip" data-r="90" onclick="setRange('bar',this)">90D</div>
     </div>
     <div class="chart-section">
-      <div class="chart-title">Religion, Working Stage, Market & Physics</div>
+      <div class="chart-title">Religion, Working Stage, Personal Wish & Physics</div>
       <div class="chart-sub">STACKED BAR — DAILY SCORE DISTRIBUTION</div>
       <div class="chart-legend">
-        <div class="cl-item"><div class="cl-dot" style="background:#3b82f6"></div>Religion</div>
-        <div class="cl-item"><div class="cl-dot" style="background:#ef4444"></div>Working Stage</div>
-        <div class="cl-item"><div class="cl-dot" style="background:#f59e0b"></div>Market / Finance</div>
-        <div class="cl-item"><div class="cl-dot" style="background:#22c55e"></div>Physics</div>
+        <div class="cl-item" onclick="toggleDataset('bar',0,this)"><div class="cl-dot" style="background:#3b82f6"></div>Religion</div>
+        <div class="cl-item" onclick="toggleDataset('bar',1,this)"><div class="cl-dot" style="background:#ef4444"></div>Working Stage</div>
+        <div class="cl-item" onclick="toggleDataset('bar',2,this)"><div class="cl-dot" style="background:#f59e0b"></div>Personal Wish</div>
+        <div class="cl-item" onclick="toggleDataset('bar',3,this)"><div class="cl-dot" style="background:#22c55e"></div>Physics</div>
       </div>
       <div class="chart-wrap"><canvas id="chart-bar"></canvas></div>
     </div>
@@ -509,10 +512,10 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <div class="chart-title">Trend Line — Semua Kategori</div>
       <div class="chart-sub">7-DAY ROLLING AVERAGE PER KATEGORI</div>
       <div class="chart-legend">
-        <div class="cl-item"><div class="cl-dot" style="background:#3b82f6"></div>Religion</div>
-        <div class="cl-item"><div class="cl-dot" style="background:#ef4444"></div>Working Stage</div>
-        <div class="cl-item"><div class="cl-dot" style="background:#f59e0b"></div>Market / Finance</div>
-        <div class="cl-item"><div class="cl-dot" style="background:#22c55e"></div>Physics</div>
+        <div class="cl-item" onclick="toggleDataset('line',0,this)"><div class="cl-dot" style="background:#3b82f6"></div>Religion</div>
+        <div class="cl-item" onclick="toggleDataset('line',1,this)"><div class="cl-dot" style="background:#ef4444"></div>Working Stage</div>
+        <div class="cl-item" onclick="toggleDataset('line',2,this)"><div class="cl-dot" style="background:#f59e0b"></div>Personal Wish</div>
+        <div class="cl-item" onclick="toggleDataset('line',3,this)"><div class="cl-dot" style="background:#22c55e"></div>Physics</div>
       </div>
       <div class="chart-wrap"><canvas id="chart-line"></canvas></div>
     </div>
@@ -1035,7 +1038,7 @@ function renderChain(){
     if(e){
       if(e.rel)det+=`<div class="dcard"><div class="dcard-lbl">Religion</div><div class="dcard-val">${e.rel}</div></div>`;
       if(e.work)det+=`<div class="dcard"><div class="dcard-lbl">Working Stage (${e.ws}/5)</div><div class="dcard-val">${e.work}</div></div>`;
-      if(e.mkt)det+=`<div class="dcard"><div class="dcard-lbl">Market / Finance (${e.ms}/5)</div><div class="dcard-val">${e.mkt}</div></div>`;
+      if(e.mkt)det+=`<div class="dcard"><div class="dcard-lbl">Personal Wish (${e.ms}/5)</div><div class="dcard-val">${e.mkt}</div></div>`;
       if(e.phy)det+=`<div class="dcard"><div class="dcard-lbl">Physical</div><div class="dcard-val">${e.phy} ✓</div></div>`;
       if(e.soc)det+=`<div class="dcard"><div class="dcard-lbl">Social / Lainnya</div><div class="dcard-val">${e.soc}</div></div>`;
       if(e.extra)det+=`<div class="dcard" style="grid-column:1/-1"><div class="dcard-lbl">Extra / Overflow</div><div class="dcard-val">${e.extra}</div></div>`;
@@ -1384,6 +1387,15 @@ function rolling(arr, key, window=7){
 }
 
 // ── STACKED BAR CHART ──
+function toggleDataset(chartId,idx,el){
+  const inst=chartId==='bar'?chartBarInstance:chartLineInstance;
+  if(!inst)return;
+  const meta=inst.getDatasetMeta(idx);
+  meta.hidden=!meta.hidden;
+  inst.update();
+  el.classList.toggle('off',meta.hidden);
+}
+
 function renderBarChart(){
   const raw=filterByRange(entries, barRange);
   const data=fillDateGaps(raw, barRange);
@@ -1402,7 +1414,7 @@ function renderBarChart(){
       datasets:[
         {label:'Religion',data:data.map(e=>e.rs||0),backgroundColor:'rgba(59,130,246,0.85)',stack:'s'},
         {label:'Working Stage',data:data.map(e=>e.ws||0),backgroundColor:'rgba(239,68,68,0.85)',stack:'s'},
-        {label:'Market / Finance',data:data.map(e=>e.ms||0),backgroundColor:'rgba(245,158,11,0.85)',stack:'s'},
+        {label:'Personal Wish',data:data.map(e=>e.ms||0),backgroundColor:'rgba(245,158,11,0.85)',stack:'s'},
         {label:'Physics',data:data.map(e=>e.ps||0),backgroundColor:'rgba(34,197,94,0.85)',stack:'s'},
       ]
     },
@@ -1457,7 +1469,7 @@ function renderLineChart(){
       datasets:[
         {label:'Religion',data:rolling(data,'rs'),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.06)',...lineOpts},
         {label:'Working Stage',data:rolling(data,'ws'),borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,0.06)',...lineOpts},
-        {label:'Market / Finance',data:rolling(data,'ms'),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.06)',...lineOpts},
+        {label:'Personal Wish',data:rolling(data,'ms'),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.06)',...lineOpts},
         {label:'Physics',data:rolling(data,'ps'),borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,0.06)',...lineOpts},
       ]
     },
