@@ -62,38 +62,11 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .btn-data:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
 .hdr-lessons{position:absolute;left:310px;right:290px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;}
 .hdr-lessons-track{position:relative;width:100%;height:32px;display:flex;align-items:center;justify-content:center;pointer-events:auto;}
-.hdr-lesson-item{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:8px;padding:5px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-family:'Poppins',sans-serif;font-size:11px;color:#14532d;max-width:90%;white-space:nowrap;opacity:0;animation:lsnGlitch 5s steps(1,end) infinite;}
-.hdr-lesson-item::before,.hdr-lesson-item::after{content:attr(data-text);position:absolute;left:14px;top:5px;font-family:'Poppins',sans-serif;font-size:11px;color:#14532d;mix-blend-mode:multiply;pointer-events:none;opacity:0;animation:lsnGlitchRGB 5s steps(1,end) infinite;}
-.hdr-lesson-item::before{color:#22c55e;text-shadow:0 0 1px #22c55e;animation-delay:.1s;}
-.hdr-lesson-item::after{color:#1e3a8a;animation-delay:.2s;}
+.hdr-lesson-item{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:8px;padding:5px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-family:'Poppins',sans-serif;font-size:11px;color:#14532d;max-width:90%;white-space:nowrap;opacity:0;transition:opacity .6s ease;pointer-events:none;}
+.hdr-lesson-item.visible{opacity:1;pointer-events:auto;}
 .hdr-lesson-item .hdr-lesson-date{font-weight:700;color:#15803d;font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
 .hdr-lesson-item .hdr-lesson-text{color:#166534;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .hdr-lesson-empty{font-family:'Poppins',sans-serif;font-size:11px;color:var(--text3);font-style:italic;}
-@keyframes lsnGlitch{
-  0%{opacity:0;transform:translate(-50%,-50%);}
-  2%{opacity:1;transform:translate(calc(-50% + 2px),-50%);clip-path:inset(0 0 60% 0);}
-  4%{transform:translate(calc(-50% - 3px),-50%);clip-path:inset(40% 0 0 0);}
-  6%{transform:translate(-50%,-50%);clip-path:inset(0 0 0 0);}
-  8%{transform:translate(calc(-50% + 1px),calc(-50% - 1px));}
-  10%{transform:translate(-50%,-50%);}
-  85%{opacity:1;transform:translate(-50%,-50%);clip-path:inset(0 0 0 0);}
-  87%{transform:translate(calc(-50% + 4px),-50%);clip-path:inset(0 0 70% 0);}
-  89%{transform:translate(calc(-50% - 2px),-50%);clip-path:inset(50% 0 0 0);}
-  91%{transform:translate(-50%,-50%);clip-path:inset(0 0 0 0);}
-  93%{opacity:.4;}
-  95%{opacity:1;}
-  98%{opacity:0;}
-  100%{opacity:0;}
-}
-@keyframes lsnGlitchRGB{
-  0%,1%{opacity:0;}
-  2%{opacity:.7;transform:translateX(2px);}
-  4%{opacity:.7;transform:translateX(-3px);}
-  6%{opacity:0;}
-  87%{opacity:.7;transform:translateX(3px);}
-  89%{opacity:.7;transform:translateX(-2px);}
-  91%,100%{opacity:0;}
-}
 .live-pill{display:flex;align-items:center;gap:6px;font-family:'Poppins',sans-serif;font-size:10px;color:var(--text3);}
 .live-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1.4s ease infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
@@ -340,6 +313,13 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .todo-inp::placeholder{color:var(--text4);}
 .todo-addbtn{background:var(--red);color:#fff;border:none;border-radius:var(--r2);width:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:300;transition:background .15s;flex-shrink:0;}
 .todo-addbtn:hover{background:var(--red2);}
+.cat-hint{padding:4px 16px 6px;font-family:'Poppins',sans-serif;font-size:10px;color:var(--text3);display:none;align-items:center;gap:5px;}
+.cat-hint.show{display:flex;}
+.cat-hint-badge{padding:1px 7px;border-radius:10px;font-weight:700;font-size:9px;letter-spacing:.04em;}
+.cat-hint-badge.c-market{background:#dcfce7;color:#15803d;}
+.cat-hint-badge.c-aitech{background:#ede9fe;color:#6d28d9;}
+.cat-hint-badge.c-work{background:#dbeafe;color:#1d4ed8;}
+.cat-hint-badge.c-content{background:#fff7ed;color:#c2410c;}
 .todo-list{overflow-y:auto;padding:8px 14px;flex:1;display:flex;flex-direction:column;gap:5px;}
 .todo-list::-webkit-scrollbar{width:3px;}
 .todo-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
@@ -374,14 +354,14 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
 .frow.one{grid-template-columns:1fr;}
 .flbl{font-size:10px;font-weight:400;color:var(--text3);margin-bottom:3px;display:block;}
-.sc-wrap{display:flex;align-items:center;gap:6px;}
-.finp-num{width:50px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:5px 6px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--text);text-align:center;outline:none;transition:border-color .15s;}
+.sc-wrap{display:flex;align-items:stretch;gap:6px;}
+.finp-num{width:36px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:5px 4px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;color:var(--text);text-align:center;outline:none;transition:border-color .15s;}
 .finp-num:focus{border-color:var(--red);}
 .finp,.fsel,.fta{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 9px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--text);outline:none;transition:border-color .15s;}
 .finp:focus,.fsel:focus,.fta:focus{border-color:var(--red);}
 .fsel option{background:#fff;}
 .fta{resize:vertical;min-height:65px;line-height:1.5;}
-.sc-row{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;}
+.sc-row{display:grid;grid-template-columns:repeat(6,28px);gap:3px;}
 .sc-row.two{grid-template-columns:repeat(2,1fr);}
 .scopt{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);text-align:center;padding:5px 0;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);}
 .scopt:hover{border-color:var(--red);color:var(--red);}
@@ -409,11 +389,6 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
     <div class="live-pill">
       <div class="live-dot"></div>
       <span id="htime" style="font-family: Poppins">06:42:17</span>
-    </div>
-    <div class="hdr-data">
-      <button class="btn-data" onclick="exportJSON()" title="Backup semua data ke file JSON">↓ Export</button>
-      <button class="btn-data" onclick="document.getElementById('imp-file').click()" title="Restore data dari file JSON">↑ Import</button>
-      <input type="file" id="imp-file" accept="application/json,.json" style="display:none;" onchange="importJSON(event)">
     </div>
     <button class="btn-log" onclick="openLog()">+ Log Hari Ini</button>
   </div>
@@ -589,9 +564,10 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <div class="cchip" data-cat="Content" onclick="filterCat(this)">Content</div>
     </div>
     <div class="todo-add">
-      <input type="text" class="todo-inp" id="ti" placeholder="Tambah task baru..." onkeydown="if(event.key==='Enter')addTodo()">
+      <input type="text" class="todo-inp" id="ti" placeholder="Tambah task baru..." onkeydown="if(event.key==='Enter')addTodo()" oninput="updateCatHint(this.value)">
       <button class="todo-addbtn" onclick="addTodo()">+</button>
     </div>
+    <div class="cat-hint" id="cat-hint">→ Diprediksi: <span class="cat-hint-badge" id="cat-hint-badge"></span></div>
     <div class="todo-list" id="todo-list"></div>
   </div>
 
@@ -737,7 +713,7 @@ async function init(){
   ]);
   
   entries=Array.isArray(en)?en:[];
-  lessons=Array.isArray(ls)?ls:[];
+  lessons=Array.isArray(ls)?ls.map(l=>{let items;try{const p=JSON.parse(l.text);items=Array.isArray(p)?p:[{id:crypto.randomUUID(),text:l.text,ts:l.locked||l.date}];}catch(e){items=[{id:crypto.randomUUID(),text:l.text,ts:l.locked||l.date}];}return{...l,items};}):[];
   if(Array.isArray(td)&&td.length){
     todos=td.map(t=>({...t,doneDate:t.done_date||null}));
   }else{
@@ -798,9 +774,23 @@ function save(){
   }
   const l=lessons.find(x=>x.date===dstr);
   if(l){
-    const {id,...rest}=l;
-    fetch(`${SURL}/rest/v1/lessons?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(rest)}).catch(console.error);
+    const payload={date:l.date,text:JSON.stringify(l.items||[]),locked:l.locked||dstr};
+    fetch(`${SURL}/rest/v1/lessons?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(payload)}).catch(console.error);
   }
+}
+function saveLessonsForDate(date){
+  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
+  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
+  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
+  const l=lessons.find(x=>x.date===date);if(!l)return;
+  const payload={date:l.date,text:JSON.stringify(l.items||[]),locked:l.locked||date};
+  fetch(`${SURL}/rest/v1/lessons?on_conflict=date`,{method:'POST',headers:h,body:JSON.stringify(payload)}).catch(console.error);
+}
+function delLessonDB(date){
+  const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
+  const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4amFxcnBqamV2bXBnc3dtcWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODk1MzksImV4cCI6MjA5Mzk2NTUzOX0.zRQJOu8qRgUcBesqRete3_OTUtBG_x5Yzwirw9I2HiY';
+  const h={'apikey':SKEY,'Authorization':'Bearer '+SKEY};
+  fetch(`${SURL}/rest/v1/lessons?date=eq.${date}`,{method:'DELETE',headers:h}).catch(console.error);
 }
 function saveTodoDB(t){
   const SURL='https://sxjaqrpjjevmpgswmqbj.supabase.co';
@@ -974,7 +964,7 @@ function renderStats(){
   const n=act.length||1;
   {const _now=new Date();const _soy=new Date(_now.getFullYear(),0,1);const _elapsed=Math.floor((_now-_soy)/86400000)+1;document.getElementById('st0').textContent=_elapsed;}
   document.getElementById('st1').textContent=entries.filter(e=>e.ps>0).length;
-  document.getElementById('st2').textContent=lessons.length;
+  document.getElementById('st2').textContent=lessons.reduce((s,l)=>s+(l.items?l.items.length:1),0);
   const now=new Date();const yr=now.getFullYear();const eoy=new Date(yr,11,31);const daysLeft=Math.ceil((eoy-now)/86400000);
   document.getElementById('st5').textContent=daysLeft;
 }
@@ -997,7 +987,7 @@ function renderChain(){
   for(let i=0;i<7;i++){
     const d=tds(addDays(wkStart,i));const e=entries.find(x=>x.date===d);
     if(e){twk+=e.ws;tmk+=e.ms;if(e.ps>0)pw++;}
-    if(lessons.some(l=>l.date===d))lw++;
+    const _dl=lessons.find(l=>l.date===d);if(_dl)lw+=(_dl.items||[_dl]).length;
   }
 
   let html=`
@@ -1018,7 +1008,7 @@ function renderChain(){
     const isToday=dstr===today;
     const isFuture=dstr>today;
     const e=entries.find(x=>x.date===dstr);
-    const les=lessons.find(l=>l.date===dstr);
+    const lesObj=lessons.find(l=>l.date===dstr);const lesItems=lesObj&&lesObj.items&&lesObj.items.length?lesObj.items:[];
     const doneTodos=todos.filter(t=>t.done&&t.doneDate===dstr);
 
     // Tags
@@ -1058,7 +1048,7 @@ function renderChain(){
       det+=`</div></div>`;
     }
     det+='</div>';
-    if(les)det+=`<div class="dlesn-card"><div class="dlesn-lbl">🔒 Lesson — ${fmtShort(les.locked)}</div><div class="dlesn-txt">${les.text}</div></div>`;
+    if(lesItems.length){const fmtTs=(ts)=>{try{const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}catch(e){return '';}};lesItems.forEach((item,i)=>{det+=`<div class="dlesn-card"><div class="dlesn-lbl">🔒 Pelajaran ${i+1}${item.ts?' — '+fmtTs(item.ts):''}</div><div class="dlesn-txt">${item.text}</div></div>`;});}
     const doneGoalsDet=goals.filter(g=>g.done&&g.doneDate===dstr);
     if(doneGoalsDet.length){
       det+=`<div class="dgoal-card"><div class="dgoal-lbl">★ Goals Achieved</div>`;
@@ -1077,7 +1067,7 @@ function renderChain(){
         </div>
         <div class="dtags">${tags}</div>
         <div class="dpips">${pips}</div>
-        ${les?'<div class="dlsn-dot" title="Ada lesson terkunci"></div>':''}
+        ${lesItems.length?`<div class="dlsn-dot" title="Ada ${lesItems.length} lesson terkunci"></div>`:''}
         <div class="dchev">▾</div>
       </div>
       <div class="ddetail">${det}</div>
@@ -1101,43 +1091,60 @@ function lockLesson(){
   const text=document.getElementById('lta').value.trim();
   if(!text)return;
   const today=todayStr();
+  const newItem={id:crypto.randomUUID(),text,ts:new Date().toISOString()};
   const idx=lessons.findIndex(l=>l.date===today);
-  if(idx>=0)lessons[idx].text=text;
-  else lessons.push({date:today,text,locked:today});
-  const ei=entries.findIndex(e=>e.date===today);
-  if(ei>=0)entries[ei].lesson=text;
+  if(idx>=0){lessons[idx].items=lessons[idx].items||[];lessons[idx].items.push(newItem);}
+  else lessons.push({date:today,items:[newItem],locked:today});
   document.getElementById('lta').value='';
-  save();render();
+  saveLessonsForDate(today);renderLessons();renderChain();renderStats();renderHdrLessons();
 }
-function delLesson(date){
+function delLesson(date,itemId){
   if(!confirm('Hapus lesson ini?'))return;
-  lessons=lessons.filter(l=>l.date!==date);
-  save();renderLessons();renderChain();renderStats();
+  const idx=lessons.findIndex(l=>l.date===date);
+  if(idx<0)return;
+  lessons[idx].items=(lessons[idx].items||[]).filter(i=>i.id!==itemId);
+  if(!lessons[idx].items.length){delLessonDB(date);lessons.splice(idx,1);}
+  else saveLessonsForDate(date);
+  renderLessons();renderChain();renderStats();renderHdrLessons();
 }
 function renderHdrLessons(){
   const track=document.getElementById('hdr-lessons-track');
   if(!track)return;
+  if(window._lsnTimer){clearInterval(window._lsnTimer);window._lsnTimer=null;}
   const today=todayStr();
-  const past=[...lessons].filter(l=>l.date<today).sort((a,b)=>b.date.localeCompare(a.date));
-  if(!past.length){track.innerHTML='<div class="hdr-lesson-empty">Belum ada pelajaran terkunci.</div>';return;}
   const fmt=(d)=>{const dt=new Date(d+'T00:00:00');const m=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];return dt.getDate()+' '+m[dt.getMonth()];};
   const esc=(s)=>(s||'').replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"})[c]);
-  const N=past.length;const dur=5;
+  const past=[];
+  [...lessons].filter(l=>l.date<today).sort((a,b)=>b.date.localeCompare(a.date)).forEach(l=>(l.items||[{text:l.text||'',date:l.date}]).forEach(item=>past.push({date:l.date,text:item.text})));
+  if(!past.length){track.innerHTML='<div class="hdr-lesson-empty">Belum ada pelajaran terkunci.</div>';return;}
   track.innerHTML=past.map((l,i)=>{
     const txt=esc(l.text);
-    return `<div class="hdr-lesson-item" data-text="🔒 ${fmt(l.date)} — ${txt}" style="animation-duration:${dur*N}s;animation-delay:${dur*i}s;"><span class="hdr-lesson-date">🔒 ${fmt(l.date)}</span><span class="hdr-lesson-text">${txt}</span></div>`;
+    return `<div class="hdr-lesson-item${i===0?' visible':''}"><span class="hdr-lesson-date">🔒 ${fmt(l.date)}</span><span class="hdr-lesson-text">${txt}</span></div>`;
   }).join('');
+  if(past.length>1){
+    let cur=0;
+    const items=track.querySelectorAll('.hdr-lesson-item');
+    window._lsnTimer=setInterval(()=>{
+      items[cur].classList.remove('visible');
+      cur=(cur+1)%items.length;
+      items[cur].classList.add('visible');
+    },5000);
+  }
 }
 
 function renderLessons(){
   const list=document.getElementById('lsn-list');
-  const sorted=[...lessons].sort((a,b)=>b.date.localeCompare(a.date));
-  if(!sorted.length){list.innerHTML='<div class="empty-note">Belum ada lesson. Lock yang pertama.</div>';return;}
-  list.innerHTML=sorted.map(l=>`
+  const today=todayStr();
+  const todayLsn=lessons.find(l=>l.date===today);
+  const items=(todayLsn&&todayLsn.items)||[];
+  if(!items.length){list.style.display='none';return;}
+  const fmtTs=(ts)=>{try{const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}catch(e){return '';}};
+  list.style.display='flex';
+  list.innerHTML=items.map((item,i)=>`
     <div class="lsn-item">
-      <div class="lsn-date">🔒 ${fmtFull(l.locked)}</div>
-      <div class="lsn-txt">${l.text}</div>
-      <button class="lsn-del" onclick="delLesson('${l.date}')">✕</button>
+      <div class="lsn-date">🔒 Pelajaran ${i+1}${item.ts?' — '+fmtTs(item.ts):''}</div>
+      <div class="lsn-txt">${item.text}</div>
+      <button class="lsn-del" onclick="delLesson('${today}','${item.id}')">✕</button>
     </div>`).join('');
 }
 
@@ -1154,13 +1161,37 @@ function filterStatus(el){
   todoStatus=el.dataset.status;
   renderTodos();
 }
+function guessCat(text){
+  const t=text.toLowerCase();
+  const rules=[
+    {cat:'AI/Tech',words:['n8n','mcp','claude','gpt','llm','openai','anthropic','ai ','bot','api','automation','pipeline','webhook','workflow','figma','trae','cursor','copilot','agent','langchain','python','javascript','coding','github','vercel','integrasi','integration','build ','deploy','script','tools','tech','replit','supabase','database','server','model','prompt','tool use','rag','embedding']},
+    {cat:'Market',words:['saham','stock','bbca','ihsg','crypto','bitcoin','btc','eth','on chain','onchain','financial model','dcf','screener','analisis market','analisis fundamental','analisis saham','analisis crypto','portofolio','portfolio','aset crypto','token','defi','wallet','fear greed','coinmarketcap','trading','market','fundamental','valuation','sector','indeks','entry','cut loss','profit taking','tbk','idx','swing','scalp','option']},
+    {cat:'Content',words:['reels','carousel','artikel','cognithink','konten','content','video','youtube','instagram','twitter','thread','caption','post','postingan','brand','design','poster','visual','thumbnail','script video','nulis','tulisan','copywriting','hook','storytelling','tiktok','linkedin','personal branding','narasi','positioning']},
+    {cat:'Work',words:['penyusutan','bmd','rekonsiliasi','laporan','bpk','audit','inventaris','administrasi','kantor','dokumen','surat','disposisi','rapat','presentasi','paparan','pimpinan','anggaran','realisasi','simak','simda','neraca','aset tetap','barang milik','pbj','pengadaan','kontrak','monev']},
+  ];
+  for(const r of rules){if(r.words.some(w=>t.includes(w)))return r.cat;}
+  return 'Work';
+}
+const CAT_HINT_CLASS={Market:'c-market','AI/Tech':'c-aitech',Work:'c-work',Content:'c-content'};
+const CAT_HINT_LABEL={Market:'Market','AI/Tech':'AI/Tech',Work:'Work/BMD',Content:'Content'};
+function updateCatHint(val){
+  const hint=document.getElementById('cat-hint');
+  const badge=document.getElementById('cat-hint-badge');
+  if(!val.trim()){hint.classList.remove('show');return;}
+  const cat=guessCat(val);
+  badge.textContent=CAT_HINT_LABEL[cat];
+  badge.className='cat-hint-badge '+CAT_HINT_CLASS[cat];
+  hint.classList.add('show');
+}
 function addTodo(){
   const inp=document.getElementById('ti');
   const text=inp.value.trim();if(!text)return;
-  const cat=todoCat==='Semua'?'Work':todoCat;
+  const cat=todoCat==='Semua'?guessCat(text):todoCat;
   const t={id:crypto.randomUUID(),text,cat,done:false,doneDate:null};
   todos.push(t);saveTodoDB(t);
-  inp.value='';renderTodos();renderStats();
+  inp.value='';
+  document.getElementById('cat-hint').classList.remove('show');
+  renderTodos();renderStats();
 }
 function toggleTodo(id){
   const t=todos.find(x=>x.id===id);if(!t)return;
@@ -1216,13 +1247,18 @@ function closeModal(){document.getElementById('mo').classList.remove('open');}
 function openLessonsModal(){
   const yr=new Date().getFullYear();
   const yrLessons=[...lessons].filter(l=>l.date.startsWith(yr+'-')).sort((a,b)=>b.date.localeCompare(a.date));
-  document.getElementById('lmo-count').textContent=yrLessons.length+' pelajaran';
+  const totalItems=yrLessons.reduce((s,l)=>s+(l.items?l.items.length:1),0);
+  document.getElementById('lmo-count').textContent=totalItems+' pelajaran';
   const body=document.getElementById('lmo-body');
   if(!yrLessons.length){body.innerHTML='<div class="empty-note" style="padding:30px;">Belum ada pelajaran terkunci tahun ini.</div>';}
   else{
     const fmt=(d)=>{const dt=new Date(d+'T00:00:00');const m=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];const days=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];return days[dt.getDay()]+', '+dt.getDate()+' '+m[dt.getMonth()]+' '+dt.getFullYear();};
     const esc=(s)=>(s||'').replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"})[c]);
-    body.innerHTML=yrLessons.map(l=>`<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-left:3px solid #22c55e;border-radius:6px;padding:12px 14px;margin-bottom:10px;"><div style="font-family:'Poppins',sans-serif;font-size:9px;letter-spacing:.1em;color:#15803d;font-weight:700;margin-bottom:5px;text-transform:uppercase;">🔒 ${fmt(l.date)}</div><div style="font-size:12px;color:#14532d;line-height:1.6;font-style:italic;">${esc(l.text)}</div></div>`).join('');
+    const fmtTs=(ts)=>{try{const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}catch(e){return '';}};
+    body.innerHTML=yrLessons.map(l=>{
+      const items=l.items||[{text:l.text,ts:null}];
+      return items.map((item,i)=>`<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-left:3px solid #22c55e;border-radius:6px;padding:12px 14px;margin-bottom:10px;"><div style="font-family:'Poppins',sans-serif;font-size:9px;letter-spacing:.1em;color:#15803d;font-weight:700;margin-bottom:5px;text-transform:uppercase;">🔒 ${fmt(l.date)}${items.length>1?' — Pelajaran '+(i+1):''}${item.ts?' ('+fmtTs(item.ts)+')':''}</div><div style="font-size:12px;color:#14532d;line-height:1.6;font-style:italic;">${esc(item.text)}</div></div>`).join('');
+    }).join('');
   }
   document.getElementById('lmo').classList.add('open');
 }
