@@ -324,6 +324,14 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .todo-inp::placeholder{color:var(--text4);}
 .todo-addbtn{background:var(--red);color:#fff;border:none;border-radius:var(--r2);width:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:300;transition:background .15s;flex-shrink:0;}
 .todo-addbtn:hover{background:var(--red2);}
+.wish-compact-wrap{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 14px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.wish-compact-title{font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;letter-spacing:.02em;}
+.wish-compact-row{display:flex;gap:6px;}
+.wish-compact-inp{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-family:'Poppins',sans-serif;font-size:11px;color:var(--text);outline:none;transition:border-color .15s;}
+.wish-compact-inp:focus{border-color:var(--red);}
+.wish-compact-inp::placeholder{color:var(--text4);}
+.wish-compact-btn{background:var(--blk);color:#fff;border:none;border-radius:var(--r2);padding:7px 14px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s;flex-shrink:0;}
+.wish-compact-btn:hover{background:#333;}
 .wish-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--r2);border:1px solid var(--border);background:var(--white);margin-bottom:8px;transition:all .2s;}
 .wish-item.wish-done{background:#fff5f5;border-color:#fecaca;opacity:.8;}
 .wish-cb-wrap{flex-shrink:0;padding-top:1px;}
@@ -433,7 +441,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
   </div>
 
   <div class="cal-wrap">
-    <div class="sec-lbl" style="font-size: 14px">DATE</div>
+    <div class="sec-lbl" style="font-size:14px;color:var(--blk)">DATE</div>
     <div class="cal-nav">
       <button class="cnav-btn" onclick="cPrev()">‹</button>
       <div class="cal-mnth" id="calmnth">—</div>
@@ -454,10 +462,19 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
     </div>
   </div>
 
+  <!-- MAKE UR WISH — compact -->
+  <div class="wish-compact-wrap">
+    <div class="sec-lbl" style="font-size:14px;color:var(--blk);margin-bottom:8px;">Make your wish</div>
+    <div class="wish-compact-row">
+      <input type="text" class="wish-compact-inp" id="wish-inp" placeholder="Whats really u want?" onkeydown="if(event.key==='Enter')addWish()">
+      <button class="wish-compact-btn" onclick="addWish()">Make it</button>
+    </div>
+  </div>
+
   <!-- GOALS — bottom-left -->
   <div class="goals-wrap">
     <div style="padding:12px 14px 4px;">
-      <div class="sec-lbl" style="font-size: 14px">Target</div>
+      <div class="sec-lbl" style="font-size:14px;color:var(--blk)">Target</div>
       <div class="target-quote" id="target-quote" onclick="rotateQuote()" title="Klik untuk quote berikutnya">“<span id="tq-text">—</span>” <span class="tq-by" id="tq-by"></span></div>
     </div>
     <div class="goals-tabs">
@@ -562,17 +579,6 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 
 <!-- RIGHT -->
 <div class="rp">
-
-  <!-- MAKE UR WISH -->
-  <div class="lsn-sec">
-    <div class="ph">
-      <div class="ph-title">Make Ur Wish ✦</div>
-    </div>
-    <div class="lsn-input-area">
-      <input type="text" class="todo-inp" id="wish-inp" placeholder="Tulis impian atau tujuan besar lo..." onkeydown="if(event.key==='Enter')addWish()" style="margin-bottom:6px;">
-      <button class="lock-btn" onclick="addWish()" style="color:#d12b2b;background:#fff5f5;border-color:#fecaca;">+ Tambah Wish</button>
-    </div>
-  </div>
 
   <!-- LESSONS -->
   <div class="lsn-sec">
