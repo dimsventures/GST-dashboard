@@ -21,8 +21,7 @@ export default function LoginPage() {
     })
 
     if (res.ok) {
-      router.push('/')
-      router.refresh()
+      router.push('/legacy.html')
     } else {
       setError('Password salah.')
       setLoading(false)
