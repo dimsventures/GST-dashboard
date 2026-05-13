@@ -403,6 +403,19 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .btn-save{background:var(--red);border:none;color:#fff;padding:8px 22px;border-radius:var(--r2);font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s;}
 .btn-save:hover{background:var(--red2);}
 
+/* ACTIVITY LOG */
+.act-input-row{display:flex;gap:6px;margin-bottom:6px;}
+.act-add-btn{background:var(--blk);color:#fff;border:none;border-radius:var(--r2);padding:0 14px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s;flex-shrink:0;}
+.act-add-btn:hover{background:#333;}
+.act-add-btn:disabled{background:var(--border2);cursor:not-allowed;}
+.act-list{margin-bottom:6px;display:flex;flex-direction:column;gap:3px;}
+.act-item{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:6px 10px;font-size:11px;color:var(--text);}
+.act-item-text{flex:1;line-height:1.4;}
+.act-del{background:none;border:none;color:var(--text4);cursor:pointer;font-size:12px;padding:0 2px;transition:color .15s;flex-shrink:0;}
+.act-del:hover{color:var(--red);}
+.act-count{font-family:'Poppins',sans-serif;font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin-bottom:10px;text-transform:uppercase;}
+.act-empty{font-size:10px;color:var(--text4);font-style:italic;margin-bottom:8px;}
+
 @media(max-width:768px){
   /* Header */
   header{height:48px;padding:0 14px;}
@@ -586,7 +599,9 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
         <div class="cl-item" onclick="toggleDataset('bar',0,this)"><div class="cl-dot" style="background:#3b82f6"></div>Religion</div>
         <div class="cl-item" onclick="toggleDataset('bar',1,this)"><div class="cl-dot" style="background:#ef4444"></div>Working Stage</div>
         <div class="cl-item" onclick="toggleDataset('bar',2,this)"><div class="cl-dot" style="background:#f59e0b"></div>Personal Wish</div>
-        <div class="cl-item" onclick="toggleDataset('bar',3,this)"><div class="cl-dot" style="background:#22c55e"></div>Physics</div>
+        <div class="cl-item" onclick="toggleDataset('bar',3,this)"><div class="cl-dot" style="background:#22c55e"></div>Exercise</div>
+        <div class="cl-item" onclick="toggleDataset('bar',4,this)"><div class="cl-dot" style="background:#8b5cf6"></div>Habit</div>
+        <div class="cl-item" onclick="toggleDataset('bar',5,this)"><div class="cl-dot" style="background:#14b8a6"></div>Humanity</div>
       </div>
       <div class="chart-wrap"><canvas id="chart-bar"></canvas></div>
     </div>
@@ -616,7 +631,9 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
         <div class="cl-item" onclick="toggleDataset('line',0,this)"><div class="cl-dot" style="background:#3b82f6"></div>Religion</div>
         <div class="cl-item" onclick="toggleDataset('line',1,this)"><div class="cl-dot" style="background:#ef4444"></div>Working Stage</div>
         <div class="cl-item" onclick="toggleDataset('line',2,this)"><div class="cl-dot" style="background:#f59e0b"></div>Personal Wish</div>
-        <div class="cl-item" onclick="toggleDataset('line',3,this)"><div class="cl-dot" style="background:#22c55e"></div>Physics</div>
+        <div class="cl-item" onclick="toggleDataset('line',3,this)"><div class="cl-dot" style="background:#22c55e"></div>Exercise</div>
+        <div class="cl-item" onclick="toggleDataset('line',4,this)"><div class="cl-dot" style="background:#8b5cf6"></div>Habit</div>
+        <div class="cl-item" onclick="toggleDataset('line',5,this)"><div class="cl-dot" style="background:#14b8a6"></div>Humanity</div>
       </div>
       <div class="chart-wrap"><canvas id="chart-line"></canvas></div>
     </div>
@@ -749,67 +766,57 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
         <button class="mclose" onclick="closeModal()">✕</button>
       </div>
     </div>
-    <div class="mbody">
+    <div class="mbody" id="mo-body">
       <div class="fsec" style="margin-top:0;padding-top:0;border-top:none;">Religion</div>
-      <div class="frow">
-        <div><label class="flbl">What u've done today?</label><input type="text" id="frel" class="finp"></div>
-        <div><label class="flbl">Intensitas</label>
-          <div class="sc-wrap">
-            <div class="sc-row" id="screl">
-              <div class="scopt" data-v="0" onclick="sc('screl',0)">0</div><div class="scopt" data-v="1" onclick="sc('screl',1)">1</div>
-              <div class="scopt" data-v="2" onclick="sc('screl',2)">2</div><div class="scopt" data-v="3" onclick="sc('screl',3)">3</div>
-              <div class="scopt" data-v="4" onclick="sc('screl',4)">4</div><div class="scopt" data-v="5" onclick="sc('screl',5)">5</div>
-            </div>
-            <input type="number" min="0" id="ms-screl" class="finp-num" placeholder="—" oninput="scManual('screl',this.value)">
-          </div>
-        </div>
+      <div class="act-input-row">
+        <input type="text" id="act-inp-religion" class="finp" placeholder="Aktivitas religion hari ini..." onkeydown="if(event.key==='Enter')addActivity('religion')">
+        <button class="act-add-btn" onclick="addActivity('religion')">+ Add</button>
       </div>
+      <div class="act-list" id="act-list-religion"></div>
+      <div class="act-count" id="act-count-religion"></div>
+
       <div class="fsec">Working Stage</div>
-      <div class="frow">
-        <div><label class="flbl">What u've done today?</label><input type="text" id="fwork" class="finp"></div>
-        <div><label class="flbl">Intensitas</label>
-          <div class="sc-wrap">
-            <div class="sc-row" id="scwork">
-              <div class="scopt" data-v="0" onclick="sc('scwork',0)">0</div><div class="scopt" data-v="1" onclick="sc('scwork',1)">1</div>
-              <div class="scopt" data-v="2" onclick="sc('scwork',2)">2</div><div class="scopt" data-v="3" onclick="sc('scwork',3)">3</div>
-              <div class="scopt" data-v="4" onclick="sc('scwork',4)">4</div><div class="scopt" data-v="5" onclick="sc('scwork',5)">5</div>
-            </div>
-            <input type="number" min="0" id="ms-scwork" class="finp-num" placeholder="—" oninput="scManual('scwork',this.value)">
-          </div>
-        </div>
+      <div class="act-input-row">
+        <input type="text" id="act-inp-work" class="finp" placeholder="Apa yang dikerjakan?" onkeydown="if(event.key==='Enter')addActivity('work')">
+        <button class="act-add-btn" onclick="addActivity('work')">+ Add</button>
       </div>
+      <div class="act-list" id="act-list-work"></div>
+      <div class="act-count" id="act-count-work"></div>
+
       <div class="fsec">Personal Wish</div>
-      <div class="frow">
-        <div><label class="flbl">What u've done today?</label><input type="text" id="fmkt" class="finp"></div>
-        <div><label class="flbl">Intensitas</label>
-          <div class="sc-wrap">
-            <div class="sc-row" id="scmkt">
-              <div class="scopt" data-v="0" onclick="sc('scmkt',0)">0</div><div class="scopt" data-v="1" onclick="sc('scmkt',1)">1</div>
-              <div class="scopt" data-v="2" onclick="sc('scmkt',2)">2</div><div class="scopt" data-v="3" onclick="sc('scmkt',3)">3</div>
-              <div class="scopt" data-v="4" onclick="sc('scmkt',4)">4</div><div class="scopt" data-v="5" onclick="sc('scmkt',5)">5</div>
-            </div>
-            <input type="number" min="0" id="ms-scmkt" class="finp-num" placeholder="—" oninput="scManual('scmkt',this.value)">
-          </div>
-        </div>
+      <div class="act-input-row">
+        <input type="text" id="act-inp-personal" class="finp" placeholder="Progress personal wish?" onkeydown="if(event.key==='Enter')addActivity('personal')">
+        <button class="act-add-btn" onclick="addActivity('personal')">+ Add</button>
       </div>
+      <div class="act-list" id="act-list-personal"></div>
+      <div class="act-count" id="act-count-personal"></div>
+
       <div class="fsec">Exercise</div>
-      <div class="frow">
-        <div><label class="flbl">What u're move today?</label><input type="text" id="fphy" class="finp"></div>
-        <div><label class="flbl">Done?</label>
-          <div class="sc-row two" id="scphy">
-            <div class="scopt" data-v="0" onclick="sc('scphy',0)">✗ Skip</div>
-            <div class="scopt" data-v="1" onclick="sc('scphy',1)">✓ Done</div>
-          </div>
-        </div>
+      <div class="act-input-row">
+        <input type="text" id="act-inp-exercise" class="finp" placeholder="Gerakan hari ini?" onkeydown="if(event.key==='Enter')addActivity('exercise')">
+        <button class="act-add-btn" onclick="addActivity('exercise')">+ Add</button>
       </div>
-      <div class="fsec">Social / Lainnya</div>
-      <div class="frow one"><div><label class="flbl">Catatan</label><input type="text" id="fsoc" class="finp"></div></div>
-      <div class="fsec">Extra / Overflow <span style="font-size:9px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">— isi jika ada aktivitas tambahan di luar kategori di atas</span></div>
-      <div class="frow one"><div><label class="flbl">Aktivitas Tambahan (optional)</label><textarea id="fext" class="fta"></textarea></div></div>
+      <div class="act-list" id="act-list-exercise"></div>
+      <div class="act-count" id="act-count-exercise"></div>
+
+      <div class="fsec">Habit</div>
+      <div class="act-input-row">
+        <input type="text" id="act-inp-habit" class="finp" placeholder="Baca buku, dll..." onkeydown="if(event.key==='Enter')addActivity('habit')">
+        <button class="act-add-btn" onclick="addActivity('habit')">+ Add</button>
+      </div>
+      <div class="act-list" id="act-list-habit"></div>
+      <div class="act-count" id="act-count-habit"></div>
+
+      <div class="fsec">Humanity</div>
+      <div class="act-input-row">
+        <input type="text" id="act-inp-humanity" class="finp" placeholder="Kebaikan, interaksi sosial..." onkeydown="if(event.key==='Enter')addActivity('humanity')">
+        <button class="act-add-btn" onclick="addActivity('humanity')">+ Add</button>
+      </div>
+      <div class="act-list" id="act-list-humanity"></div>
+      <div class="act-count" id="act-count-humanity"></div>
     </div>
     <div class="mfooter">
-      <button class="btn-cancel" onclick="closeModal()">Batal</button>
-      <button class="btn-save" onclick="saveEntry()">Simpan & Kunci</button>
+      <button class="btn-save" onclick="closeModal()" style="background:var(--blk);">Selesai</button>
     </div>
   </div>
 </div>
@@ -827,8 +834,20 @@ let calY=2025,calM=0; // will be set to today
 let wkStart=null; // Monday of viewed week
 let todoCat='Semua';
 let todoStatus='todo';
-let mscores={screl:0,scwork:0,scmkt:0,scphy:0};
+let activities=[];
 let logDate=null;
+
+const ACT_CATS=[
+  {key:'religion',  label:'Religion',      color:'#3b82f6'},
+  {key:'work',      label:'Working Stage', color:'#ef4444'},
+  {key:'personal',  label:'Personal Wish', color:'#f59e0b'},
+  {key:'exercise',  label:'Exercise',      color:'#22c55e'},
+  {key:'habit',     label:'Habit',         color:'#8b5cf6'},
+  {key:'humanity',  label:'Humanity',      color:'#14b8a6'},
+];
+
+function actScore(date,cat){return activities.filter(a=>a.date===date&&a.category===cat).length;}
+function actScoreTotal(date){return activities.filter(a=>a.date===date).length;}
 
 // ── API HELPER ──
 async function api(path,method='GET',body=null){
@@ -841,7 +860,8 @@ async function api(path,method='GET',body=null){
 
 // ── INIT ──
 async function init(){
-  const {entries:en,lessons:ls,todos:td,goals:gl,wishes:ws}=await api('/api/data');
+  const {entries:en,lessons:ls,todos:td,goals:gl,wishes:ws,activities:ac}=await api('/api/data');
+  activities=Array.isArray(ac)?ac:[];
 
   entries=Array.isArray(en)?en:[];
   lessons=Array.isArray(ls)?ls.map(l=>{let items;try{const p=JSON.parse(l.text);items=Array.isArray(p)?p:[{id:crypto.randomUUID(),text:l.text,ts:l.locked||l.date}];}catch(e){items=[{id:crypto.randomUUID(),text:l.text,ts:l.locked||l.date}];}return{...l,items};}):[];
@@ -1136,7 +1156,7 @@ function renderCal(){
     const e=entries.find(x=>x.date===dstr);
     const hl=lessons.some(l=>l.date===dstr);
     let cls='cday';
-    if(e&&(e.ws>0||e.ms>0||e.ps>0))cls+=' hasdata';
+    if(actScoreTotal(dstr)>0||(e&&(e.ws>0||e.ms>0||e.ps>0)))cls+=' hasdata';
     if(hl)cls+=' haslesson';
     if(dstr===today)cls+=' todaycal';
     if(selWeek.includes(dstr))cls+=' selweek';
@@ -1177,10 +1197,10 @@ function renderChain(){
 
   document.getElementById('wknav-lbl').textContent=`WEEK ${wn} — ${wkStart.getDate()} ${MN[wkStart.getMonth()]} – ${wEnd.getDate()} ${MN[wEnd.getMonth()]} ${wEnd.getFullYear()}`;
 
-  let twk=0,tmk=0,pw=0,lw=0;
+  let twk=0,texr=0,lw=0;
   for(let i=0;i<7;i++){
-    const d=tds(addDays(wkStart,i));const e=entries.find(x=>x.date===d);
-    if(e){twk+=e.ws;tmk+=e.ms;if(e.ps>0)pw++;}
+    const d=tds(addDays(wkStart,i));
+    twk+=actScore(d,'work');texr+=actScore(d,'exercise');
     const _dl=lessons.find(l=>l.date===d);if(_dl)lw+=(_dl.items||[_dl]).length;
   }
 
@@ -1190,9 +1210,8 @@ function renderChain(){
     ${tds(wkStart)<=today&&today<=tds(wEnd)?'<div class="wk-badge">MINGGU INI</div>':''}
   </div>
   <div class="wk-sumbar">
-    <div class="wsb"><div class="wdot" style="background:#2563eb"></div>Work avg: ${(twk/7).toFixed(1)}</div>
-    <div class="wsb"><div class="wdot" style="background:#15a34a"></div>Market avg: ${(tmk/7).toFixed(1)}</div>
-    <div class="wsb"><div class="wdot" style="background:#d12b2b"></div>Workout: ${pw}x</div>
+    <div class="wsb"><div class="wdot" style="background:#ef4444"></div>Work: ${twk}x</div>
+    <div class="wsb"><div class="wdot" style="background:#22c55e"></div>Exercise: ${texr}x</div>
     <div class="wsb"><div class="wdot" style="background:#c9841a"></div>Lessons: ${lw}</div>
   </div>`;
 
@@ -1206,13 +1225,19 @@ function renderChain(){
     const doneTodos=todos.filter(t=>t.done&&t.doneDate===dstr);
 
     // Tags
+    const dayActs=activities.filter(a=>a.date===dstr);
     let tags='';
-    if(e){
+    if(dayActs.length){
+      dayActs.filter(a=>a.category==='religion').slice(0,1).forEach(a=>tags+=`<span class="tag tr">${a.text.slice(0,20)}</span>`);
+      dayActs.filter(a=>a.category==='work').slice(0,2).forEach(a=>tags+=`<span class="tag tw">${a.text.slice(0,20)}</span>`);
+      dayActs.filter(a=>a.category==='personal').slice(0,1).forEach(a=>tags+=`<span class="tag tm">${a.text.slice(0,20)}</span>`);
+      dayActs.filter(a=>a.category==='exercise').slice(0,1).forEach(a=>tags+=`<span class="tag tp">${a.text.slice(0,20)}</span>`);
+      dayActs.filter(a=>a.category==='habit').slice(0,1).forEach(a=>tags+=`<span class="tag" style="background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;">${a.text.slice(0,20)}</span>`);
+      dayActs.filter(a=>a.category==='humanity').slice(0,1).forEach(a=>tags+=`<span class="tag ts">${a.text.slice(0,20)}</span>`);
+    }else if(e){
       if(e.rel)tags+=`<span class="tag tr">${e.rel.split(',')[0].trim()}</span>`;
       if(e.work)e.work.split(',').slice(0,2).forEach(p=>{if(p.trim())tags+=`<span class="tag tw">${p.trim()}</span>`;});
-      if(e.mkt)e.mkt.split(',').slice(0,2).forEach(p=>{if(p.trim())tags+=`<span class="tag tm">${p.trim()}</span>`;});
-      if(e.phy)tags+=`<span class="tag tp">${e.phy}</span>`;
-      if(e.soc)tags+=`<span class="tag ts">${e.soc.split(',')[0].trim()}</span>`;
+      if(e.mkt)e.mkt.split(',').slice(0,1).forEach(p=>{if(p.trim())tags+=`<span class="tag tm">${p.trim()}</span>`;});
     }else{
       tags=`<span class="tag te">${isFuture?'belum waktunya':'belum dicatat'}</span>`;
     }
@@ -1222,19 +1247,24 @@ function renderChain(){
     const doneWishes=wishes.filter(w=>w.done&&w.doneDate===dstr);
     doneWishes.forEach(w=>{tags+=`<span class="tag" style="background:#fff5f5;color:#d12b2b;border:1px solid #fecaca;">✦ ${w.text.slice(0,16)}${w.text.length>16?'...':''}</span>`;});
 
-    // Pips
-    const sc=e?Math.round((e.ws+e.ms)/2):0;
+    // Pips (total activities, cap display at 5)
+    const sc=dayActs.length?Math.min(actScoreTotal(dstr),5):e?Math.round((e.ws+e.ms)/2):0;
     let pips='';for(let p=0;p<5;p++)pips+=`<div class="pip${p<sc?' on':''}"></div>`;
 
     // Detail
     let det='<div class="ddet-grid">';
-    if(e){
+    if(dayActs.length){
+      ACT_CATS.forEach(c=>{
+        const catActs=dayActs.filter(a=>a.category===c.key);
+        if(catActs.length)det+=`<div class="dcard"><div class="dcard-lbl">${c.label} (${catActs.length}x)</div><div class="dcard-val">${catActs.map(a=>a.text).join(' · ')}</div></div>`;
+      });
+    }else if(e){
       if(e.rel)det+=`<div class="dcard"><div class="dcard-lbl">Religion</div><div class="dcard-val">${e.rel}</div></div>`;
       if(e.work)det+=`<div class="dcard"><div class="dcard-lbl">Working Stage (${e.ws}/5)</div><div class="dcard-val">${e.work}</div></div>`;
       if(e.mkt)det+=`<div class="dcard"><div class="dcard-lbl">Personal Wish (${e.ms}/5)</div><div class="dcard-val">${e.mkt}</div></div>`;
-      if(e.phy)det+=`<div class="dcard"><div class="dcard-lbl">Physical</div><div class="dcard-val">${e.phy} ✓</div></div>`;
-      if(e.soc)det+=`<div class="dcard"><div class="dcard-lbl">Social / Lainnya</div><div class="dcard-val">${e.soc}</div></div>`;
-      if(e.extra)det+=`<div class="dcard" style="grid-column:1/-1"><div class="dcard-lbl">Extra / Overflow</div><div class="dcard-val">${e.extra}</div></div>`;
+      if(e.phy)det+=`<div class="dcard"><div class="dcard-lbl">Exercise</div><div class="dcard-val">${e.phy} ✓</div></div>`;
+      if(e.soc)det+=`<div class="dcard"><div class="dcard-lbl">Humanity</div><div class="dcard-val">${e.soc}</div></div>`;
+      if(e.extra)det+=`<div class="dcard" style="grid-column:1/-1"><div class="dcard-lbl">Extra</div><div class="dcard-val">${e.extra}</div></div>`;
     }else{
       det+=`<div class="dcard" style="grid-column:1/-1"><div class="dcard-lbl">Status</div><div class="dcard-val empty">${isFuture?'Belum waktunya.':'Belum dicatat hari ini.'}</div></div>`;
     }
@@ -1257,8 +1287,7 @@ function renderChain(){
       doneWishesDet.forEach(w=>{det+=`<div class="dlesn-txt" style="color:#7f1d1d;margin-bottom:6px;"><strong>${w.text}</strong>${w.achievementStory?'<br><span style="font-size:10px;opacity:.8;">'+w.achievementStory+'</span>':''}</div>`;});
       det+=`</div>`;
     }
-    if(e&&!isFuture)det+=`<button class="edit-entry-btn" onclick="openLogDate('${dstr}')">✎ Edit</button>`;
-    if(!e&&!isFuture)det+=`<button class="add-chain-btn" onclick="openLogDate('${dstr}')">+ Log aktivitas ${DN[i]}</button>`;
+    if(!isFuture)det+=`<button class="edit-entry-btn" onclick="openLogDate('${dstr}')">✎ ${dayActs.length?'Tambah / Edit':'Log Aktivitas'}</button>`;
 
     html+=`
     <div class="drow${isToday?' todayrow':''}" id="dr-${dstr}">
@@ -1418,27 +1447,52 @@ async function logout(){
   location.href='/login';
 }
 
-// ── MODAL ──
+// ── ACTIVITY MODAL ──
+function renderActList(cat){
+  const dstr=logDate||todayStr();
+  const list=document.getElementById('act-list-'+cat);
+  const countEl=document.getElementById('act-count-'+cat);
+  if(!list)return;
+  const items=activities.filter(a=>a.date===dstr&&a.category===cat);
+  if(countEl)countEl.textContent=items.length?items.length+' aktivitas':'';
+  list.innerHTML=items.length
+    ?items.map(a=>`<div class="act-item"><span class="act-item-text">${a.text}</span><button class="act-del" onclick="delActivity('${a.id}','${cat}')">✕</button></div>`).join('')
+    :'';
+}
+
+async function addActivity(cat){
+  const inp=document.getElementById('act-inp-'+cat);
+  const text=inp.value.trim();if(!text)return;
+  const dstr=logDate||todayStr();
+  const btn=inp.nextElementSibling;btn.disabled=true;
+  try{
+    const act=await api('/api/activities','POST',{date:dstr,category:cat,text});
+    activities.push(act);inp.value='';
+    renderActList(cat);render();
+  }catch(err){alert('Gagal simpan: '+err.message);}
+  finally{btn.disabled=false;}
+  inp.focus();
+}
+
+async function delActivity(id,cat){
+  await api('/api/activities?id='+id,'DELETE');
+  activities=activities.filter(a=>a.id!==id);
+  renderActList(cat);render();
+}
+
 function openLog(){openLogDate(todayStr());}
 function openLogDate(dstr){
   logDate=dstr;
   document.getElementById('mdbadge').textContent=fmtFull(dstr);
-  Object.keys(mscores).forEach(k=>{mscores[k]=0;sc(k,0);});
-  ['ms-screl','ms-scwork','ms-scmkt'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['frel','fwork','fmkt','fphy','fsoc','fext'].forEach(id=>document.getElementById(id).value='');
-  const e=entries.find(x=>x.date===dstr);
-  if(e){
-    document.getElementById('frel').value=e.rel||'';
-    document.getElementById('fwork').value=e.work||'';
-    document.getElementById('fmkt').value=e.mkt||'';
-    document.getElementById('fphy').value=e.phy||'';
-    document.getElementById('fsoc').value=e.soc||'';
-    document.getElementById('fext').value=e.extra||'';
-    sc('screl',e.rs||0);sc('scwork',e.ws||0);sc('scmkt',e.ms||0);sc('scphy',e.ps||0);
-  }
+  ACT_CATS.forEach(c=>{
+    const inp=document.getElementById('act-inp-'+c.key);
+    if(inp)inp.value='';
+    renderActList(c.key);
+  });
   document.getElementById('mo').classList.add('open');
+  setTimeout(()=>{const f=document.getElementById('act-inp-religion');if(f)f.focus();},100);
 }
-function closeModal(){document.getElementById('mo').classList.remove('open');}
+function closeModal(){document.getElementById('mo').classList.remove('open');render();}
 function openLessonsModal(){
   const yr=new Date().getFullYear();
   const yrLessons=[...lessons].filter(l=>l.date.startsWith(yr+'-')).sort((a,b)=>b.date.localeCompare(a.date));
@@ -1478,38 +1532,6 @@ function openGoalsModal(){
 }
 function closeGoalsModal(){document.getElementById('gmo').classList.remove('open');}
 document.getElementById('gmo').addEventListener('click',function(e){if(e.target===this)closeGoalsModal();});
-function sc(gid,val){
-  mscores[gid]=val;
-  document.querySelectorAll(`#${gid} .scopt`).forEach(el=>el.classList.toggle('active',parseInt(el.dataset.v)===val));
-  const mi=document.getElementById('ms-'+gid);
-  if(mi) mi.value=val;
-}
-function scManual(gid,val){
-  const v=parseInt(val);
-  if(!isNaN(v)&&v>=0){
-    mscores[gid]=v;
-    document.querySelectorAll(`#${gid} .scopt`).forEach(el=>el.classList.toggle('active',parseInt(el.dataset.v)===v));
-  }
-}
-async function saveEntry(){
-  const dstr=logDate||todayStr();
-  const ne={date:dstr,rel:document.getElementById('frel').value.trim(),rs:mscores.screl,
-    work:document.getElementById('fwork').value.trim(),ws:mscores.scwork,
-    mkt:document.getElementById('fmkt').value.trim(),ms:mscores.scmkt,
-    phy:document.getElementById('fphy').value.trim(),ps:mscores.scphy,
-    soc:document.getElementById('fsoc').value.trim(),extra:document.getElementById('fext').value.trim()};
-  const idx=entries.findIndex(e=>e.date===dstr);
-  if(idx>=0)entries[idx]=ne;else entries.push(ne);
-  const btn=document.querySelector('.btn-save');
-  btn.textContent='Menyimpan...';btn.disabled=true;
-  try{
-    await api('/api/entries','POST',ne);
-    closeModal();render();
-  }catch(err){
-    alert('✗ Gagal simpan ke database:\n'+err.message+'\n\nData tersimpan sementara di memori tapi akan hilang saat reload.');
-    btn.textContent='Simpan & Kunci';btn.disabled=false;
-  }
-}
 
 document.getElementById('mo').addEventListener('click',function(e){if(e.target===this)closeModal();});
 
@@ -1550,19 +1572,38 @@ function filterByRange(data, range){
   return sorted;
 }
 
-// fill date gaps in range with zeros
-function fillDateGaps(data, range){
-  if(!data.length) return data;
-  const sorted=[...data].sort((a,b)=>a.date.localeCompare(b.date));
-  const result=[];
-  let cur=new Date(sorted[0].date+'T00:00:00');
-  const end=new Date(sorted[sorted.length-1].date+'T00:00:00');
-  const map={};sorted.forEach(e=>map[e.date]=e);
-  while(cur<=end){
-    const s=tds(cur);
-    result.push(map[s]||{date:s,rs:0,ws:0,ms:0,ps:0});
-    cur.setDate(cur.getDate()+1);
+// Build unified day data merging activities (new) + entries (legacy)
+function buildDayData(date){
+  const dayActs=activities.filter(a=>a.date===date);
+  if(dayActs.length){
+    return{date,
+      religion:dayActs.filter(a=>a.category==='religion').length,
+      work:dayActs.filter(a=>a.category==='work').length,
+      personal:dayActs.filter(a=>a.category==='personal').length,
+      exercise:dayActs.filter(a=>a.category==='exercise').length,
+      habit:dayActs.filter(a=>a.category==='habit').length,
+      humanity:dayActs.filter(a=>a.category==='humanity').length,
+    };
   }
+  const e=entries.find(x=>x.date===date);
+  if(e)return{date,religion:e.rs||0,work:e.ws||0,personal:e.ms||0,exercise:e.ps||0,habit:0,humanity:0};
+  return{date,religion:0,work:0,personal:0,exercise:0,habit:0,humanity:0};
+}
+
+function fillDateGaps(range){
+  const allDates=[...new Set([...activities.map(a=>a.date),...entries.map(e=>e.date)])].sort();
+  if(!allDates.length)return[];
+  let filtered=allDates;
+  if(range!=='all'&&range.startsWith('m')){
+    const yr=new Date().getFullYear();const mo=parseInt(range.slice(1));
+    const start=`${yr}-${String(mo).padStart(2,'0')}-01`;const end=tds(new Date(yr,mo,0));
+    filtered=allDates.filter(d=>d>=start&&d<=end);
+  }
+  if(!filtered.length)return[];
+  const result=[];
+  let cur=new Date(filtered[0]+'T00:00:00');
+  const end=new Date(filtered[filtered.length-1]+'T00:00:00');
+  while(cur<=end){const s=tds(cur);result.push(buildDayData(s));cur.setDate(cur.getDate()+1);}
   return result;
 }
 
@@ -1585,114 +1626,53 @@ function toggleDataset(chartId,idx,el){
 }
 
 function renderBarChart(){
-  const raw=filterByRange(entries, barRange);
-  const data=fillDateGaps(raw, barRange);
-  if(!data.length) return;
-
-  const labels=data.map(e=>{
-    const d=new Date(e.date+'T00:00:00');
-    const mn=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-    return`${d.getDate()} ${mn[d.getMonth()]}`;
-  });
-
+  const data=fillDateGaps(barRange);
+  if(!data.length)return;
+  const mn=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const labels=data.map(e=>{const d=new Date(e.date+'T00:00:00');return`${d.getDate()} ${mn[d.getMonth()]}`;});
   const cfg={
     type:'bar',
-    data:{
-      labels,
-      datasets:[
-        {label:'Religion',data:data.map(e=>e.rs||0),backgroundColor:'rgba(59,130,246,0.85)',stack:'s'},
-        {label:'Working Stage',data:data.map(e=>e.ws||0),backgroundColor:'rgba(239,68,68,0.85)',stack:'s'},
-        {label:'Personal Wish',data:data.map(e=>e.ms||0),backgroundColor:'rgba(245,158,11,0.85)',stack:'s'},
-        {label:'Physics',data:data.map(e=>e.ps||0),backgroundColor:'rgba(34,197,94,0.85)',stack:'s'},
-      ]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      animation:{duration:400},
-      plugins:{
-        legend:{display:false},
-        tooltip:{
-          mode:'index',intersect:false,
-          callbacks:{
-            title:ctx=>`${ctx[0].label}`,
-            label:ctx=>`${ctx.dataset.label}: ${ctx.raw}`
-          }
-        }
-      },
+    data:{labels,datasets:[
+      {label:'Religion',    data:data.map(e=>e.religion), backgroundColor:'rgba(59,130,246,0.85)',stack:'s'},
+      {label:'Working Stage',data:data.map(e=>e.work),   backgroundColor:'rgba(239,68,68,0.85)', stack:'s'},
+      {label:'Personal Wish',data:data.map(e=>e.personal),backgroundColor:'rgba(245,158,11,0.85)',stack:'s'},
+      {label:'Exercise',    data:data.map(e=>e.exercise), backgroundColor:'rgba(34,197,94,0.85)', stack:'s'},
+      {label:'Habit',       data:data.map(e=>e.habit),    backgroundColor:'rgba(139,92,246,0.85)',stack:'s'},
+      {label:'Humanity',    data:data.map(e=>e.humanity), backgroundColor:'rgba(20,184,166,0.85)',stack:'s'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{title:ctx=>ctx[0].label,label:ctx=>`${ctx.dataset.label}: ${ctx.raw}x`}}},
       scales:{
         x:{stacked:true,grid:{display:false},ticks:{font:{family:'Poppins',size:9},color:'#999',maxRotation:45,minRotation:45,maxTicksLimit:40}},
-        y:{stacked:true,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'Poppins',size:9},color:'#999'},min:0,max:12}
+        y:{stacked:true,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'Poppins',size:9},color:'#999'},min:0}
       }
     }
   };
-
   const canvas=document.getElementById('chart-bar');
-  canvas.style.height='260px';
-  canvas.style.width=Math.max(600,data.length*18)+'px';
+  canvas.style.height='260px';canvas.style.width=Math.max(600,data.length*18)+'px';
   canvas.parentElement.style.overflowX='auto';
-
   if(chartBarInstance){chartBarInstance.destroy();chartBarInstance=null;}
   chartBarInstance=new Chart(canvas,cfg);
 }
 
 // ── LINE CHART ──
 function renderLineChart(){
-  const raw=filterByRange(entries, lineRange);
-  const data=fillDateGaps(raw, lineRange);
-  if(!data.length) return;
-
-  const labels=data.map(e=>{
-    const d=new Date(e.date+'T00:00:00');
-    const mn=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-    return`${d.getDate()} ${mn[d.getMonth()]}`;
-  });
-
+  const data=fillDateGaps(lineRange);
+  if(!data.length)return;
+  const mn=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const labels=data.map(e=>{const d=new Date(e.date+'T00:00:00');return`${d.getDate()} ${mn[d.getMonth()]}`;});
   const lineOpts={tension:.4,pointRadius:0,pointHoverRadius:4,borderWidth:2,fill:true};
-
   const cfgLine={
     type:'line',
-    data:{
-      labels,
-      datasets:[
-        {label:'Religion',data:rolling(data,'rs'),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.06)',...lineOpts},
-        {label:'Working Stage',data:rolling(data,'ws'),borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,0.06)',...lineOpts},
-        {label:'Personal Wish',data:rolling(data,'ms'),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.06)',...lineOpts},
-        {label:'Physics',data:rolling(data,'ps'),borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,0.06)',...lineOpts},
-      ]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,animation:{duration:400},
-      interaction:{mode:'index',intersect:false},
-      plugins:{legend:{display:false},tooltip:{callbacks:{title:ctx=>ctx[0].label}}},
-      scales:{
-        x:{grid:{display:false},ticks:{font:{family:'Poppins',size:9},color:'#999',maxRotation:45,minRotation:45,maxTicksLimit:30}},
-        y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'Poppins',size:9},color:'#999'},min:0,suggestedMax:5}
-      }
-    }
-  };
-
-  const canvasLine=document.getElementById('chart-line');
-  canvasLine.style.height='240px';
-  canvasLine.style.width=Math.max(600,data.length*14)+'px';
-  if(chartLineInstance){chartLineInstance.destroy();chartLineInstance=null;}
-  chartLineInstance=new Chart(canvasLine,cfgLine);
-
-  // Total score chart
-  const totalData=data.map(e=>(e.rs||0)+(e.ws||0)+(e.ms||0)+(e.ps||0));
-  const rollingTotal=rolling(data.map((_,i)=>({v:totalData[i]})),'v',7);
-
-  const cfgTotal={
-    type:'line',
-    data:{
-      labels,
-      datasets:[
-        {label:'Raw Total',data:totalData,borderColor:'rgba(209,43,43,0.25)',backgroundColor:'transparent',tension:.1,pointRadius:0,borderWidth:1,fill:false},
-        {label:'7D Avg',data:rollingTotal,borderColor:'#d12b2b',backgroundColor:'rgba(209,43,43,0.08)',tension:.4,pointRadius:0,borderWidth:2,fill:true},
-      ]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,animation:{duration:400},
+    data:{labels,datasets:[
+      {label:'Religion',    data:rolling(data,'religion'), borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.06)',...lineOpts},
+      {label:'Working Stage',data:rolling(data,'work'),   borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,0.06)',...lineOpts},
+      {label:'Personal Wish',data:rolling(data,'personal'),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.06)',...lineOpts},
+      {label:'Exercise',    data:rolling(data,'exercise'), borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,0.06)',...lineOpts},
+      {label:'Habit',       data:rolling(data,'habit'),    borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,0.06)',...lineOpts},
+      {label:'Humanity',    data:rolling(data,'humanity'), borderColor:'#14b8a6',backgroundColor:'rgba(20,184,166,0.06)',...lineOpts},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},
       interaction:{mode:'index',intersect:false},
       plugins:{legend:{display:false},tooltip:{callbacks:{title:ctx=>ctx[0].label}}},
       scales:{
@@ -1701,10 +1681,30 @@ function renderLineChart(){
       }
     }
   };
+  const canvasLine=document.getElementById('chart-line');
+  canvasLine.style.height='240px';canvasLine.style.width=Math.max(600,data.length*14)+'px';
+  if(chartLineInstance){chartLineInstance.destroy();chartLineInstance=null;}
+  chartLineInstance=new Chart(canvasLine,cfgLine);
 
+  const totalData=data.map(e=>e.religion+e.work+e.personal+e.exercise+e.habit+e.humanity);
+  const rollingTotal=rolling(totalData.map(v=>({v})),'v',7);
+  const cfgTotal={
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Raw Total',data:totalData,borderColor:'rgba(209,43,43,0.25)',backgroundColor:'transparent',tension:.1,pointRadius:0,borderWidth:1,fill:false},
+      {label:'7D Avg',  data:rollingTotal,borderColor:'#d12b2b',backgroundColor:'rgba(209,43,43,0.08)',tension:.4,pointRadius:0,borderWidth:2,fill:true},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{callbacks:{title:ctx=>ctx[0].label}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{family:'Poppins',size:9},color:'#999',maxRotation:45,minRotation:45,maxTicksLimit:30}},
+        y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'Poppins',size:9},color:'#999'},min:0}
+      }
+    }
+  };
   const canvasTotal=document.getElementById('chart-total');
-  canvasTotal.style.height='180px';
-  canvasTotal.style.width=Math.max(600,data.length*14)+'px';
+  canvasTotal.style.height='180px';canvasTotal.style.width=Math.max(600,data.length*14)+'px';
   if(chartTotalInstance){chartTotalInstance.destroy();chartTotalInstance=null;}
   chartTotalInstance=new Chart(canvasTotal,cfgTotal);
 }
