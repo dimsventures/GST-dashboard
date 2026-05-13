@@ -402,6 +402,56 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .btn-cancel:hover{border-color:var(--text2);}
 .btn-save{background:var(--red);border:none;color:#fff;padding:8px 22px;border-radius:var(--r2);font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s;}
 .btn-save:hover{background:var(--red2);}
+
+@media(max-width:768px){
+  /* Header */
+  header{height:48px;padding:0 14px;}
+  .hdr-lessons{display:none;}
+  #analog-clock{display:none;}
+  .live-dot{display:none;}
+  #htime{font-size:11px;}
+  .hdr-r{gap:8px;}
+  .btn-log{padding:7px 12px;font-size:10px;}
+  #hdate{font-size:11px;}
+
+  /* App: stack vertically, allow page scroll */
+  .app{display:flex;flex-direction:column;height:auto;overflow:visible;padding:8px;gap:10px;}
+
+  /* Left panel */
+  .lp{border-right:none;border-radius:10px;border:1px solid var(--border);min-height:auto;overflow:visible;}
+
+  /* Stats: 2 cols */
+  .stat-grid{grid-template-columns:repeat(2,1fr)!important;}
+
+  /* Calendar days bigger tap */
+  .cday{padding:8px 2px;font-size:13px;}
+
+  /* Center panel */
+  #center-panel{margin:0;border-radius:10px;min-height:60vh;}
+  .cp{overflow-y:visible;height:auto;min-height:400px;}
+  .chart-panel{height:auto;}
+  .chart-wrap canvas{min-width:360px;}
+
+  /* Right panel */
+  .rp{border-left:none;border-radius:10px;border:1px solid var(--border);overflow:visible;}
+  .lsn-list{max-height:none;}
+
+  /* Bigger tap targets */
+  .titem{padding:12px 14px;}
+  .gitem{padding:10px 12px;}
+  .gcb{width:18px;height:18px;}
+  .todo-inp,.goal-inp,.lsn-ta,.finp,.fsel,.fta{font-size:16px;}
+  .lsn-ta{min-height:80px;}
+  .lock-btn,.todo-addbtn,.goal-addbtn{min-height:38px;}
+  .btn-save,.btn-cancel{padding:11px 22px;font-size:13px;}
+  .cnav-btn{width:34px;height:34px;}
+  .sbtn{padding:6px 12px;font-size:11px;}
+  .cchip{padding:5px 12px;font-size:11px;}
+
+  /* Modal: bottom sheet */
+  .moverlay{padding:0;align-items:flex-end;}
+  .modal{border-radius:16px 16px 0 0;max-height:92vh;max-width:100%;border-bottom:none;}
+}
 </style>
 </head>
 <body>
@@ -501,7 +551,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 </div>
 
 <!-- CENTER -->
-<div style="display:flex;flex-direction:column;overflow:hidden;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 16px rgba(0,0,0,.05);margin:12px 0;">
+<div id="center-panel" style="display:flex;flex-direction:column;overflow:hidden;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 16px rgba(0,0,0,.05);margin:12px 0;">
   <!-- VIEW TOGGLE -->
   <div class="view-toggle" style="border-top-left-radius:10px;border-top-right-radius:10px;overflow:hidden;">
     <button class="vtab active" id="tab-chain" onclick="switchView('chain')">Weekly Chain</button>
