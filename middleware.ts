@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createHash } from 'crypto'
 
-function sessionToken() {
-  return createHash('sha256').update(process.env.DASHBOARD_PASSWORD || '').digest('hex')
+async function sessionToken() {
+  const data = new TextEncoder().encode(process.env.DASHBOARD_PASSWORD || '')
+  const hash = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (pathname.startsWith('/login') || pathname.startsWith('/api/auth')) {
@@ -14,7 +15,7 @@ export function middleware(request: NextRequest) {
   }
 
   const cookie = request.cookies.get('gst_auth')
-  if (!cookie || cookie.value !== sessionToken()) {
+  if (!cookie || cookie.value !== await sessionToken()) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
