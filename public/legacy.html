@@ -423,6 +423,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <span id="htime" style="font-family: Poppins">06:42:17</span>
     </div>
     <button class="btn-log" onclick="openLog()">+ Log Hari Ini</button>
+    <button onclick="logout()" style="background:none;border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-family:'Poppins',sans-serif;font-size:10px;font-weight:600;color:var(--text3);cursor:pointer;letter-spacing:.04em;transition:all .15s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'">Logout</button>
   </div>
 </header>
 
@@ -1360,6 +1361,11 @@ function renderTodos(){
       ${t.done?`<div class="tdone-badge">✓ ${t.doneDate?fmtShort(t.doneDate):''}</div>`:''}
       <button class="tdel" onclick="event.stopPropagation();delTodo('${t.id}')">✕</button>
     </div>`).join('');
+}
+
+async function logout(){
+  await fetch('/api/auth',{method:'DELETE'});
+  location.href='/login';
 }
 
 // ── MODAL ──
