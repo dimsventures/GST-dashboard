@@ -324,6 +324,18 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .todo-inp::placeholder{color:var(--text4);}
 .todo-addbtn{background:var(--red);color:#fff;border:none;border-radius:var(--r2);width:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:300;transition:background .15s;flex-shrink:0;}
 .todo-addbtn:hover{background:var(--red2);}
+.wish-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--r2);border:1px solid var(--border);background:var(--white);margin-bottom:8px;transition:all .2s;}
+.wish-item.wish-done{background:#fff5f5;border-color:#fecaca;opacity:.8;}
+.wish-cb-wrap{flex-shrink:0;padding-top:1px;}
+.wish-cb{width:18px;height:18px;border-radius:4px;border:2px solid var(--border2);cursor:pointer;transition:all .15s;flex-shrink:0;}
+.wish-cb:hover{border-color:var(--red);}
+.wish-cb.checked{background:var(--red);border-color:var(--red);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;}
+.wish-content{flex:1;min-width:0;}
+.wish-text{font-size:12px;color:var(--text);line-height:1.5;font-weight:500;}
+.wish-done .wish-text{text-decoration:line-through;color:var(--text3);}
+.wish-meta{font-size:10px;color:var(--red);margin-top:4px;line-height:1.5;font-style:italic;}
+.wish-del{background:none;border:none;color:var(--text4);cursor:pointer;font-size:12px;padding:2px 4px;flex-shrink:0;transition:color .15s;}
+.wish-del:hover{color:var(--red);}
 .cat-hint{padding:4px 16px 6px;font-family:'Poppins',sans-serif;font-size:10px;color:var(--text3);display:none;align-items:center;gap:5px;}
 .cat-hint.show{display:flex;}
 .cat-hint-badge{padding:1px 7px;border-radius:10px;font-weight:700;font-size:9px;letter-spacing:.04em;}
@@ -414,7 +426,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
     <div class="sec-lbl" style="font-size: 14px">Overview</div>
     <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
       <div class="sbox"><div class="sval" id="st0">—</div><div class="slbl">Hari</div></div>
-      <div class="sbox"><div class="sval red" id="st1">—</div><div class="slbl">Workout</div></div>
+      <div class="sbox" style="cursor:pointer;" onclick="openWishesModal()" title="Lihat semua dream lo"><div class="sval red" id="st1">—</div><div class="slbl">Dream</div></div>
       <div class="sbox" style="cursor:pointer;" onclick="openLessonsModal()" title="Lihat semua pelajaran tahun ini"><div class="sval gold" id="st2">—</div><div class="slbl">Lesson</div></div>
       <div class="sbox" style="cursor:pointer;" onclick="openGoalsModal()" title="Lihat goals yang belum tercapai"><div class="sval left-val" id="st5">—</div><div class="slbl">Left</div></div>
     </div>
@@ -551,6 +563,17 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 <!-- RIGHT -->
 <div class="rp">
 
+  <!-- MAKE UR WISH -->
+  <div class="lsn-sec">
+    <div class="ph">
+      <div class="ph-title">Make Ur Wish ✦</div>
+    </div>
+    <div class="lsn-input-area">
+      <input type="text" class="todo-inp" id="wish-inp" placeholder="Tulis impian atau tujuan besar lo..." onkeydown="if(event.key==='Enter')addWish()" style="margin-bottom:6px;">
+      <button class="lock-btn" onclick="addWish()" style="color:#d12b2b;background:#fff5f5;border-color:#fecaca;">+ Tambah Wish</button>
+    </div>
+  </div>
+
   <!-- LESSONS -->
   <div class="lsn-sec">
     <div class="ph">
@@ -623,6 +646,39 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       </div>
     </div>
     <div class="mbody" id="lmo-body" style="padding:18px 22px;"></div>
+  </div>
+</div>
+
+<!-- WISHES MODAL -->
+<div class="moverlay" id="wish-modal">
+  <div class="modal" style="max-width:560px;">
+    <div class="mhdr">
+      <div class="mtitle">✦ Dream List</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="mdbadge" id="wish-modal-count" style="background:#fff5f5;border-color:#fecaca;color:#d12b2b;">0</div>
+        <button class="mclose" onclick="closeWishesModal()">✕</button>
+      </div>
+    </div>
+    <div class="mbody" id="wish-modal-body" style="padding:18px 22px;"></div>
+  </div>
+</div>
+
+<!-- ACHIEVE WISH MODAL -->
+<div class="moverlay" id="achieve-wish-modal">
+  <div class="modal" style="max-width:480px;">
+    <div class="mhdr">
+      <div class="mtitle">💪 Wish Tercapai!</div>
+      <button class="mclose" onclick="document.getElementById('achieve-wish-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="mbody" style="padding:22px 24px;">
+      <div id="achieve-wish-text" style="font-size:13px;font-style:italic;color:var(--red);font-weight:600;margin-bottom:16px;line-height:1.5;"></div>
+      <div style="font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;letter-spacing:.04em;">DENGAN CARA APA LU MENCAPAI INI SEMUA?</div>
+      <textarea id="achieve-wish-story" placeholder="Ceritakan perjalanan lo disini..." style="width:100%;min-height:100px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:10px 12px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--text);resize:vertical;outline:none;line-height:1.6;box-sizing:border-box;" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn-cancel" onclick="document.getElementById('achieve-wish-modal').classList.remove('open')" style="flex:1;">Batal</button>
+        <button class="btn-save" onclick="confirmAchieveWish()" style="flex:2;background:var(--red);">✓ Save — Wish Tercapai!</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -707,7 +763,7 @@ const PRE=[];
 
 // ── STATE ──
 const SK={e:'d26e',l:'d26l',t:'d26t',g:'d26g'};
-let entries=[],lessons=[],todos=[],goals=[];
+let entries=[],lessons=[],todos=[],goals=[],wishes=[];
 let goalTab='year';
 let goalNavY=null,goalNavM=null,goalNavYr=null;
 let calY=2025,calM=0; // will be set to today
@@ -728,7 +784,7 @@ async function api(path,method='GET',body=null){
 
 // ── INIT ──
 async function init(){
-  const {entries:en,lessons:ls,todos:td,goals:gl}=await api('/api/data');
+  const {entries:en,lessons:ls,todos:td,goals:gl,wishes:ws}=await api('/api/data');
 
   entries=Array.isArray(en)?en:[];
   lessons=Array.isArray(ls)?ls.map(l=>{let items;try{const p=JSON.parse(l.text);items=Array.isArray(p)?p:[{id:crypto.randomUUID(),text:l.text,ts:l.locked||l.date}];}catch(e){items=[{id:crypto.randomUUID(),text:l.text,ts:l.locked||l.date}];}return{...l,items};}):[];
@@ -744,6 +800,8 @@ async function init(){
     goals=defGoals();
     goals.forEach(g=>api('/api/goals','POST',{id:g.id,text:g.text,scope:g.scope,yr:g.yr||null,ym:g.ym||null,done:g.done,done_date:null}).catch(console.error));
   }
+
+  wishes=Array.isArray(ws)?ws.map(w=>({...w,doneDate:w.done_date||null})):[];
 
   PRE.forEach(p=>{if(!entries.find(e=>e.date===p.date))entries.push(p);});
 
@@ -799,6 +857,67 @@ function saveGoalDB(g){
 }
 function delGoalDB(id){
   api('/api/goals?id='+id,'DELETE').catch(console.error);
+}
+function saveWishDB(w){
+  api('/api/wishes','POST',{id:w.id,text:w.text,done:w.done,done_date:w.doneDate||null,achievement_story:w.achievementStory||null,created_at:w.createdAt||new Date().toISOString()}).catch(console.error);
+}
+function delWishDB(id){
+  api('/api/wishes?id='+id,'DELETE').catch(console.error);
+}
+function addWish(){
+  const inp=document.getElementById('wish-inp');
+  const text=inp.value.trim();if(!text)return;
+  const w={id:crypto.randomUUID(),text,done:false,doneDate:null,achievementStory:null,createdAt:new Date().toISOString()};
+  wishes.push(w);saveWishDB(w);
+  inp.value='';renderStats();
+}
+function delWish(id){
+  if(!confirm('Hapus wish ini?'))return;
+  wishes=wishes.filter(w=>w.id!==id);delWishDB(id);renderStats();
+}
+function openAchieveWish(id){
+  const w=wishes.find(x=>x.id===id);if(!w)return;
+  document.getElementById('achieve-wish-text').textContent='"'+w.text+'"';
+  document.getElementById('achieve-wish-story').value='';
+  document.getElementById('achieve-wish-modal').dataset.id=id;
+  document.getElementById('achieve-wish-modal').classList.add('open');
+}
+function confirmAchieveWish(){
+  const modal=document.getElementById('achieve-wish-modal');
+  const id=modal.dataset.id;
+  const story=document.getElementById('achieve-wish-story').value.trim();
+  if(!story){alert('Ceritakan dulu gimana lo mencapai ini! 💪');return;}
+  const w=wishes.find(x=>x.id===id);if(!w)return;
+  w.done=true;w.doneDate=todayStr();w.achievementStory=story;
+  saveWishDB(w);
+  modal.classList.remove('open');
+  renderStats();renderChain();
+}
+function openWishesModal(){
+  const modal=document.getElementById('wish-modal');
+  renderWishList();
+  modal.classList.add('open');
+}
+function closeWishesModal(){document.getElementById('wish-modal').classList.remove('open');}
+function renderWishList(){
+  const body=document.getElementById('wish-modal-body');
+  const badge=document.getElementById('wish-modal-count');
+  if(badge)badge.textContent=wishes.filter(w=>!w.done).length+' belum tercapai';
+  const esc=(s)=>(s||'').replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"})[c]);
+  if(!wishes.length){body.innerHTML='<div class="empty-note" style="padding:24px;">Belum ada wish. Tambahkan impian pertama lo!</div>';return;}
+  body.innerHTML=wishes.map(w=>`
+    <div class="wish-item${w.done?' wish-done':''}">
+      <div class="wish-cb-wrap">
+        ${w.done
+          ?'<div class="wish-cb checked">✓</div>'
+          :`<div class="wish-cb" onclick="openAchieveWish('${w.id}')"></div>`}
+      </div>
+      <div class="wish-content">
+        <div class="wish-text">${esc(w.text)}</div>
+        ${w.done?`<div class="wish-meta">✦ Achieved ${w.doneDate||''} — <em>${esc(w.achievementStory||'')}</em></div>`:''}
+      </div>
+      ${w.done?'':'<button class="wish-del" onclick="delWish(\''+w.id+'\')">✕</button>'}
+    </div>`).join('');
 }
 // ── TARGET QUOTES ──
 const TARGET_QUOTES=[
@@ -981,7 +1100,7 @@ function renderStats(){
   const act=entries.filter(e=>e.ws>0||e.ms>0||e.ps>0||e.rs>0);
   const n=act.length||1;
   {const _now=new Date();const _soy=new Date(_now.getFullYear(),0,1);const _elapsed=Math.floor((_now-_soy)/86400000)+1;document.getElementById('st0').textContent=_elapsed;}
-  document.getElementById('st1').textContent=entries.filter(e=>e.ps>0).length;
+  document.getElementById('st1').textContent=wishes.length;
   document.getElementById('st2').textContent=lessons.reduce((s,l)=>s+(l.items?l.items.length:1),0);
   const now=new Date();const yr=now.getFullYear();const eoy=new Date(yr,11,31);const daysLeft=Math.ceil((eoy-now)/86400000);
   document.getElementById('st5').textContent=daysLeft;
@@ -1043,6 +1162,8 @@ function renderChain(){
     doneTodos.forEach(t=>{tags+=`<span class="tag tdone-tag">✓ ${t.text.slice(0,18)}${t.text.length>18?'...':''}</span>`;});
     const doneGoals=goals.filter(g=>g.done&&g.doneDate===dstr);
     doneGoals.forEach(g=>{tags+=`<span class="tag tg">★ ${g.text.slice(0,16)}${g.text.length>16?'...':''}</span>`;});
+    const doneWishes=wishes.filter(w=>w.done&&w.doneDate===dstr);
+    doneWishes.forEach(w=>{tags+=`<span class="tag" style="background:#fff5f5;color:#d12b2b;border:1px solid #fecaca;">✦ ${w.text.slice(0,16)}${w.text.length>16?'...':''}</span>`;});
 
     // Pips
     const sc=e?Math.round((e.ws+e.ms)/2):0;
@@ -1071,6 +1192,12 @@ function renderChain(){
     if(doneGoalsDet.length){
       det+=`<div class="dgoal-card"><div class="dgoal-lbl">★ Goals Achieved</div>`;
       doneGoalsDet.forEach(g=>{det+=`<div class="dgoal-row"><span style="flex:1">${g.text}</span><span class="dgoal-scope">${g.scope==='year'?(g.yr||new Date().getFullYear()):'MONTH'}</span></div>`;});
+      det+=`</div>`;
+    }
+    const doneWishesDet=wishes.filter(w=>w.done&&w.doneDate===dstr);
+    if(doneWishesDet.length){
+      det+=`<div class="dlesn-card" style="background:#fff5f5;border-color:#fecaca;"><div class="dlesn-lbl" style="color:var(--red);">✦ Dream Tercapai</div>`;
+      doneWishesDet.forEach(w=>{det+=`<div class="dlesn-txt" style="color:#7f1d1d;margin-bottom:6px;"><strong>${w.text}</strong>${w.achievementStory?'<br><span style="font-size:10px;opacity:.8;">'+w.achievementStory+'</span>':''}</div>`;});
       det+=`</div>`;
     }
     if(e&&!isFuture)det+=`<button class="edit-entry-btn" onclick="openLogDate('${dstr}')">✎ Edit</button>`;
@@ -1270,6 +1397,8 @@ function openLessonsModal(){
 }
 function closeLessonsModal(){document.getElementById('lmo').classList.remove('open');}
 document.getElementById('lmo').addEventListener('click',function(e){if(e.target===this)closeLessonsModal();});
+document.getElementById('wish-modal').addEventListener('click',function(e){if(e.target===this)closeWishesModal();});
+document.getElementById('achieve-wish-modal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 
 function openGoalsModal(){
   const yr=new Date().getFullYear();const m=new Date().getMonth();const ymStr=`${yr}-${p2(m+1)}`;
