@@ -413,6 +413,9 @@ async function init(){
     api('/api/reconciliations'),
   ]);
   transactions=tr;bufferLogs=bl;reconciliations=rc;
+  const lastDate=tr.length?tr.map(t=>t.date).sort().reverse()[0]:todayStr();
+  document.getElementById('trx-date-filter').value=lastDate;
+  document.getElementById('date-inp').value=todayStr();
   render();
   fillReconFromLast();
 }
