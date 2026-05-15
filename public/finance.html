@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Finance — GST HQ</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
   --white:#fff;--bg:#f5f4f2;--bg2:#eeedeb;
@@ -157,6 +158,31 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .btn-save.gold{background:var(--gold);}
 
 /* RESPONSIVE */
+/* CALENDAR */
+.fin-cal{padding:10px 12px 8px;}
+.fin-cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.fin-cal-mnth{font-size:11px;font-weight:700;color:var(--text);}
+.fin-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.fin-cdname{text-align:center;font-size:7px;font-weight:600;color:var(--text3);padding:1px 0 4px;letter-spacing:.05em;}
+.fin-cday{border-radius:4px;padding:3px 2px;cursor:pointer;transition:background .12s;text-align:center;min-height:30px;}
+.fin-cday:hover{background:var(--bg);}
+.fin-cday.today{background:var(--red);color:#fff;}
+.fin-cday.today .fin-day-exp{color:rgba(255,255,255,.85);}
+.fin-cday.selected{background:var(--blk);color:#fff;}
+.fin-cday.selected .fin-day-exp{color:rgba(255,255,255,.7);}
+.fin-cday.othermo{opacity:.3;}
+.fin-day-num{font-size:10px;font-weight:600;line-height:1.2;}
+.fin-day-exp{font-size:7px;color:var(--red);font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* YTD TOGGLE */
+.ytd-toggle{background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);padding:0 2px;transition:transform .2s;}
+.ytd-toggle.open{transform:rotate(180deg);}
+.ytd-body{transition:all .2s;}
+
+/* CHART */
+.chart-wrap-fin{position:relative;width:100%;overflow-x:auto;}
+.chart-wrap-fin canvas{min-width:500px;height:200px!important;}
+
 @media(max-width:768px){
   .main{grid-template-columns:1fr;padding:8px;gap:8px;}
   .amount-inp{font-size:20px;}
@@ -179,8 +205,23 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 
 <div class="main">
 
-<!-- LEFT: QUICK ADD + TRANSACTION LIST -->
+<!-- LEFT: CALENDAR + QUICK ADD + TRANSACTION LIST -->
 <div style="display:flex;flex-direction:column;gap:12px;">
+
+  <!-- CALENDAR -->
+  <div class="card">
+    <div class="fin-cal">
+      <div class="fin-cal-nav">
+        <button class="mnav" onclick="calPrev()">‹</button>
+        <div class="fin-cal-mnth" id="fin-cal-lbl">—</div>
+        <button class="mnav" onclick="calNext()">›</button>
+      </div>
+      <div class="fin-cal-grid" id="fin-cal-grid">
+        <div class="fin-cdname">Sen</div><div class="fin-cdname">Sel</div><div class="fin-cdname">Rab</div>
+        <div class="fin-cdname">Kam</div><div class="fin-cdname">Jum</div><div class="fin-cdname">Sab</div><div class="fin-cdname">Min</div>
+      </div>
+    </div>
+  </div>
 
   <!-- QUICK ADD -->
   <div class="card">
@@ -234,14 +275,27 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
     <div class="breakdown" id="breakdown"></div>
   </div>
 
+  <!-- STACKED BAR CHART -->
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">Expense per Bulan</div></div>
+    <div style="padding:12px 14px;">
+      <div class="chart-wrap-fin"><canvas id="fin-chart-bar"></canvas></div>
+    </div>
+  </div>
+
   <!-- YTD SUMMARY -->
   <div class="card">
-    <div class="card-hdr"><div class="card-title">Year to Date</div></div>
-    <div class="sum-grid">
-      <div class="sum-box"><div class="sum-lbl">Total Income</div><div class="sum-val green" id="ytd-income">Rp 0</div></div>
-      <div class="sum-box"><div class="sum-lbl">Total Expense</div><div class="sum-val red" id="ytd-expense">Rp 0</div></div>
-      <div class="sum-box"><div class="sum-lbl">Total Invest</div><div class="sum-val blue" id="ytd-invest">Rp 0</div></div>
-      <div class="sum-box"><div class="sum-lbl">Savings Rate</div><div class="sum-val gold" id="ytd-rate">0%</div></div>
+    <div class="card-hdr" onclick="toggleYTD()" style="cursor:pointer;user-select:none;">
+      <div class="card-title">Year to Date</div>
+      <button class="ytd-toggle" id="ytd-toggle">▾</button>
+    </div>
+    <div class="ytd-body" id="ytd-body">
+      <div class="sum-grid">
+        <div class="sum-box"><div class="sum-lbl">Total Income</div><div class="sum-val green" id="ytd-income">Rp 0</div></div>
+        <div class="sum-box"><div class="sum-lbl">Total Expense</div><div class="sum-val red" id="ytd-expense">Rp 0</div></div>
+        <div class="sum-box"><div class="sum-lbl">Total Invest</div><div class="sum-val blue" id="ytd-invest">Rp 0</div></div>
+        <div class="sum-box"><div class="sum-lbl">Savings Rate</div><div class="sum-val gold" id="ytd-rate">0%</div></div>
+      </div>
     </div>
   </div>
 
@@ -379,7 +433,99 @@ function render(){
   renderSummary();
   renderBuffer();
   renderReconHistory();
+  renderCalendar();
+  renderFinChart();
   calcRecon();
+}
+
+// ── CALENDAR ──
+let calY=new Date().getFullYear(), calM=new Date().getMonth();
+function calPrev(){calM--;if(calM<0){calM=11;calY--;}renderCalendar();}
+function calNext(){calM++;if(calM>11){calM=0;calY++;}renderCalendar();}
+function calSelectDay(dstr){
+  document.getElementById('date-inp').value=dstr;
+  document.getElementById('trx-date-filter').value=dstr;
+  renderCalendar();renderTrxList();
+}
+function renderCalendar(){
+  const MN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  document.getElementById('fin-cal-lbl').textContent=`${MN[calM]} ${calY}`;
+  const today=todayStr();
+  const selected=document.getElementById('trx-date-filter').value||today;
+  const grid=document.getElementById('fin-cal-grid');
+  grid.querySelectorAll('.fin-cday').forEach(el=>el.remove());
+  const firstDay=new Date(calY,calM,1).getDay();
+  const dim=new Date(calY,calM+1,0).getDate();
+  const off=firstDay===0?6:firstDay-1;
+  const prevDim=new Date(calY,calM,0).getDate();
+  const p2n=n=>String(n).padStart(2,'0');
+  const fmt=(y,m,d)=>`${y}-${p2n(m+1)}-${p2n(d)}`;
+  function dayExpense(dstr){return transactions.filter(t=>t.date===dstr&&t.type==='expense').reduce((s,t)=>s+t.amount,0);}
+  function fmtK(n){return n>=1000?(n/1000).toFixed(0)+'k':n>0?String(n):'';}
+  for(let i=off-1;i>=0;i--){
+    const d=prevDim-i;const dstr=fmt(calY,calM-1,d);
+    const exp=dayExpense(dstr);
+    const el=document.createElement('div');el.className='fin-cday othermo';
+    el.innerHTML=`<div class="fin-day-num">${d}</div>${exp?`<div class="fin-day-exp">${fmtK(exp)}</div>`:''}`;
+    el.onclick=()=>calSelectDay(dstr);grid.appendChild(el);
+  }
+  for(let d=1;d<=dim;d++){
+    const dstr=fmt(calY,calM,d);
+    const exp=dayExpense(dstr);
+    let cls='fin-cday';
+    if(dstr===today)cls+=' today';
+    if(dstr===selected&&dstr!==today)cls+=' selected';
+    const el=document.createElement('div');el.className=cls;
+    el.innerHTML=`<div class="fin-day-num">${d}</div>${exp?`<div class="fin-day-exp">${fmtK(exp)}</div>`:''}`;
+    el.onclick=()=>calSelectDay(dstr);grid.appendChild(el);
+  }
+  const total=off+dim;const rem=(7-total%7)%7;
+  for(let d=1;d<=rem;d++){
+    const el=document.createElement('div');el.className='fin-cday othermo';
+    el.innerHTML=`<div class="fin-day-num">${d}</div>`;grid.appendChild(el);
+  }
+}
+
+// ── STACKED BAR CHART ──
+let finChartInstance=null;
+const CAT_COLORS={'Housing':'rgba(239,68,68,.85)','Consumption':'rgba(245,158,11,.85)','Needs':'rgba(34,197,94,.85)',
+  'Joy':'rgba(168,85,247,.85)','Transport':'rgba(59,130,246,.85)','Utilities':'rgba(20,184,166,.85)',
+  'Electronic':'rgba(249,115,22,.85)','Charity':'rgba(236,72,153,.85)','Unexpected':'rgba(107,114,128,.85)'};
+function renderFinChart(){
+  const yr=currentMonth.slice(0,4);
+  const months=[...new Set(transactions.filter(t=>t.date.startsWith(yr)&&t.type==='expense').map(t=>t.date.slice(0,7)))].sort();
+  if(!months.length)return;
+  const MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const labels=months.map(m=>{const mo=parseInt(m.slice(5))-1;return MN[mo];});
+  const cats=Object.keys(CAT_COLORS);
+  const datasets=cats.map(cat=>({
+    label:cat,
+    data:months.map(m=>transactions.filter(t=>t.date.startsWith(m)&&t.type==='expense'&&t.category===cat).reduce((s,t)=>s+t.amount,0)),
+    backgroundColor:CAT_COLORS[cat],stack:'s'
+  })).filter(ds=>ds.data.some(v=>v>0));
+  const canvas=document.getElementById('fin-chart-bar');
+  canvas.style.width=Math.max(500,months.length*80)+'px';
+  if(finChartInstance){finChartInstance.destroy();finChartInstance=null;}
+  finChartInstance=new Chart(canvas,{
+    type:'bar',
+    data:{labels,datasets},
+    options:{
+      responsive:false,maintainAspectRatio:false,animation:{duration:300},
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>`${ctx.dataset.label}: Rp ${ctx.raw.toLocaleString('id-ID')}`}}},
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{font:{family:'Poppins',size:9},color:'#999'}},
+        y:{stacked:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{family:'Poppins',size:9},color:'#999',callback:v=>'Rp '+(v/1000).toFixed(0)+'k'}}
+      }
+    }
+  });
+}
+
+// ── YTD TOGGLE ──
+let ytdOpen=true;
+function toggleYTD(){
+  ytdOpen=!ytdOpen;
+  document.getElementById('ytd-body').style.display=ytdOpen?'block':'none';
+  document.getElementById('ytd-toggle').classList.toggle('open',ytdOpen);
 }
 
 function renderMonthLabel(){
