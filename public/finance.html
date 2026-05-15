@@ -188,7 +188,6 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <button class="ttab active" data-type="expense" onclick="switchType('expense',this)">Expense</button>
       <button class="ttab" data-type="income" onclick="switchType('income',this)">Income</button>
       <button class="ttab" data-type="investment" onclick="switchType('investment',this)">Invest</button>
-      <button class="ttab" data-type="buffer" onclick="switchType('buffer',this)">Buffer</button>
     </div>
     <div class="cat-chips" id="cat-chips"></div>
     <div class="amount-wrap">
@@ -273,7 +272,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
     <div class="recon-inputs">
       <div class="recon-row"><span class="recon-lbl">Bank Jatim</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-jatim" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
       <div class="recon-row"><span class="recon-lbl">Seabank</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-sea" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
-      <div class="recon-row"><span class="recon-lbl">Bank Jago</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-jago" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
+      <div class="recon-row"><span class="recon-lbl">BLU (Buffer)</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-blu" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
       <div class="recon-row"><span class="recon-lbl">E-Wallet</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-ewallet" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
       <div class="recon-row"><span class="recon-lbl">Cash</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-cash" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
     </div>
@@ -301,9 +300,14 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <button class="mclose" onclick="closeBufModal()">✕</button>
     </div>
     <div class="mbody">
-      <div style="font-size:10px;color:var(--text3);margin-bottom:8px;">Nominal (Rp)</div>
-      <input type="number" id="buf-amount" placeholder="0" style="width:100%;border:1.5px solid var(--border);border-radius:var(--r2);padding:9px 12px;font-size:16px;font-weight:700;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
-      <input type="text" id="buf-note" placeholder="Catatan (optional)" style="width:100%;border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:11px;margin-top:8px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">Nominal (Rp)</div>
+      <input type="number" id="buf-amount" placeholder="0" style="width:100%;border:1.5px solid var(--border);border-radius:var(--r2);padding:9px 12px;font-size:16px;font-weight:700;outline:none;background:var(--bg);margin-bottom:10px;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+      <div id="buf-expense-section" style="display:none;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">Untuk expense kategori:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;" id="buf-cat-chips"></div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">Catatan:</div>
+      </div>
+      <input type="text" id="buf-note" placeholder="Catatan (optional)" style="width:100%;border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:11px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
     </div>
     <div class="mfooter">
       <button class="btn-cancel" onclick="closeBufModal()">Batal</button>
@@ -359,7 +363,7 @@ function fillReconFromLast(){
   const last=reconciliations[0];
   rcSet('rc-jatim',last.bank_jatim);
   rcSet('rc-sea',last.seabank);
-  rcSet('rc-jago',last.bank_jago);
+  rcSet('rc-blu',last.bank_jago);
   rcSet('rc-ewallet',last.ewallet);
   rcSet('rc-cash',last.cash);
   calcRecon();
@@ -491,25 +495,49 @@ function renderBuffer(){
 }
 
 // BUFFER MODAL
+const EXP_CATS=['Housing','Consumption','Needs','Joy','Transport','Utilities','Electronic','Charity','Unexpected'];
+let bufExpCat='';
+
 function openBufModal(dir){
-  bufDir=dir;
-  document.getElementById('buf-modal-title').textContent=dir==='in'?'+ Isi Buffer':'− Ambil dari Buffer';
+  bufDir=dir;bufExpCat='';
+  document.getElementById('buf-modal-title').textContent=dir==='in'?'+ Isi Buffer (→ BLU)':'− Ambil dari Buffer';
   document.getElementById('buf-amount').value='';
   document.getElementById('buf-note').value='';
+  const expSec=document.getElementById('buf-expense-section');
+  expSec.style.display=dir==='out'?'block':'none';
+  if(dir==='out'){
+    document.getElementById('buf-cat-chips').innerHTML=EXP_CATS.map(c=>
+      `<div onclick="selectBufCat(this,'${c}')" style="font-size:9px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--bg);color:var(--text2);transition:all .15s;">${c}</div>`
+    ).join('');
+  }
   document.getElementById('buf-modal').classList.add('open');
   setTimeout(()=>document.getElementById('buf-amount').focus(),100);
+}
+function selectBufCat(el,cat){
+  bufExpCat=cat;
+  document.querySelectorAll('#buf-cat-chips div').forEach(d=>{d.style.background='var(--bg)';d.style.color='var(--text2)';d.style.borderColor='var(--border)';});
+  el.style.background='var(--red)';el.style.color='#fff';el.style.borderColor='var(--red)';
 }
 function closeBufModal(){document.getElementById('buf-modal').classList.remove('open');}
 async function confirmBuffer(){
   const amt=parseInt(document.getElementById('buf-amount').value);
   if(!amt||amt<=0)return;
+  if(bufDir==='out'&&!bufExpCat){alert('Pilih kategori expense dulu!');return;}
   const note=document.getElementById('buf-note').value.trim();
   const amount=bufDir==='in'?amt:-amt;
-  const body={date:todayStr(),amount,note:note||null};
+  const today=todayStr();
   try{
-    const log=await api('/api/buffer-logs','POST',body);
+    const log=await api('/api/buffer-logs','POST',{date:today,amount,note:note||null});
     bufferLogs.push(log);
-    closeBufModal();renderBuffer();
+    if(bufDir==='in'){
+      const trx=await api('/api/transactions','POST',{date:today,type:'buffer',category:'Isi Buffer (BLU)',amount:amt,note:note||'Alokasi ke BLU'});
+      transactions.push(trx);
+    }
+    if(bufDir==='out'){
+      const trx=await api('/api/transactions','POST',{date:today,type:'expense',category:bufExpCat,amount:amt,note:'[Buffer] '+(note||bufExpCat)});
+      transactions.push(trx);
+    }
+    closeBufModal();render();
   }catch(e){alert('Gagal: '+e.message);}
 }
 
@@ -524,14 +552,15 @@ function rcSet(id,val){const el=document.getElementById(id);el.value=val?rcFmt(v
 function calcRecon(){
   const jatim=rcRaw(document.getElementById('rc-jatim'));
   const sea=rcRaw(document.getElementById('rc-sea'));
-  const jago=rcRaw(document.getElementById('rc-jago'));
+  const blu=rcRaw(document.getElementById('rc-blu'));
   const ewallet=rcRaw(document.getElementById('rc-ewallet'));
   const cash=rcRaw(document.getElementById('rc-cash'));
-  const actual=jatim+sea+jago+ewallet+cash;
+  const actual=jatim+sea+blu+ewallet+cash;
   const sysbal=transactions.reduce((s,t)=>{
     if(t.type==='income')return s+t.amount;
     if(t.type==='expense')return s-t.amount;
     if(t.type==='investment')return s-t.amount;
+    if(t.type==='buffer')return s-t.amount;
     return s;
   },0);
   const diff=actual-sysbal;
@@ -547,17 +576,18 @@ function calcRecon(){
 async function saveRecon(){
   const jatim=rcRaw(document.getElementById('rc-jatim'));
   const sea=rcRaw(document.getElementById('rc-sea'));
-  const jago=rcRaw(document.getElementById('rc-jago'));
+  const blu=rcRaw(document.getElementById('rc-blu'));
   const ewallet=rcRaw(document.getElementById('rc-ewallet'));
   const cash=rcRaw(document.getElementById('rc-cash'));
-  const total_actual=jatim+sea+jago+ewallet+cash;
+  const total_actual=jatim+sea+blu+ewallet+cash;
   const total_system=transactions.reduce((s,t)=>{
     if(t.type==='income')return s+t.amount;
     if(t.type==='expense')return s-t.amount;
     if(t.type==='investment')return s-t.amount;
+    if(t.type==='buffer')return s-t.amount;
     return s;
   },0);
-  const body={date:todayStr(),bank_jatim:jatim,seabank:sea,bank_jago:jago,ewallet,cash,total_actual,total_system,difference:total_actual-total_system};
+  const body={date:todayStr(),bank_jatim:jatim,seabank:sea,bank_jago:blu,ewallet,cash,total_actual,total_system,difference:total_actual-total_system};
   try{
     const rc=await api('/api/reconciliations','POST',body);
     reconciliations.unshift(rc);
