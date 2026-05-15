@@ -1412,10 +1412,24 @@ function addTodo(){
   document.getElementById('cat-hint').classList.remove('show');
   renderTodos();renderStats();
 }
-function toggleTodo(id){
+async function toggleTodo(id){
   const t=todos.find(x=>x.id===id);if(!t)return;
+  const prevDoneDate=t.doneDate;
   t.done=!t.done;t.doneDate=t.done?todayStr():null;
-  saveTodoDB(t);render();
+  saveTodoDB(t);
+  if(t.done){
+    try{
+      const act=await api('/api/activities','POST',{date:todayStr(),category:'personal',text:t.text});
+      activities.push(act);
+    }catch(e){console.error(e);}
+  }else if(prevDoneDate){
+    const match=activities.find(a=>a.date===prevDoneDate&&a.category==='personal'&&a.text===t.text);
+    if(match){
+      await api('/api/activities?id='+match.id,'DELETE').catch(console.error);
+      activities=activities.filter(a=>a.id!==match.id);
+    }
+  }
+  render();
 }
 function delTodo(id){
   todos=todos.filter(x=>x.id!==id);delTodoDB(id);renderTodos();renderStats();
