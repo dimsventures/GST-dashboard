@@ -271,11 +271,11 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <div id="recon-badge" style="font-size:9px;font-weight:700;"></div>
     </div>
     <div class="recon-inputs">
-      <div class="recon-row"><span class="recon-lbl">Bank Jatim</span><input type="number" class="recon-inp" id="rc-jatim" placeholder="0" oninput="calcRecon()"></div>
-      <div class="recon-row"><span class="recon-lbl">Seabank</span><input type="number" class="recon-inp" id="rc-sea" placeholder="0" oninput="calcRecon()"></div>
-      <div class="recon-row"><span class="recon-lbl">Bank Jago</span><input type="number" class="recon-inp" id="rc-jago" placeholder="0" oninput="calcRecon()"></div>
-      <div class="recon-row"><span class="recon-lbl">E-Wallet</span><input type="number" class="recon-inp" id="rc-ewallet" placeholder="0" oninput="calcRecon()"></div>
-      <div class="recon-row"><span class="recon-lbl">Cash</span><input type="number" class="recon-inp" id="rc-cash" placeholder="0" oninput="calcRecon()"></div>
+      <div class="recon-row"><span class="recon-lbl">Bank Jatim</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-jatim" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
+      <div class="recon-row"><span class="recon-lbl">Seabank</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-sea" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
+      <div class="recon-row"><span class="recon-lbl">Bank Jago</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-jago" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
+      <div class="recon-row"><span class="recon-lbl">E-Wallet</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-ewallet" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
+      <div class="recon-row"><span class="recon-lbl">Cash</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-cash" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
     </div>
     <div class="recon-result">
       <div class="recon-diff-row"><span class="recon-diff-lbl">Total Aktual</span><span id="rc-actual" style="font-size:11px;font-weight:700;">Rp 0</span></div>
@@ -357,11 +357,11 @@ async function init(){
 function fillReconFromLast(){
   if(!reconciliations.length)return;
   const last=reconciliations[0];
-  document.getElementById('rc-jatim').value=last.bank_jatim||0;
-  document.getElementById('rc-sea').value=last.seabank||0;
-  document.getElementById('rc-jago').value=last.bank_jago||0;
-  document.getElementById('rc-ewallet').value=last.ewallet||0;
-  document.getElementById('rc-cash').value=last.cash||0;
+  rcSet('rc-jatim',last.bank_jatim);
+  rcSet('rc-sea',last.seabank);
+  rcSet('rc-jago',last.bank_jago);
+  rcSet('rc-ewallet',last.ewallet);
+  rcSet('rc-cash',last.cash);
   calcRecon();
 }
 
@@ -513,13 +513,20 @@ async function confirmBuffer(){
   }catch(e){alert('Gagal: '+e.message);}
 }
 
-// RECONCILIATION
+// RECONCILIATION HELPERS
+function rcRaw(el){return parseInt(el.value.replace(/[^0-9]/g,''))||0;}
+function rcFmt(n){return n?'Rp '+n.toLocaleString('id-ID'):'';}
+function rcInput(el){el.value=el.value.replace(/[^0-9]/g,'');calcRecon();}
+function rcFocus(el){const v=rcRaw(el);el.value=v||'';}
+function rcBlur(el){const v=rcRaw(el);el.value=v?rcFmt(v):'';calcRecon();}
+function rcSet(id,val){const el=document.getElementById(id);el.value=val?rcFmt(val):'';}
+
 function calcRecon(){
-  const jatim=parseInt(document.getElementById('rc-jatim').value)||0;
-  const sea=parseInt(document.getElementById('rc-sea').value)||0;
-  const jago=parseInt(document.getElementById('rc-jago').value)||0;
-  const ewallet=parseInt(document.getElementById('rc-ewallet').value)||0;
-  const cash=parseInt(document.getElementById('rc-cash').value)||0;
+  const jatim=rcRaw(document.getElementById('rc-jatim'));
+  const sea=rcRaw(document.getElementById('rc-sea'));
+  const jago=rcRaw(document.getElementById('rc-jago'));
+  const ewallet=rcRaw(document.getElementById('rc-ewallet'));
+  const cash=rcRaw(document.getElementById('rc-cash'));
   const actual=jatim+sea+jago+ewallet+cash;
   const sysbal=transactions.reduce((s,t)=>{
     if(t.type==='income')return s+t.amount;
@@ -538,11 +545,11 @@ function calcRecon(){
   document.getElementById('recon-badge').style.color=diff===0?'var(--green)':'var(--red)';
 }
 async function saveRecon(){
-  const jatim=parseInt(document.getElementById('rc-jatim').value)||0;
-  const sea=parseInt(document.getElementById('rc-sea').value)||0;
-  const jago=parseInt(document.getElementById('rc-jago').value)||0;
-  const ewallet=parseInt(document.getElementById('rc-ewallet').value)||0;
-  const cash=parseInt(document.getElementById('rc-cash').value)||0;
+  const jatim=rcRaw(document.getElementById('rc-jatim'));
+  const sea=rcRaw(document.getElementById('rc-sea'));
+  const jago=rcRaw(document.getElementById('rc-jago'));
+  const ewallet=rcRaw(document.getElementById('rc-ewallet'));
+  const cash=rcRaw(document.getElementById('rc-cash'));
   const total_actual=jatim+sea+jago+ewallet+cash;
   const total_system=transactions.reduce((s,t)=>{
     if(t.type==='income')return s+t.amount;
