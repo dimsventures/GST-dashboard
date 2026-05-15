@@ -681,7 +681,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <div class="cchip active" data-cat="Semua" onclick="filterCat(this)">Semua</div>
       <div class="cchip" data-cat="Market" onclick="filterCat(this)">Market</div>
       <div class="cchip" data-cat="AI/Tech" onclick="filterCat(this)">AI/Tech</div>
-      <div class="cchip" data-cat="Work" onclick="filterCat(this)">Work/BMD</div>
+      <div class="cchip" data-cat="Psychology" onclick="filterCat(this)">Psychology</div>
       <div class="cchip" data-cat="Content" onclick="filterCat(this)">Content</div>
     </div>
     <div class="todo-add">
@@ -1386,13 +1386,13 @@ function guessCat(text){
     {cat:'AI/Tech',words:['n8n','mcp','claude','gpt','llm','openai','anthropic','ai ','bot','api','automation','pipeline','webhook','workflow','figma','trae','cursor','copilot','agent','langchain','python','javascript','coding','github','vercel','integrasi','integration','build ','deploy','script','tools','tech','replit','supabase','database','server','model','prompt','tool use','rag','embedding']},
     {cat:'Market',words:['saham','stock','bbca','ihsg','crypto','bitcoin','btc','eth','on chain','onchain','financial model','dcf','screener','analisis market','analisis fundamental','analisis saham','analisis crypto','portofolio','portfolio','aset crypto','token','defi','wallet','fear greed','coinmarketcap','trading','market','fundamental','valuation','sector','indeks','entry','cut loss','profit taking','tbk','idx','swing','scalp','option']},
     {cat:'Content',words:['reels','carousel','artikel','cognithink','konten','content','video','youtube','instagram','twitter','thread','caption','post','postingan','brand','design','poster','visual','thumbnail','script video','nulis','tulisan','copywriting','hook','storytelling','tiktok','linkedin','personal branding','narasi','positioning']},
-    {cat:'Work',words:['penyusutan','bmd','rekonsiliasi','laporan','bpk','audit','inventaris','administrasi','kantor','dokumen','surat','disposisi','rapat','presentasi','paparan','pimpinan','anggaran','realisasi','simak','simda','neraca','aset tetap','barang milik','pbj','pengadaan','kontrak','monev']},
+    {cat:'Psychology',words:['psikologi','psychology','perilaku','behaviour','behavior','manusia','human','mental','mindset','emosi','emotion','kognitif','cognitive','bias','motivasi','motivation','habit','kebiasaan','self','diri','karakter','kepribadian','personality','sosial','social','komunikasi','communication','empati','empathy','relasi','relationship','belajar human','pemahaman','understanding','sikap','attitude','keputusan','influence','persuasi','trust','kepercayaan','leadership','ikigai','stoic','filosofi','philosophy','deep in','perilaku manusia','psych']},
   ];
   for(const r of rules){if(r.words.some(w=>t.includes(w)))return r.cat;}
-  return 'Work';
+  return 'AI/Tech';
 }
-const CAT_HINT_CLASS={Market:'c-market','AI/Tech':'c-aitech',Work:'c-work',Content:'c-content'};
-const CAT_HINT_LABEL={Market:'Market','AI/Tech':'AI/Tech',Work:'Work/BMD',Content:'Content'};
+const CAT_HINT_CLASS={Market:'c-market','AI/Tech':'c-aitech',Psychology:'c-work',Content:'c-content'};
+const CAT_HINT_LABEL={Market:'Market','AI/Tech':'AI/Tech',Psychology:'Psychology',Content:'Content'};
 function updateCatHint(val){
   const hint=document.getElementById('cat-hint');
   const badge=document.getElementById('cat-hint-badge');
