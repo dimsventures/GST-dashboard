@@ -277,7 +277,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
     <div class="recon-inputs">
       <div class="recon-row"><span class="recon-lbl">Bank Jatim</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-jatim" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
       <div class="recon-row"><span class="recon-lbl">Seabank</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-sea" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
-      <div class="recon-row"><span class="recon-lbl">Bank Jago / BLU</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-blu" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
+      <div class="recon-row"><span class="recon-lbl">Bank Jago</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-blu" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
       <div class="recon-row"><span class="recon-lbl">E-Wallet</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-ewallet" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
       <div class="recon-row"><span class="recon-lbl">Cash</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-cash" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
     </div>
@@ -433,8 +433,16 @@ async function addTransaction(){
 }
 
 async function delTransaction(id){
+  const t=transactions.find(x=>x.id===id);
   await api('/api/transactions?id='+id,'DELETE');
-  transactions=transactions.filter(t=>t.id!==id);
+  transactions=transactions.filter(x=>x.id!==id);
+  if(t&&t.type==='buffer'){
+    const match=bufferLogs.find(l=>l.date===t.date&&l.amount===t.amount);
+    if(match){
+      await api('/api/buffer-logs?id='+match.id,'DELETE').catch(console.error);
+      bufferLogs=bufferLogs.filter(l=>l.id!==match.id);
+    }
+  }
   render();
 }
 
