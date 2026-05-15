@@ -738,6 +738,26 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
   </div>
 </div>
 
+<!-- LEARNING RESULT MODAL -->
+<div class="moverlay" id="learning-modal">
+  <div class="modal" style="max-width:460px;">
+    <div class="mhdr">
+      <div class="mtitle">📚 Learning Done!</div>
+      <button class="mclose" onclick="closeLearningModal()">✕</button>
+    </div>
+    <div class="mbody" style="padding:20px 22px;">
+      <div id="learning-todo-text" style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px;"></div>
+      <div style="font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;margin-top:14px;">Apa yang kamu pelajari?</div>
+      <textarea id="learning-result-text" placeholder="Tulis kesimpulan, insight, atau hal penting yang kamu tangkap..." style="width:100%;min-height:110px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:10px 12px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--text);resize:vertical;outline:none;line-height:1.6;box-sizing:border-box;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px;">Tersimpan ke <strong>Lessons</strong> — bahan bacaan AI agent kamu nanti.</div>
+    </div>
+    <div class="mfooter">
+      <button class="btn-cancel" onclick="closeLearningModal()">Lewati</button>
+      <button class="btn-save" onclick="confirmLearning()" style="background:var(--gold);border-color:var(--gold);">🔒 Lock Learning</button>
+    </div>
+  </div>
+</div>
+
 <!-- ACHIEVE WISH MODAL -->
 <div class="moverlay" id="achieve-wish-modal">
   <div class="modal" style="max-width:480px;">
@@ -1468,7 +1488,22 @@ function addTodo(){
   document.getElementById('cat-hint').classList.remove('show');
   renderTodos();renderStats();
 }
+let learningTodoId=null;
+
 async function toggleTodo(id){
+  const t=todos.find(x=>x.id===id);if(!t)return;
+  if(!t.done&&t.cat==='Learning'){
+    learningTodoId=id;
+    document.getElementById('learning-todo-text').textContent=t.text;
+    document.getElementById('learning-result-text').value='';
+    document.getElementById('learning-modal').classList.add('open');
+    setTimeout(()=>document.getElementById('learning-result-text').focus(),100);
+    return;
+  }
+  await completeTodo(id);
+}
+
+async function completeTodo(id){
   const t=todos.find(x=>x.id===id);if(!t)return;
   const prevDoneDate=t.doneDate;
   t.done=!t.done;t.doneDate=t.done?todayStr():null;
@@ -1486,6 +1521,25 @@ async function toggleTodo(id){
     }
   }
   render();
+}
+
+async function confirmLearning(){
+  const text=document.getElementById('learning-result-text').value.trim();
+  if(text){
+    const today=todayStr();
+    const newItem={id:crypto.randomUUID(),text:'[Learning] '+document.getElementById('learning-todo-text').textContent+' → '+text,ts:new Date().toISOString()};
+    const idx=lessons.findIndex(l=>l.date===today);
+    if(idx>=0){lessons[idx].items=lessons[idx].items||[];lessons[idx].items.push(newItem);}
+    else{lessons.push({date:today,items:[newItem]});}
+    saveLessonsForDate(today);
+  }
+  closeLearningModal();
+  if(learningTodoId)await completeTodo(learningTodoId);
+  learningTodoId=null;
+}
+
+function closeLearningModal(){
+  document.getElementById('learning-modal').classList.remove('open');
 }
 function delTodo(id){
   todos=todos.filter(x=>x.id!==id);delTodoDB(id);renderTodos();renderStats();
