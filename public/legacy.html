@@ -1542,6 +1542,11 @@ function closeLearningModal(){
   document.getElementById('learning-modal').classList.remove('open');
 }
 function delTodo(id){
+  const t=todos.find(x=>x.id===id);
+  if(t&&t.done&&t.doneDate){
+    const match=activities.find(a=>a.date===t.doneDate&&a.category==='personal'&&a.text===t.text);
+    if(match){api('/api/activities?id='+match.id,'DELETE').catch(console.error);activities=activities.filter(a=>a.id!==match.id);}
+  }
   todos=todos.filter(x=>x.id!==id);delTodoDB(id);renderTodos();renderStats();
 }
 function renderTodos(){
