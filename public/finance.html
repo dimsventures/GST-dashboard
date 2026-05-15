@@ -279,9 +279,11 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
   <!-- STACKED BAR CHART -->
   <div class="card">
     <div class="card-hdr"><div class="card-title">Expense per Bulan</div></div>
-    <div style="padding:12px 14px;">
+    <div style="padding:10px 14px 6px;">
+      <div id="fin-chart-legend" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
       <div class="chart-wrap-fin"><canvas id="fin-chart-bar"></canvas></div>
     </div>
+    <div id="fin-chart-table" style="overflow-x:auto;padding:0 14px 12px;display:none;"></div>
   </div>
 
   <!-- YTD SUMMARY -->
@@ -495,6 +497,7 @@ let finChartInstance=null;
 const CAT_COLORS={'Housing':'rgba(239,68,68,.85)','Consumption':'rgba(245,158,11,.85)','Needs':'rgba(34,197,94,.85)',
   'Joy':'rgba(168,85,247,.85)','Transport':'rgba(59,130,246,.85)','Utilities':'rgba(20,184,166,.85)',
   'Electronic':'rgba(249,115,22,.85)','Charity':'rgba(236,72,153,.85)','Unexpected':'rgba(107,114,128,.85)'};
+
 function renderFinChart(){
   const yr=currentMonth.slice(0,4);
   const months=[...new Set(transactions.filter(t=>t.date.startsWith(yr)&&t.type==='expense').map(t=>t.date.slice(0,7)))].sort();
@@ -507,6 +510,14 @@ function renderFinChart(){
     data:months.map(m=>transactions.filter(t=>t.date.startsWith(m)&&t.type==='expense'&&t.category===cat).reduce((s,t)=>s+t.amount,0)),
     backgroundColor:CAT_COLORS[cat],stack:'s'
   })).filter(ds=>ds.data.some(v=>v>0));
+
+  // Legend
+  const legendEl=document.getElementById('fin-chart-legend');
+  legendEl.innerHTML=datasets.map((ds,i)=>`
+    <div onclick="toggleFinCat(${i},this)" style="display:flex;align-items:center;gap:5px;font-size:9px;font-weight:600;padding:3px 8px;border-radius:12px;border:1px solid var(--border);cursor:pointer;background:var(--bg);color:var(--text2);transition:all .15s;" data-idx="${i}">
+      <span style="width:8px;height:8px;border-radius:2px;background:${ds.backgroundColor};flex-shrink:0;display:inline-block;"></span>${ds.label}
+    </div>`).join('');
+
   const canvas=document.getElementById('fin-chart-bar');
   canvas.style.width=Math.max(500,months.length*80)+'px';
   if(finChartInstance){finChartInstance.destroy();finChartInstance=null;}
@@ -522,6 +533,38 @@ function renderFinChart(){
       }
     }
   });
+
+  // Table
+  const tbl=document.getElementById('fin-chart-table');
+  const totals=months.map(m=>datasets.reduce((s,ds)=>s+ds.data[months.indexOf(m)],0));
+  tbl.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:10px;">
+    <thead>
+      <tr style="border-bottom:2px solid var(--border);">
+        <th style="text-align:left;padding:5px 8px;font-weight:700;color:var(--text2);">Kategori</th>
+        ${labels.map(l=>`<th style="text-align:right;padding:5px 8px;font-weight:700;color:var(--text2);">${l}</th>`).join('')}
+      </tr>
+    </thead>
+    <tbody>
+      ${datasets.map(ds=>`
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:5px 8px;display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:2px;background:${ds.backgroundColor};flex-shrink:0;display:inline-block;"></span>${ds.label}</td>
+          ${ds.data.map(v=>`<td style="text-align:right;padding:5px 8px;color:${v?'var(--text)':'var(--text4)'};">${v?'Rp '+v.toLocaleString('id-ID'):'-'}</td>`).join('')}
+        </tr>`).join('')}
+      <tr style="border-top:2px solid var(--border);font-weight:700;">
+        <td style="padding:6px 8px;">Total</td>
+        ${totals.map(v=>`<td style="text-align:right;padding:6px 8px;color:var(--red);">Rp ${v.toLocaleString('id-ID')}</td>`).join('')}
+      </tr>
+    </tbody>
+  </table>`;
+}
+
+function toggleFinCat(idx,el){
+  if(!finChartInstance)return;
+  const meta=finChartInstance.getDatasetMeta(idx);
+  meta.hidden=!meta.hidden;
+  finChartInstance.update();
+  el.style.opacity=meta.hidden?'.35':'1';
+  document.getElementById('fin-chart-table').style.display='block';
 }
 
 // ── BREAKDOWN TOGGLE ──
