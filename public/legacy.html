@@ -756,6 +756,33 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
   </div>
 </div>
 
+<!-- GOAL ACHIEVE MODAL -->
+<div class="moverlay" id="goal-achieve-modal">
+  <div class="modal" style="max-width:420px;">
+    <div class="mhdr">
+      <div class="mtitle">🎯 Goal Tercapai!</div>
+      <button class="mclose" onclick="closeGoalAchieveModal()">✕</button>
+    </div>
+    <div class="mbody" style="padding:20px 22px;">
+      <div id="goal-achieve-text" style="font-size:12px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:4px;"></div>
+      <div id="goal-achieve-pts" style="font-size:11px;color:var(--red);font-weight:700;letter-spacing:.04em;margin-bottom:18px;"></div>
+      <div style="font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">Masukkan poin ke kategori:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px;">
+        <button class="goal-cat-btn" data-cat="religion"  onclick="selectGoalCat('religion')"  style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Religion</button>
+        <button class="goal-cat-btn" data-cat="work"      onclick="selectGoalCat('work')"      style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Working Stage</button>
+        <button class="goal-cat-btn" data-cat="personal"  onclick="selectGoalCat('personal')"  style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Personal Wish</button>
+        <button class="goal-cat-btn" data-cat="exercise"  onclick="selectGoalCat('exercise')"  style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Exercise</button>
+        <button class="goal-cat-btn" data-cat="habit"     onclick="selectGoalCat('habit')"     style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Habit</button>
+        <button class="goal-cat-btn" data-cat="humanity"  onclick="selectGoalCat('humanity')"  style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Humanity</button>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn-cancel" onclick="closeGoalAchieveModal()">Batal</button>
+      <button class="btn-save" id="goal-achieve-confirm" onclick="confirmGoalAchieve()" disabled style="opacity:.4;cursor:not-allowed;">Konfirmasi</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOG MODAL -->
 <div class="moverlay" id="mo">
   <div class="modal">
@@ -1738,7 +1765,56 @@ function addGoal(){
   goals.push(g);saveGoalDB(g);
   inp.value='';renderGoals();
 }
-function toggleGoal(id){const g=goals.find(x=>x.id===id);if(!g)return;g.done=!g.done;g.doneDate=g.done?todayStr():null;saveGoalDB(g);render();}
+let goalAchieveId=null,goalAchieveCat=null;
+
+function toggleGoal(id){
+  const g=goals.find(x=>x.id===id);if(!g)return;
+  if(!g.done){
+    goalAchieveId=id;goalAchieveCat=null;
+    document.getElementById('goal-achieve-text').textContent=g.text;
+    document.getElementById('goal-achieve-pts').textContent=g.scope==='year'?'+7 poin aktivitas':'+3 poin aktivitas';
+    document.querySelectorAll('.goal-cat-btn').forEach(b=>{b.style.background='var(--bg)';b.style.color='var(--text2)';b.style.borderColor='var(--border)';});
+    const btn=document.getElementById('goal-achieve-confirm');btn.disabled=true;btn.style.opacity='.4';btn.style.cursor='not-allowed';
+    document.getElementById('goal-achieve-modal').classList.add('open');
+  }else{
+    if(!confirm('Batalkan pencapaian goal ini? Poin aktivitas yang ditambahkan akan dihapus.'))return;
+    const prevDate=g.doneDate;const n=g.scope==='year'?7:3;
+    g.done=false;g.doneDate=null;saveGoalDB(g);
+    const toDelete=activities.filter(a=>a.date===prevDate&&a.text==='[G] '+g.text).slice(0,n);
+    toDelete.forEach(a=>{api('/api/activities?id='+a.id,'DELETE').catch(console.error);});
+    activities=activities.filter(a=>!toDelete.find(d=>d.id===a.id));
+    render();
+  }
+}
+
+function selectGoalCat(cat){
+  goalAchieveCat=cat;
+  document.querySelectorAll('.goal-cat-btn').forEach(b=>{
+    const active=b.dataset.cat===cat;
+    b.style.background=active?'var(--blk)':'var(--bg)';
+    b.style.color=active?'#fff':'var(--text2)';
+    b.style.borderColor=active?'var(--blk)':'var(--border)';
+  });
+  const btn=document.getElementById('goal-achieve-confirm');btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';
+}
+
+async function confirmGoalAchieve(){
+  if(!goalAchieveId||!goalAchieveCat)return;
+  const g=goals.find(x=>x.id===goalAchieveId);if(!g)return;
+  const n=g.scope==='year'?7:3;const today=todayStr();
+  g.done=true;g.doneDate=today;saveGoalDB(g);
+  for(let i=0;i<n;i++){
+    try{const act=await api('/api/activities','POST',{date:today,category:goalAchieveCat,text:'[G] '+g.text});activities.push(act);}
+    catch(e){console.error(e);}
+  }
+  closeGoalAchieveModal();render();
+}
+
+function closeGoalAchieveModal(){
+  document.getElementById('goal-achieve-modal').classList.remove('open');
+  goalAchieveId=null;goalAchieveCat=null;
+}
+
 function delGoal(id){goals=goals.filter(x=>x.id!==id);delGoalDB(id);renderGoals();}
 function renderGoals(){
   if(goalNavY===null){const n=new Date();goalNavY=n.getFullYear();goalNavM=n.getMonth();goalNavYr=n.getFullYear();}
