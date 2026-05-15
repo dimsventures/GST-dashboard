@@ -267,12 +267,13 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
     </div>
     <div class="sum-grid">
       <div class="sum-box"><div class="sum-lbl">Income</div><div class="sum-val green" id="s-income">Rp 0</div></div>
-      <div class="sum-box"><div class="sum-lbl">Life Cost</div><div class="sum-val red" id="s-expense">Rp 0</div></div>
-      <div class="sum-box"><div class="sum-lbl">Investment</div><div class="sum-val blue" id="s-invest">Rp 0</div></div>
+      <div class="sum-box" onclick="toggleBreakdown('expense')" style="cursor:pointer;" title="Klik untuk detail"><div class="sum-lbl">Life Cost ▾</div><div class="sum-val red" id="s-expense">Rp 0</div></div>
+      <div class="sum-box" onclick="toggleBreakdown('invest')" style="cursor:pointer;" title="Klik untuk detail"><div class="sum-lbl">Investment ▾</div><div class="sum-val blue" id="s-invest">Rp 0</div></div>
       <div class="sum-box"><div class="sum-lbl">Sisa</div><div class="sum-val gold" id="s-sisa">Rp 0</div></div>
     </div>
     <div class="saverate-bar"><div class="saverate-fill" id="saverate-fill" style="width:0%"></div></div>
-    <div class="breakdown" id="breakdown"></div>
+    <div class="breakdown" id="breakdown" style="display:none;"></div>
+    <div class="breakdown" id="breakdown-invest" style="display:none;"></div>
   </div>
 
   <!-- STACKED BAR CHART -->
@@ -523,6 +524,14 @@ function renderFinChart(){
   });
 }
 
+// ── BREAKDOWN TOGGLE ──
+function toggleBreakdown(type){
+  const el=document.getElementById(type==='expense'?'breakdown':'breakdown-invest');
+  const other=document.getElementById(type==='expense'?'breakdown-invest':'breakdown');
+  other.style.display='none';
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+
 // ── YTD TOGGLE ──
 let ytdOpen=true;
 function toggleYTD(){
@@ -630,13 +639,21 @@ function renderSummary(){
   document.getElementById('save-rate-badge').textContent=`Save Rate: ${rate}%`;
   document.getElementById('saverate-fill').style.width=Math.min(rate,100)+'%';
 
-  // Expense breakdown
+  // Expense breakdown (hidden by default)
   const cats={};
   moTrx.filter(t=>t.type==='expense').forEach(t=>{cats[t.category]=(cats[t.category]||0)+t.amount;});
   const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
   document.getElementById('breakdown').innerHTML=sorted.length
     ?sorted.map(([k,v])=>`<div class="bk-row"><span class="bk-label">${k}</span><span class="bk-val">${fmtRp(v)}</span></div>`).join('')
     :'<div style="font-size:10px;color:var(--text4);text-align:center;padding:8px;">Belum ada pengeluaran.</div>';
+
+  // Investment breakdown (hidden by default)
+  const invCats={};
+  moTrx.filter(t=>t.type==='investment').forEach(t=>{invCats[t.category]=(invCats[t.category]||0)+t.amount;});
+  const invSorted=Object.entries(invCats).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('breakdown-invest').innerHTML=invSorted.length
+    ?invSorted.map(([k,v])=>`<div class="bk-row"><span class="bk-label">${k}</span><span class="bk-val" style="color:var(--blue)">${fmtRp(v)}</span></div>`).join('')
+    :'<div style="font-size:10px;color:var(--text4);text-align:center;padding:8px;">Belum ada investasi.</div>';
 
   // YTD
   const yr=currentMonth.slice(0,4);
