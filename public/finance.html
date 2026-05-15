@@ -260,10 +260,30 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 <!-- CENTER: MONTHLY SUMMARY -->
 <div style="display:flex;flex-direction:column;gap:12px;">
 
+  <!-- YTD SUMMARY -->
+  <div class="card">
+    <div class="card-hdr" onclick="toggleYTD()" style="cursor:pointer;user-select:none;">
+      <div class="card-title">Year to Date</div>
+      <button class="ytd-toggle" id="ytd-toggle">▾</button>
+    </div>
+    <div class="ytd-body" id="ytd-body">
+      <div class="sum-grid">
+        <div class="sum-box"><div class="sum-lbl">Total Income</div><div class="sum-val green" id="ytd-income">Rp 0</div></div>
+        <div class="sum-box"><div class="sum-lbl">Total Expense</div><div class="sum-val red" id="ytd-expense">Rp 0</div></div>
+        <div class="sum-box"><div class="sum-lbl">Total Invest</div><div class="sum-val blue" id="ytd-invest">Rp 0</div></div>
+        <div class="sum-box"><div class="sum-lbl">Savings Rate</div><div class="sum-val gold" id="ytd-rate">0%</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RINGKASAN BULAN INI -->
   <div class="card">
     <div class="card-hdr">
       <div class="card-title">Ringkasan Bulan Ini</div>
-      <div id="save-rate-badge" style="font-size:10px;font-weight:700;color:var(--green);"></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="save-rate-badge" style="font-size:10px;font-weight:700;color:var(--green);"></div>
+        <button onclick="toggleHide()" id="eye-btn" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3);padding:0;line-height:1;" title="Sembunyikan angka">👁</button>
+      </div>
     </div>
     <div class="sum-grid">
       <div class="sum-box"><div class="sum-lbl">Income</div><div class="sum-val green" id="s-income">Rp 0</div></div>
@@ -284,22 +304,6 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <div class="chart-wrap-fin"><canvas id="fin-chart-bar"></canvas></div>
     </div>
     <div id="fin-chart-table" style="overflow-x:auto;padding:0 14px 12px;display:none;"></div>
-  </div>
-
-  <!-- YTD SUMMARY -->
-  <div class="card">
-    <div class="card-hdr" onclick="toggleYTD()" style="cursor:pointer;user-select:none;">
-      <div class="card-title">Year to Date</div>
-      <button class="ytd-toggle" id="ytd-toggle">▾</button>
-    </div>
-    <div class="ytd-body" id="ytd-body">
-      <div class="sum-grid">
-        <div class="sum-box"><div class="sum-lbl">Total Income</div><div class="sum-val green" id="ytd-income">Rp 0</div></div>
-        <div class="sum-box"><div class="sum-lbl">Total Expense</div><div class="sum-val red" id="ytd-expense">Rp 0</div></div>
-        <div class="sum-box"><div class="sum-lbl">Total Invest</div><div class="sum-val blue" id="ytd-invest">Rp 0</div></div>
-        <div class="sum-box"><div class="sum-lbl">Savings Rate</div><div class="sum-val gold" id="ytd-rate">0%</div></div>
-      </div>
-    </div>
   </div>
 
 </div>
@@ -567,6 +571,24 @@ function toggleFinCat(idx,el){
   document.getElementById('fin-chart-table').style.display='block';
 }
 
+// ── EYE HIDE TOGGLE ──
+let numbersHidden=false;
+const HIDDEN_IDS=['s-income','s-expense','s-invest','s-sisa'];
+let hiddenVals={};
+function toggleHide(){
+  numbersHidden=!numbersHidden;
+  document.getElementById('eye-btn').textContent=numbersHidden?'🙈':'👁';
+  HIDDEN_IDS.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    if(numbersHidden){hiddenVals[id]=el.textContent;el.textContent='•••••••';}
+    else{el.textContent=hiddenVals[id]||el.textContent;}
+  });
+  const badge=document.getElementById('save-rate-badge');
+  if(numbersHidden){hiddenVals['badge']=badge.textContent;badge.textContent='';}
+  else{badge.textContent=hiddenVals['badge']||'';}
+}
+
 // ── BREAKDOWN TOGGLE ──
 function toggleBreakdown(type){
   const el=document.getElementById(type==='expense'?'breakdown':'breakdown-invest');
@@ -674,12 +696,18 @@ function renderSummary(){
   const invest=moTrx.filter(t=>t.type==='investment').reduce((s,t)=>s+t.amount,0);
   const sisa=income-expense-invest;
   const rate=income>0?Math.round((invest/income)*100):0;
-  document.getElementById('s-income').textContent=fmtRp(income);
-  document.getElementById('s-expense').textContent=fmtRp(expense);
-  document.getElementById('s-invest').textContent=fmtRp(invest);
-  document.getElementById('s-sisa').textContent=fmtRp(sisa);
+  if(numbersHidden){
+    hiddenVals['s-income']=fmtRp(income);hiddenVals['s-expense']=fmtRp(expense);
+    hiddenVals['s-invest']=fmtRp(invest);hiddenVals['s-sisa']=fmtRp(sisa);
+    hiddenVals['badge']=`Save Rate: ${rate}%`;
+  }else{
+    document.getElementById('s-income').textContent=fmtRp(income);
+    document.getElementById('s-expense').textContent=fmtRp(expense);
+    document.getElementById('s-invest').textContent=fmtRp(invest);
+    document.getElementById('s-sisa').textContent=fmtRp(sisa);
+    document.getElementById('save-rate-badge').textContent=`Save Rate: ${rate}%`;
+  }
   document.getElementById('s-sisa').style.color=sisa>=0?'var(--gold)':'var(--red)';
-  document.getElementById('save-rate-badge').textContent=`Save Rate: ${rate}%`;
   document.getElementById('saverate-fill').style.width=Math.min(rate,100)+'%';
 
   // Expense breakdown (hidden by default)
