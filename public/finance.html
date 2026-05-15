@@ -351,6 +351,18 @@ async function init(){
   ]);
   transactions=tr;bufferLogs=bl;reconciliations=rc;
   render();
+  fillReconFromLast();
+}
+
+function fillReconFromLast(){
+  if(!reconciliations.length)return;
+  const last=reconciliations[0];
+  document.getElementById('rc-jatim').value=last.bank_jatim||0;
+  document.getElementById('rc-sea').value=last.seabank||0;
+  document.getElementById('rc-jago').value=last.bank_jago||0;
+  document.getElementById('rc-ewallet').value=last.ewallet||0;
+  document.getElementById('rc-cash').value=last.cash||0;
+  calcRecon();
 }
 
 function render(){
@@ -543,6 +555,7 @@ async function saveRecon(){
     const rc=await api('/api/reconciliations','POST',body);
     reconciliations.unshift(rc);
     renderReconHistory();
+    fillReconFromLast();
     alert('Audit tersimpan!');
   }catch(e){alert('Gagal: '+e.message);}
 }
