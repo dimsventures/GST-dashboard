@@ -679,6 +679,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
     </div>
     <div class="cat-bar">
       <div class="cchip active" data-cat="Semua" onclick="filterCat(this)">Semua</div>
+      <div class="cchip" data-cat="Learning" onclick="filterCat(this)">Learning</div>
       <div class="cchip" data-cat="Market" onclick="filterCat(this)">Market</div>
       <div class="cchip" data-cat="AI/Tech" onclick="filterCat(this)">AI/Tech</div>
       <div class="cchip" data-cat="Psychology" onclick="filterCat(this)">Psychology</div>
@@ -1437,6 +1438,7 @@ function filterStatus(el){
 function guessCat(text){
   const t=text.toLowerCase();
   const rules=[
+    {cat:'Learning',words:['belajar','pelajari','learning','learn','to know','pahami','memahami','riset','research','deep in','deep dive','studi','study','eksplorasi','explore','cari tau','cari tahu','ngerti','mengerti','kenali','review','baca buku','baca ','read ','curso','kursus','course','modul','module','dokumentasi','documentation','tutorial']},
     {cat:'AI/Tech',words:['n8n','mcp','claude','gpt','llm','openai','anthropic','ai ','bot','api','automation','pipeline','webhook','workflow','figma','trae','cursor','copilot','agent','langchain','python','javascript','coding','github','vercel','integrasi','integration','build ','deploy','script','tools','tech','replit','supabase','database','server','model','prompt','tool use','rag','embedding']},
     {cat:'Market',words:['saham','stock','bbca','ihsg','crypto','bitcoin','btc','eth','on chain','onchain','financial model','dcf','screener','analisis market','analisis fundamental','analisis saham','analisis crypto','portofolio','portfolio','aset crypto','token','defi','wallet','fear greed','coinmarketcap','trading','market','fundamental','valuation','sector','indeks','entry','cut loss','profit taking','tbk','idx','swing','scalp','option']},
     {cat:'Content',words:['reels','carousel','artikel','cognithink','konten','content','video','youtube','instagram','twitter','thread','caption','post','postingan','brand','design','poster','visual','thumbnail','script video','nulis','tulisan','copywriting','hook','storytelling','tiktok','linkedin','personal branding','narasi','positioning']},
@@ -1445,8 +1447,8 @@ function guessCat(text){
   for(const r of rules){if(r.words.some(w=>t.includes(w)))return r.cat;}
   return 'AI/Tech';
 }
-const CAT_HINT_CLASS={Market:'c-market','AI/Tech':'c-aitech',Psychology:'c-work',Content:'c-content'};
-const CAT_HINT_LABEL={Market:'Market','AI/Tech':'AI/Tech',Psychology:'Psychology',Content:'Content'};
+const CAT_HINT_CLASS={Learning:'c-aitech',Market:'c-market','AI/Tech':'c-aitech',Psychology:'c-work',Content:'c-content'};
+const CAT_HINT_LABEL={Learning:'Learning',Market:'Market','AI/Tech':'AI/Tech',Psychology:'Psychology',Content:'Content'};
 function updateCatHint(val){
   const hint=document.getElementById('cat-hint');
   const badge=document.getElementById('cat-hint-badge');
