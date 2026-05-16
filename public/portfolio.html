@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — GST HQ</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --white:#fff;--bg:#f5f4f2;--bg2:#eeedeb;
+  --border:#e4e2de;--border2:#d0cdc8;
+  --text:#1a1a1a;--text2:#4a4a4a;--text3:#888;--text4:#c0bdb8;
+  --red:#d12b2b;--red2:#b32222;--red-bg:#fef2f2;
+  --blk:#111;
+  --green:#15a34a;--green-bg:#f0fdf4;--green-border:#bbf7d0;
+  --gold:#c9841a;--gold-bg:#fffbf0;--gold-border:#f0d88a;
+  --blue:#2563eb;--blue-bg:#eff6ff;
+  --purple:#7c3aed;
+  --r:8px;--r2:5px;
+  --s1:0 1px 3px rgba(0,0,0,.06);--s2:0 4px 12px rgba(0,0,0,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;-webkit-font-smoothing:antialiased;}
+button,input,select,textarea{font-family:'Poppins',sans-serif;}
+header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-size:15px;font-weight:700;color:var(--blk);}
+.logo span{color:var(--green);}
+.hdr-r{display:flex;align-items:center;gap:8px;}
+.btn-nav{background:none;border:1px solid var(--border);padding:6px 12px;border-radius:var(--r2);font-size:10px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .15s;}
+.btn-nav:hover{border-color:var(--blk);color:var(--blk);}
+.main{display:grid;grid-template-columns:280px 1fr 280px;gap:12px;padding:12px;min-height:calc(100vh - 52px);}
+.card{background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--s1);overflow:hidden;margin-bottom:12px;}
+.card:last-child{margin-bottom:0;}
+.card-hdr{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text);}
+.card-body{padding:14px 16px;}
+
+/* ASSET LIST */
+.asset-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);transition:background .12s;}
+.asset-item:last-child{border-bottom:none;}
+.asset-item:hover{background:var(--bg);}
+.asset-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.asset-name{flex:1;font-size:11px;font-weight:600;color:var(--text);}
+.asset-type{font-size:9px;color:var(--text3);font-weight:500;}
+.asset-currency{font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;background:var(--bg2);color:var(--text3);}
+.asset-toggle{background:none;border:none;cursor:pointer;font-size:10px;color:var(--text3);transition:color .15s;}
+.asset-toggle:hover{color:var(--red);}
+.add-asset-form{padding:10px 12px;border-top:1px solid var(--border);}
+.mini-inp{width:100%;border:1px solid var(--border);border-radius:var(--r2);padding:6px 8px;font-size:11px;outline:none;background:var(--bg);margin-bottom:6px;transition:border-color .15s;}
+.mini-inp:focus{border-color:var(--blk);}
+.mini-sel{width:100%;border:1px solid var(--border);border-radius:var(--r2);padding:6px 8px;font-size:11px;outline:none;background:var(--bg);margin-bottom:6px;}
+.btn-sm{width:100%;background:var(--blk);color:#fff;border:none;border-radius:var(--r2);padding:7px;font-size:10px;font-weight:700;cursor:pointer;transition:background .15s;}
+.btn-sm:hover{background:#333;}
+.btn-sm.red{background:var(--red);}
+.btn-sm.red:hover{background:var(--red2);}
+.btn-sm.green{background:var(--green);}
+
+/* SNAPSHOT TABLE */
+.snap-table{width:100%;border-collapse:collapse;font-size:11px;}
+.snap-table th{text-align:left;padding:6px 10px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:2px solid var(--border);}
+.snap-table td{padding:6px 10px;border-bottom:1px solid var(--border);}
+.snap-table tr:last-child td{border-bottom:none;}
+.snap-inp{width:100%;border:1px solid var(--border);border-radius:var(--r2);padding:5px 7px;font-size:11px;font-weight:600;outline:none;background:var(--bg);text-align:right;}
+.snap-inp:focus{border-color:var(--green);}
+.snap-asset-name{font-weight:600;color:var(--text);}
+.snap-asset-cur{font-size:8px;color:var(--text3);margin-left:4px;}
+.month-nav{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);}
+.mnav{background:none;border:1px solid var(--border);width:26px;height:26px;border-radius:var(--r2);cursor:pointer;font-size:12px;color:var(--text2);transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.mnav:hover{border-color:var(--green);color:var(--green);}
+.mlbl{font-size:12px;font-weight:700;color:var(--text);}
+.btn-save-snap{margin:10px 16px;width:calc(100% - 32px);background:var(--green);color:#fff;border:none;border-radius:var(--r2);padding:9px;font-size:11px;font-weight:700;cursor:pointer;transition:background .15s;}
+.btn-save-snap:hover{background:#128c40;}
+
+/* CHART */
+.chart-wrap-porto{position:relative;width:100%;overflow-x:auto;padding:12px 14px;}
+.chart-wrap-porto canvas{width:100%!important;height:220px!important;}
+
+/* SUMMARY */
+.total-val{text-align:center;padding:16px 14px 10px;border-bottom:1px solid var(--border);}
+.total-num{font-size:24px;font-weight:700;color:var(--green);}
+.total-lbl{font-size:9px;color:var(--text3);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+.roi-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;margin-top:6px;}
+.roi-pill.pos{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.roi-pill.neg{background:var(--red-bg);color:var(--red);border:1px solid #fad4d4;}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;border-bottom:1px solid var(--border);font-size:11px;}
+.sum-row:last-child{border-bottom:none;}
+.sum-row-lbl{color:var(--text2);font-weight:500;}
+.sum-row-val{font-weight:700;}
+
+/* ASSET BREAKDOWN */
+.bk-asset{padding:8px 14px;border-bottom:1px solid var(--border);}
+.bk-asset:last-child{border-bottom:none;}
+.bk-asset-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
+.bk-asset-name{font-size:10px;font-weight:700;display:flex;align-items:center;gap:5px;}
+.bk-asset-val{font-size:12px;font-weight:700;color:var(--green);}
+.bk-asset-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:3px;}
+.bk-asset-fill{height:100%;border-radius:2px;background:var(--green);}
+.bk-asset-meta{display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:2px;}
+
+/* WITHDRAWAL */
+.wd-item{padding:8px 14px;border-bottom:1px solid var(--border);font-size:10px;}
+.wd-item:last-child{border-bottom:none;}
+.wd-item-hdr{display:flex;justify-content:space-between;margin-bottom:2px;}
+.wd-asset{font-weight:600;}
+.wd-amount{font-weight:700;color:var(--red);}
+.wd-meta{color:var(--text3);}
+
+/* MODAL */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
+.moverlay.open{display:flex;}
+.modal{background:var(--white);border-radius:10px;border:1.5px solid var(--border);width:100%;max-width:400px;box-shadow:0 8px 24px rgba(0,0,0,.12);}
+.mhdr{padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.mtitle{font-size:13px;font-weight:700;}
+.mclose{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;}
+.mbody{padding:16px 18px;}
+.mlbl{font-size:10px;font-weight:600;color:var(--text2);margin-bottom:5px;display:block;letter-spacing:.04em;}
+.mfooter{padding:10px 18px 16px;display:flex;gap:8px;justify-content:flex-end;}
+.btn-cancel{background:none;border:1px solid var(--border);color:var(--text2);padding:7px 14px;border-radius:var(--r2);font-size:11px;cursor:pointer;}
+.btn-primary{background:var(--green);border:none;color:#fff;padding:7px 18px;border-radius:var(--r2);font-size:11px;font-weight:700;cursor:pointer;}
+
+/* TYPE COLORS */
+.stocks_idr{background:#3b82f6;}
+.crypto_idr{background:#8b5cf6;}
+.crypto_usd{background:#f59e0b;}
+.wallet_usd{background:#ec4899;}
+.stocks_usd{background:#14b8a6;}
+.other{background:#6b7280;}
+
+@media(max-width:768px){.main{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GST <span>Portfolio</span></div>
+  <div class="hdr-r">
+    <button class="btn-nav" onclick="location.href='/finance.html'">Finance</button>
+    <button class="btn-nav" onclick="location.href='/legacy.html'">← Dashboard</button>
+  </div>
+</header>
+
+<div class="main">
+
+<!-- LEFT: ASSETS + WITHDRAWAL -->
+<div>
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-title">Aset</div>
+      <button onclick="toggleAddAsset()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text3);">+</button>
+    </div>
+    <div id="asset-list"></div>
+    <div id="add-asset-form" class="add-asset-form" style="display:none;">
+      <input class="mini-inp" id="new-asset-name" placeholder="Nama aset (e.g. Bibit)">
+      <select class="mini-sel" id="new-asset-type">
+        <option value="stocks_idr">Saham IDR</option>
+        <option value="crypto_idr">Crypto IDR</option>
+        <option value="crypto_usd">Crypto USD</option>
+        <option value="wallet_usd">Wallet USD</option>
+        <option value="stocks_usd">Saham USD</option>
+        <option value="other">Lainnya</option>
+      </select>
+      <select class="mini-sel" id="new-asset-currency">
+        <option value="IDR">IDR</option>
+        <option value="USD">USD</option>
+      </select>
+      <button class="btn-sm" onclick="addAsset()">Tambah Aset</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">Tarik Dana</div></div>
+    <div class="card-body">
+      <label class="mlbl">Dari Aset</label>
+      <select class="mini-sel" id="wd-asset" style="margin-bottom:10px;"></select>
+      <label class="mlbl">Nominal (IDR)</label>
+      <input type="number" class="mini-inp" id="wd-amount" placeholder="0" style="margin-bottom:10px;">
+      <label class="mlbl">Alokasi ke</label>
+      <select class="mini-sel" id="wd-type" onchange="updateWdAlloc()" style="margin-bottom:6px;">
+        <option value="finance_expense">Finance — Expense</option>
+        <option value="finance_income">Finance — Income</option>
+        <option value="finance_buffer">Finance — Buffer</option>
+        <option value="reinvest">Re-invest ke aset lain</option>
+      </select>
+      <div id="wd-alloc-extra" style="margin-bottom:10px;"></div>
+      <input type="text" class="mini-inp" id="wd-note" placeholder="Catatan" style="margin-bottom:10px;">
+      <button class="btn-sm red" onclick="saveWithdrawal()">Tarik Dana</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">Penarikan Terakhir</div></div>
+    <div id="wd-list"><div style="padding:14px;font-size:10px;color:var(--text4);text-align:center;">Belum ada penarikan.</div></div>
+  </div>
+</div>
+
+<!-- CENTER: SNAPSHOT + CHART -->
+<div>
+  <div class="card">
+    <div class="month-nav">
+      <button class="mnav" onclick="snapMonthChange(-1)">‹</button>
+      <div class="mlbl" id="snap-month-lbl">—</div>
+      <button class="mnav" onclick="snapMonthChange(1)">›</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="snap-table" id="snap-table">
+        <thead><tr>
+          <th>Aset</th>
+          <th style="text-align:right;">Deposit Bulan Ini</th>
+          <th style="text-align:right;">Nilai Sekarang</th>
+          <th>Rate (USD)</th>
+          <th>Catatan</th>
+        </tr></thead>
+        <tbody id="snap-tbody"></tbody>
+      </table>
+    </div>
+    <button class="btn-save-snap" onclick="saveSnapshots()">💾 Simpan Snapshot</button>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">Deposit vs Portfolio Value</div></div>
+    <div class="chart-wrap-porto"><canvas id="porto-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- RIGHT: SUMMARY -->
+<div>
+  <div class="card">
+    <div class="total-val">
+      <div class="total-num" id="total-value">Rp 0</div>
+      <div class="total-lbl">Total Portfolio Value</div>
+      <div id="roi-pill"></div>
+    </div>
+    <div class="sum-row"><span class="sum-row-lbl">Total Deposited</span><span class="sum-row-val blue" id="total-deposit" style="color:var(--blue);">Rp 0</span></div>
+    <div class="sum-row"><span class="sum-row-lbl">Unrealized G/L</span><span class="sum-row-val" id="total-gl">Rp 0</span></div>
+    <div class="sum-row"><span class="sum-row-lbl">Aset Aktif</span><span class="sum-row-val" id="active-count">0</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">Breakdown Aset</div></div>
+    <div id="asset-breakdown"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+let assets=[], snapshots=[], withdrawals=[];
+let snapMonth='';
+let portoChart=null;
+
+const TYPE_LABEL={stocks_idr:'Saham IDR',crypto_idr:'Crypto IDR',crypto_usd:'Crypto USD',wallet_usd:'Wallet USD',stocks_usd:'Saham USD',other:'Lainnya'};
+const EXP_CATS=['Housing','Consumption','Needs','Joy','Transport','Utilities','Electronic','Charity','Unexpected'];
+
+function todayStr(){const n=new Date();return`${n.getFullYear()}-${p2(n.getMonth()+1)}-${p2(n.getDate())}`;}
+function p2(n){return String(n).padStart(2,'0');}
+function monthStr(y,m){return`${y}-${p2(m+1)}`;}
+function fmtRp(n){return'Rp '+Math.round(n).toLocaleString('id-ID');}
+function fmtPct(n){return(n>=0?'+':'')+n.toFixed(1)+'%';}
+
+async function api(path,method='GET',body=null){
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(path,opts);
+  if(!r.ok){const t=await r.text();throw new Error(t);}
+  return r.json();
+}
+
+async function init(){
+  const now=new Date();
+  snapMonth=monthStr(now.getFullYear(),now.getMonth());
+  renderSnapMonthLabel();
+  const [a,s,w]=await Promise.all([
+    api('/api/portfolio/assets'),
+    api('/api/portfolio/snapshots'),
+    api('/api/portfolio/withdrawals'),
+  ]);
+  assets=a;snapshots=s;withdrawals=w;
+  render();
+}
+
+function render(){
+  renderAssets();
+  renderSnapTable();
+  renderSummary();
+  renderChart();
+  renderWithdrawals();
+  renderWdAssetSelect();
+  updateWdAlloc();
+}
+
+// ── ASSETS ──
+const typeColor={stocks_idr:'#3b82f6',crypto_idr:'#8b5cf6',crypto_usd:'#f59e0b',wallet_usd:'#ec4899',stocks_usd:'#14b8a6',other:'#6b7280'};
+function renderAssets(){
+  const el=document.getElementById('asset-list');
+  if(!assets.length){el.innerHTML='<div style="padding:12px 14px;font-size:10px;color:var(--text4);">Belum ada aset.</div>';return;}
+  el.innerHTML=assets.map(a=>`
+    <div class="asset-item">
+      <div class="asset-dot" style="background:${typeColor[a.type]||'#999'};opacity:${a.is_active?1:.3};"></div>
+      <div style="flex:1;min-width:0;">
+        <div class="asset-name">${a.name}</div>
+        <div class="asset-type">${TYPE_LABEL[a.type]||a.type}</div>
+      </div>
+      <span class="asset-currency">${a.currency}</span>
+      <button class="asset-toggle" onclick="toggleAsset('${a.id}',${!a.is_active})" title="${a.is_active?'Nonaktifkan':'Aktifkan'}">${a.is_active?'●':'○'}</button>
+    </div>`).join('');
+}
+let addAssetOpen=false;
+function toggleAddAsset(){
+  addAssetOpen=!addAssetOpen;
+  document.getElementById('add-asset-form').style.display=addAssetOpen?'block':'none';
+}
+async function addAsset(){
+  const name=document.getElementById('new-asset-name').value.trim();
+  const type=document.getElementById('new-asset-type').value;
+  const currency=document.getElementById('new-asset-currency').value;
+  if(!name)return;
+  const a=await api('/api/portfolio/assets','POST',{name,type,currency,is_active:true});
+  assets.push(a);
+  document.getElementById('new-asset-name').value='';
+  addAssetOpen=false;document.getElementById('add-asset-form').style.display='none';
+  render();
+}
+async function toggleAsset(id,active){
+  await api('/api/portfolio/assets','PATCH',{id,is_active:active});
+  const a=assets.find(x=>x.id===id);if(a)a.is_active=active;
+  render();
+}
+
+// ── SNAPSHOT ──
+function renderSnapMonthLabel(){
+  const [y,m]=snapMonth.split('-').map(Number);
+  const MN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  document.getElementById('snap-month-lbl').textContent=`Snapshot ${MN[m-1]} ${y}`;
+}
+function snapMonthChange(d){
+  const [y,m]=snapMonth.split('-').map(Number);
+  const nd=new Date(y,m-1+d,1);
+  snapMonth=monthStr(nd.getFullYear(),nd.getMonth());
+  renderSnapMonthLabel();renderSnapTable();
+}
+function renderSnapTable(){
+  const activeAssets=assets.filter(a=>a.is_active);
+  const tbody=document.getElementById('snap-tbody');
+  if(!activeAssets.length){tbody.innerHTML='<tr><td colspan="5" style="padding:16px;text-align:center;color:var(--text4);font-size:10px;">Tidak ada aset aktif.</td></tr>';return;}
+  tbody.innerHTML=activeAssets.map(a=>{
+    const snap=snapshots.find(s=>s.asset_id===a.id&&s.month===snapMonth);
+    const isUSD=a.currency==='USD';
+    return`<tr>
+      <td><div class="snap-asset-name">${a.name}<span class="snap-asset-cur">${a.currency}</span></div></td>
+      <td><input type="number" class="snap-inp" id="snap-dep-${a.id}" value="${snap?.deposit||''}" placeholder="0"></td>
+      <td><input type="number" class="snap-inp" id="snap-val-${a.id}" value="${snap?.current_value||''}" placeholder="0" style="border-color:var(--green);"></td>
+      <td>${isUSD?`<input type="number" class="snap-inp" id="snap-rate-${a.id}" value="${snap?.note?.match(/rate:(\d+)/)?.[1]||''}" placeholder="rate" style="width:70px;">`:'-'}</td>
+      <td><input type="text" class="snap-inp" id="snap-note-${a.id}" value="${snap?.note&&!snap.note.includes('rate:')?snap.note:''}" placeholder="catatan" style="font-weight:400;"></td>
+    </tr>`;
+  }).join('');
+}
+async function saveSnapshots(){
+  const activeAssets=assets.filter(a=>a.is_active);
+  const btn=document.querySelector('.btn-save-snap');
+  btn.textContent='Menyimpan...';btn.disabled=true;
+  try{
+    for(const a of activeAssets){
+      const dep=parseInt(document.getElementById('snap-dep-'+a.id)?.value)||0;
+      const val=parseInt(document.getElementById('snap-val-'+a.id)?.value);
+      if(isNaN(val)||val<=0)continue;
+      let note=document.getElementById('snap-note-'+a.id)?.value||'';
+      const rate=document.getElementById('snap-rate-'+a.id)?.value;
+      if(rate)note=`rate:${rate}${note?' '+note:''}`;
+      const s=await api('/api/portfolio/snapshots','POST',{asset_id:a.id,month:snapMonth,deposit:dep,current_value:val,note:note||null});
+      const idx=snapshots.findIndex(x=>x.asset_id===a.id&&x.month===snapMonth);
+      if(idx>=0)snapshots[idx]=s;else snapshots.push(s);
+    }
+    render();
+    btn.textContent='✓ Tersimpan!';setTimeout(()=>{btn.textContent='💾 Simpan Snapshot';btn.disabled=false;},1500);
+  }catch(e){alert('Gagal: '+e.message);btn.textContent='💾 Simpan Snapshot';btn.disabled=false;}
+}
+
+// ── SUMMARY ──
+function latestSnapshot(assetId){
+  const snaps=snapshots.filter(s=>s.asset_id===assetId).sort((a,b)=>b.month.localeCompare(a.month));
+  return snaps[0]||null;
+}
+function totalDepositedForAsset(assetId){
+  return snapshots.filter(s=>s.asset_id===assetId).reduce((sum,s)=>sum+(s.deposit||0),0);
+}
+function renderSummary(){
+  const activeAssets=assets.filter(a=>a.is_active);
+  let totalVal=0,totalDep=0;
+  activeAssets.forEach(a=>{
+    const snap=latestSnapshot(a.id);
+    if(snap){totalVal+=snap.current_value;totalDep+=totalDepositedForAsset(a.id);}
+  });
+  const gl=totalVal-totalDep;
+  const roi=totalDep>0?((gl/totalDep)*100):0;
+  document.getElementById('total-value').textContent=fmtRp(totalVal);
+  document.getElementById('total-deposit').textContent=fmtRp(totalDep);
+  document.getElementById('total-gl').textContent=fmtRp(gl);
+  document.getElementById('total-gl').style.color=gl>=0?'var(--green)':'var(--red)';
+  document.getElementById('active-count').textContent=activeAssets.length;
+  const pill=document.getElementById('roi-pill');
+  pill.innerHTML=`<span class="roi-pill ${roi>=0?'pos':'neg'}">${fmtPct(roi)} ROI</span>`;
+
+  // Breakdown
+  const bd=document.getElementById('asset-breakdown');
+  if(!activeAssets.length){bd.innerHTML='<div style="padding:14px;font-size:10px;color:var(--text4);text-align:center;">Tidak ada aset.</div>';return;}
+  bd.innerHTML=activeAssets.map(a=>{
+    const snap=latestSnapshot(a.id);
+    const val=snap?.current_value||0;
+    const dep=totalDepositedForAsset(a.id);
+    const gl=val-dep;const roi=dep>0?((gl/dep)*100):0;
+    const pct=totalVal>0?(val/totalVal*100):0;
+    return`<div class="bk-asset">
+      <div class="bk-asset-hdr">
+        <div class="bk-asset-name"><span style="width:7px;height:7px;border-radius:50%;background:${typeColor[a.type]||'#999'};display:inline-block;"></span>${a.name}</div>
+        <div class="bk-asset-val">${fmtRp(val)}</div>
+      </div>
+      <div class="bk-asset-bar"><div class="bk-asset-fill" style="width:${pct.toFixed(1)}%;background:${typeColor[a.type]||'#999'};"></div></div>
+      <div class="bk-asset-meta">
+        <span>Dep: ${fmtRp(dep)}</span>
+        <span style="color:${gl>=0?'var(--green)':'var(--red)'}">G/L: ${fmtRp(gl)} (${fmtPct(roi)})</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CHART ──
+function renderChart(){
+  const allMonths=[...new Set(snapshots.map(s=>s.month))].sort();
+  if(allMonths.length<2)return;
+  const MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const labels=allMonths.map(m=>{const mo=parseInt(m.slice(5))-1;return MN[mo]+' '+m.slice(2,4);});
+  const totalValues=allMonths.map(m=>{
+    return assets.filter(a=>a.is_active).reduce((sum,a)=>{
+      const snap=snapshots.filter(s=>s.asset_id===a.id&&s.month<=m).sort((a,b)=>b.month.localeCompare(a.month))[0];
+      return sum+(snap?.current_value||0);
+    },0);
+  });
+  const totalDeps=allMonths.map(m=>{
+    return assets.filter(a=>a.is_active).reduce((sum,a)=>{
+      return sum+snapshots.filter(s=>s.asset_id===a.id&&s.month<=m).reduce((s2,x)=>s2+(x.deposit||0),0);
+    },0);
+  });
+  const canvas=document.getElementById('porto-chart');
+  if(portoChart){portoChart.destroy();portoChart=null;}
+  portoChart=new Chart(canvas,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Portfolio Value',data:totalValues,borderColor:'#15a34a',backgroundColor:'rgba(21,163,74,.08)',tension:.4,pointRadius:3,pointHoverRadius:5,borderWidth:2,fill:true},
+      {label:'Total Deposited',data:totalDeps,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.06)',tension:.4,pointRadius:3,pointHoverRadius:5,borderWidth:2,fill:true,borderDash:[5,3]},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:400},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,position:'top',labels:{font:{family:'Poppins',size:10},boxWidth:12,padding:16}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtRp(ctx.raw)}`}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{font:{family:'Poppins',size:9},color:'#999',maxRotation:45}},
+        y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:'Poppins',size:9},color:'#999',callback:v=>'Rp '+(v/1000000).toFixed(1)+'jt'}}
+      }
+    }
+  });
+}
+
+// ── WITHDRAWALS ──
+function renderWdAssetSelect(){
+  const sel=document.getElementById('wd-asset');
+  const active=assets.filter(a=>a.is_active);
+  sel.innerHTML=active.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+}
+function updateWdAlloc(){
+  const type=document.getElementById('wd-type').value;
+  const el=document.getElementById('wd-alloc-extra');
+  if(type==='finance_expense'){
+    el.innerHTML=`<select class="mini-sel" id="wd-cat">${EXP_CATS.map(c=>`<option>${c}</option>`).join('')}</select>`;
+  }else if(type==='reinvest'){
+    const active=assets.filter(a=>a.is_active);
+    el.innerHTML=`<select class="mini-sel" id="wd-target">${active.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select>`;
+  }else{el.innerHTML='';}
+}
+async function saveWithdrawal(){
+  const assetId=document.getElementById('wd-asset').value;
+  const amt=parseInt(document.getElementById('wd-amount').value);
+  const type=document.getElementById('wd-type').value;
+  const note=document.getElementById('wd-note').value.trim();
+  if(!assetId||!amt||amt<=0){alert('Lengkapi nominal dulu.');return;}
+  const today=todayStr();
+  let body={asset_id:assetId,date:today,amount:amt,note:note||null};
+  if(type.startsWith('finance_')){
+    const finType=type.replace('finance_','');
+    const cat=type==='finance_expense'?(document.getElementById('wd-cat')?.value||'Unexpected'):finType;
+    body.finance_type=finType;body.finance_category=cat;
+    await api('/api/transactions','POST',{date:today,type:finType,category:cat,amount:amt,note:'[Porto] '+(note||cat)});
+  }else if(type==='reinvest'){
+    body.target_asset_id=document.getElementById('wd-target')?.value;
+    body.finance_type='reinvest';
+  }
+  const wd=await api('/api/portfolio/withdrawals','POST',body);
+  withdrawals.unshift(wd);
+  document.getElementById('wd-amount').value='';
+  document.getElementById('wd-note').value='';
+  renderWithdrawals();
+}
+function renderWithdrawals(){
+  const el=document.getElementById('wd-list');
+  if(!withdrawals.length){el.innerHTML='<div style="padding:14px;font-size:10px;color:var(--text4);text-align:center;">Belum ada penarikan.</div>';return;}
+  el.innerHTML=withdrawals.slice(0,8).map(w=>{
+    const a=assets.find(x=>x.id===w.asset_id);
+    const target=w.target_asset_id?assets.find(x=>x.id===w.target_asset_id):null;
+    const alloc=w.finance_type==='reinvest'?`→ ${target?.name||'aset lain'}`:`→ ${w.finance_category||w.finance_type}`;
+    return`<div class="wd-item">
+      <div class="wd-item-hdr">
+        <span class="wd-asset">${a?.name||'-'}</span>
+        <span class="wd-amount">-${fmtRp(w.amount)}</span>
+      </div>
+      <div class="wd-meta">${w.date} · ${alloc}${w.note?' · '+w.note:''}</div>
+    </div>`;
+  }).join('');
+}
+
+init();
+</script>
+</body>
+</html>
