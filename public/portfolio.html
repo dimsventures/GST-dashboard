@@ -245,6 +245,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 
 <script>
 let assets=[], snapshots=[], withdrawals=[], financeTransactions=[];
+let usdRate=null;
 let snapMonth='';
 let portoChart=null;
 
@@ -277,7 +278,18 @@ async function init(){
   ]);
   assets=a;snapshots=s;withdrawals=w;
   financeTransactions=(ft||[]).filter(t=>t.type==='investment'&&t.category==='Deposit'&&t.asset_id);
+  fetchUsdRate();
   render();
+}
+
+async function fetchUsdRate(){
+  try{
+    const r=await fetch('https://api.frankfurter.app/latest?from=USD&to=IDR');
+    const d=await r.json();
+    usdRate=Math.round(d.rates.IDR);
+    // re-render snap table supaya rate ter-autofill
+    renderSnapTable();
+  }catch(e){console.warn('Gagal fetch USD rate:',e);}
 }
 
 function render(){
@@ -350,7 +362,7 @@ function renderSnapTable(){
     return`<tr>
       <td><div class="snap-asset-name">${a.name}<span class="snap-asset-cur">${a.currency}</span></div></td>
       <td><input type="number" class="snap-inp" id="snap-val-${a.id}" value="${snap?.current_value||''}" placeholder="0" style="border-color:var(--green);"></td>
-      <td>${isUSD?`<input type="number" class="snap-inp" id="snap-rate-${a.id}" value="${snap?.note?.match(/rate:(\d+)/)?.[1]||''}" placeholder="rate" style="width:70px;">`:'-'}</td>
+      <td>${isUSD?`<input type="number" class="snap-inp" id="snap-rate-${a.id}" value="${snap?.note?.match(/rate:(\d+)/)?.[1]||(usdRate||'')}" placeholder="${usdRate||'rate'}" style="width:70px;">`:'-'}</td>
       <td><input type="text" class="snap-inp" id="snap-note-${a.id}" value="${snap?.note&&!snap.note.includes('rate:')?snap.note:''}" placeholder="catatan" style="font-weight:400;"></td>
     </tr>`;
   }).join('');
