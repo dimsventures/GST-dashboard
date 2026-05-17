@@ -235,6 +235,11 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
         <input type="number" class="amount-inp" id="amount-inp" placeholder="0" min="0" onkeydown="if(event.key==='Enter')addTransaction()">
       </div>
     </div>
+    <div class="extra-row" id="asset-row" style="display:none;">
+      <select class="note-inp" id="asset-sel" style="flex:1;cursor:pointer;">
+        <option value="">— Pilih Aset Tujuan —</option>
+      </select>
+    </div>
     <div class="extra-row">
       <input type="date" class="date-inp" id="date-inp">
       <input type="text" class="note-inp" id="note-inp" placeholder="Catatan (optional)" onkeydown="if(event.key==='Enter')addTransaction()">
@@ -391,8 +396,8 @@ const CATS={
 };
 const TYPE_COLOR={income:'#15a34a',expense:'#d12b2b',investment:'#2563eb',buffer:'#c9841a'};
 
-let transactions=[],bufferLogs=[],reconciliations=[];
-let currentType='expense',currentCat='',currentMonth='',bufDir='in';
+let transactions=[],bufferLogs=[],reconciliations=[],portfolioAssets=[];
+let currentType='expense',currentCat='',currentMonth='',bufDir='in',currentAssetId=null;
 
 function todayStr(){const n=new Date();return`${n.getFullYear()}-${p2(n.getMonth()+1)}-${p2(n.getDate())}`;}
 function p2(n){return String(n).padStart(2,'0');}
@@ -414,12 +419,13 @@ async function init(){
   document.getElementById('date-inp').value=todayStr();
   document.getElementById('trx-date-filter').value=todayStr();
   switchType('expense',document.querySelector('.ttab'));
-  const [tr,bl,rc]=await Promise.all([
+  const [tr,bl,rc,pa]=await Promise.all([
     api('/api/transactions'),
     api('/api/buffer-logs'),
     api('/api/reconciliations'),
+    api('/api/portfolio/assets'),
   ]);
-  transactions=tr;bufferLogs=bl;reconciliations=rc;
+  transactions=tr;bufferLogs=bl;reconciliations=rc;portfolioAssets=pa||[];
   const lastDate=tr.length?tr.map(t=>t.date).sort().reverse()[0]:todayStr();
   document.getElementById('trx-date-filter').value=lastDate;
   document.getElementById('date-inp').value=todayStr();
@@ -631,6 +637,16 @@ function selectCat(el,cat){
   currentCat=cat;
   document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
+  const assetRow=document.getElementById('asset-row');
+  const assetSel=document.getElementById('asset-sel');
+  if(currentType==='investment'&&cat==='Deposit'){
+    assetSel.innerHTML='<option value="">— Pilih Aset Tujuan —</option>'+
+      portfolioAssets.filter(a=>a.is_active).map(a=>`<option value="${a.id}">${a.name} (${a.currency})</option>`).join('');
+    assetRow.style.display='flex';
+  }else{
+    assetRow.style.display='none';
+    currentAssetId=null;
+  }
 }
 
 async function addTransaction(){
@@ -638,7 +654,8 @@ async function addTransaction(){
   if(!amt||amt<=0)return;
   const date=document.getElementById('date-inp').value||todayStr();
   const note=document.getElementById('note-inp').value.trim();
-  const body={date,type:currentType,category:currentCat,amount:amt,note:note||null};
+  const assetId=document.getElementById('asset-sel')?.value||null;
+  const body={date,type:currentType,category:currentCat,amount:amt,note:note||null,asset_id:assetId||null};
   const btn=document.querySelector('.btn-add');btn.disabled=true;btn.textContent='Menyimpan...';
   try{
     const t=await api('/api/transactions','POST',body);

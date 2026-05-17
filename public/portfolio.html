@@ -206,7 +206,6 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <table class="snap-table" id="snap-table">
         <thead><tr>
           <th>Aset</th>
-          <th style="text-align:right;">Deposit Bulan Ini</th>
           <th style="text-align:right;">Nilai Sekarang</th>
           <th>Rate (USD)</th>
           <th>Catatan</th>
@@ -245,7 +244,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 </div>
 
 <script>
-let assets=[], snapshots=[], withdrawals=[];
+let assets=[], snapshots=[], withdrawals=[], financeTransactions=[];
 let snapMonth='';
 let portoChart=null;
 
@@ -270,12 +269,14 @@ async function init(){
   const now=new Date();
   snapMonth=monthStr(now.getFullYear(),now.getMonth());
   renderSnapMonthLabel();
-  const [a,s,w]=await Promise.all([
+  const [a,s,w,ft]=await Promise.all([
     api('/api/portfolio/assets'),
     api('/api/portfolio/snapshots'),
     api('/api/portfolio/withdrawals'),
+    api('/api/transactions'),
   ]);
   assets=a;snapshots=s;withdrawals=w;
+  financeTransactions=(ft||[]).filter(t=>t.type==='investment'&&t.category==='Deposit'&&t.asset_id);
   render();
 }
 
@@ -342,13 +343,12 @@ function snapMonthChange(d){
 function renderSnapTable(){
   const activeAssets=assets.filter(a=>a.is_active);
   const tbody=document.getElementById('snap-tbody');
-  if(!activeAssets.length){tbody.innerHTML='<tr><td colspan="5" style="padding:16px;text-align:center;color:var(--text4);font-size:10px;">Tidak ada aset aktif.</td></tr>';return;}
+  if(!activeAssets.length){tbody.innerHTML='<tr><td colspan="4" style="padding:16px;text-align:center;color:var(--text4);font-size:10px;">Tidak ada aset aktif.</td></tr>';return;}
   tbody.innerHTML=activeAssets.map(a=>{
     const snap=snapshots.find(s=>s.asset_id===a.id&&s.month===snapMonth);
     const isUSD=a.currency==='USD';
     return`<tr>
       <td><div class="snap-asset-name">${a.name}<span class="snap-asset-cur">${a.currency}</span></div></td>
-      <td><input type="number" class="snap-inp" id="snap-dep-${a.id}" value="${snap?.deposit||''}" placeholder="0"></td>
       <td><input type="number" class="snap-inp" id="snap-val-${a.id}" value="${snap?.current_value||''}" placeholder="0" style="border-color:var(--green);"></td>
       <td>${isUSD?`<input type="number" class="snap-inp" id="snap-rate-${a.id}" value="${snap?.note?.match(/rate:(\d+)/)?.[1]||''}" placeholder="rate" style="width:70px;">`:'-'}</td>
       <td><input type="text" class="snap-inp" id="snap-note-${a.id}" value="${snap?.note&&!snap.note.includes('rate:')?snap.note:''}" placeholder="catatan" style="font-weight:400;"></td>
@@ -361,13 +361,12 @@ async function saveSnapshots(){
   btn.textContent='Menyimpan...';btn.disabled=true;
   try{
     for(const a of activeAssets){
-      const dep=parseInt(document.getElementById('snap-dep-'+a.id)?.value)||0;
       const val=parseInt(document.getElementById('snap-val-'+a.id)?.value);
       if(isNaN(val)||val<=0)continue;
       let note=document.getElementById('snap-note-'+a.id)?.value||'';
       const rate=document.getElementById('snap-rate-'+a.id)?.value;
       if(rate)note=`rate:${rate}${note?' '+note:''}`;
-      const s=await api('/api/portfolio/snapshots','POST',{asset_id:a.id,month:snapMonth,deposit:dep,current_value:val,note:note||null});
+      const s=await api('/api/portfolio/snapshots','POST',{asset_id:a.id,month:snapMonth,current_value:val,note:note||null});
       const idx=snapshots.findIndex(x=>x.asset_id===a.id&&x.month===snapMonth);
       if(idx>=0)snapshots[idx]=s;else snapshots.push(s);
     }
@@ -382,7 +381,7 @@ function latestSnapshot(assetId){
   return snaps[0]||null;
 }
 function totalDepositedForAsset(assetId){
-  return snapshots.filter(s=>s.asset_id===assetId).reduce((sum,s)=>sum+(s.deposit||0),0);
+  return financeTransactions.filter(t=>t.asset_id===assetId).reduce((sum,t)=>sum+(t.amount||0),0);
 }
 function renderSummary(){
   const activeAssets=assets.filter(a=>a.is_active);
@@ -437,9 +436,7 @@ function renderChart(){
     },0);
   });
   const totalDeps=allMonths.map(m=>{
-    return assets.filter(a=>a.is_active).reduce((sum,a)=>{
-      return sum+snapshots.filter(s=>s.asset_id===a.id&&s.month<=m).reduce((s2,x)=>s2+(x.deposit||0),0);
-    },0);
+    return financeTransactions.filter(t=>t.date.slice(0,7)<=m).reduce((sum,t)=>sum+(t.amount||0),0);
   });
   const canvas=document.getElementById('porto-chart');
   if(portoChart){portoChart.destroy();portoChart=null;}
