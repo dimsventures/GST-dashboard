@@ -21,7 +21,7 @@
   --s1:0 1px 3px rgba(0,0,0,.06);--s2:0 4px 12px rgba(0,0,0,.08);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;-webkit-font-smoothing:antialiased;}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;-webkit-font-smoothing:antialiased;padding-left:200px;}
 button,input,select,textarea{font-family:'Poppins',sans-serif;}
 header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .logo{font-size:15px;font-weight:700;color:var(--blk);}
@@ -128,15 +128,36 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .other{background:#6b7280;}
 
 @media(max-width:768px){.main{grid-template-columns:1fr;}}
+/* SIDEBAR */
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:200px;background:#111;z-index:400;display:flex;flex-direction:column;}
+.sb-brand{height:52px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;}
+.sb-brand-name{font-size:14px;font-weight:700;color:#fff;letter-spacing:.05em;}
+.sb-brand-name em{color:#d12b2b;font-style:normal;}
+.sb-nav{padding:10px 0;flex:1;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,.45);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.04em;border-left:3px solid transparent;transition:all .15s;}
+.sb-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.06);}
+.sb-item.active{color:#fff;background:rgba(255,255,255,.08);border-left-color:#d12b2b;}
+.sb-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0;}
+.sb-sep{height:1px;background:rgba(255,255,255,.07);margin:6px 0;}
 </style>
 </head>
 <body>
 
+<aside id="sidebar">
+  <div class="sb-brand"><span class="sb-brand-name">GST<em>.</em></span></div>
+  <nav class="sb-nav">
+    <a href="/dashboard.html" class="sb-item" id="sb-dashboard"><span class="sb-icon">⊞</span>Dashboard</a>
+    <div class="sb-sep"></div>
+    <a href="/legacy.html" class="sb-item" id="sb-gst"><span class="sb-icon">◎</span>GST</a>
+    <a href="/finance.html" class="sb-item" id="sb-finance"><span class="sb-icon">◈</span>Finance</a>
+    <a href="/portfolio.html" class="sb-item" id="sb-portfolio"><span class="sb-icon">◉</span>Portfolio</a>
+  </nav>
+</aside>
+<script>(function(){const m={'/dashboard.html':'sb-dashboard','/legacy.html':'sb-gst','/finance.html':'sb-finance','/portfolio.html':'sb-portfolio'};const id=m[location.pathname];if(id)document.getElementById(id)?.classList.add('active');})();</script>
+
 <header>
   <div class="logo">GST <span>Portfolio</span></div>
   <div class="hdr-r">
-    <button class="btn-nav" onclick="location.href='/finance.html'">Finance</button>
-    <button class="btn-nav" onclick="location.href='/legacy.html'">← Dashboard</button>
   </div>
 </header>
 

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — GST</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --white:#fff;--bg:#f5f4f2;--bg2:#eeedeb;
+  --border:#e4e2de;--border2:#d0cdc8;
+  --text:#1a1a1a;--text2:#4a4a4a;--text3:#888;--text4:#c0bdb8;
+  --red:#d12b2b;--red2:#b32222;--red-bg:#fef2f2;--red-border:#fad4d4;
+  --blk:#111;
+  --green:#15a34a;--green-bg:#f0fdf4;--green-border:#bbf7d0;
+  --gold:#c9841a;--gold-bg:#fffbf0;--gold-border:#f0d88a;
+  --blue:#2563eb;--blue-bg:#eff6ff;
+  --r:8px;--r2:5px;
+  --s1:0 1px 3px rgba(0,0,0,.06);--s2:0 4px 12px rgba(0,0,0,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;-webkit-font-smoothing:antialiased;padding-left:200px;}
+button,input,select{font-family:'Poppins',sans-serif;}
+
+/* SIDEBAR */
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:200px;background:#111;z-index:400;display:flex;flex-direction:column;}
+.sb-brand{height:52px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;}
+.sb-brand-name{font-size:14px;font-weight:700;color:#fff;letter-spacing:.05em;}
+.sb-brand-name em{color:#d12b2b;font-style:normal;}
+.sb-nav{padding:10px 0;flex:1;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,.45);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.04em;border-left:3px solid transparent;transition:all .15s;}
+.sb-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.06);}
+.sb-item.active{color:#fff;background:rgba(255,255,255,.08);border-left-color:#d12b2b;}
+.sb-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0;}
+.sb-sep{height:1px;background:rgba(255,255,255,.07);margin:6px 0;}
+
+/* PAGE HEADER */
+.page-hdr{background:var(--white);border-bottom:1px solid var(--border);height:52px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.page-title{font-size:14px;font-weight:700;color:var(--blk);}
+.page-date{font-size:11px;color:var(--text3);}
+
+/* CONTENT */
+.dash-content{padding:20px 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-content:start;}
+
+/* CARD */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--s1);overflow:hidden;}
+.card-hdr{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);}
+.card-tag{font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;letter-spacing:.03em;}
+.card-tag.red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);}
+.card-tag.green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.card-tag.gold{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border);}
+.card-body{padding:16px;}
+
+/* GST */
+.gst-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.gst-stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;}
+.gst-stat-val{font-size:20px;font-weight:700;color:var(--text);}
+.gst-stat-val.red{color:var(--red);}
+.gst-stat-lbl{font-size:8px;color:var(--text3);font-weight:500;margin-top:2px;letter-spacing:.05em;text-transform:uppercase;}
+.chart-wrap{position:relative;height:150px;}
+
+/* FINANCE */
+.fin-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);}
+.fin-row:last-child{border-bottom:none;}
+.fin-label{font-size:10px;color:var(--text3);font-weight:500;display:flex;align-items:center;gap:6px;}
+.fin-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.fin-val{font-size:12px;font-weight:700;color:var(--text);}
+.fin-val.green{color:var(--green);}
+.fin-val.red{color:var(--red);}
+.fin-bar-wrap{margin-top:12px;}
+.fin-bar-lbl{display:flex;justify-content:space-between;margin-bottom:5px;}
+.fin-bar-key{font-size:9px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;}
+.fin-bar-pct{font-size:9px;font-weight:700;color:var(--green);}
+.fin-bar-pct.neg{color:var(--red);}
+.fin-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.fin-bar-fill{height:100%;background:var(--green);border-radius:3px;transition:width .5s;}
+.fin-bar-fill.neg{background:var(--red);}
+
+/* PORTFOLIO */
+.porto-total{text-align:center;padding:14px 16px 10px;border-bottom:1px solid var(--border);}
+.porto-total-val{font-size:22px;font-weight:700;color:var(--green);}
+.porto-total-lbl{font-size:9px;color:var(--text3);margin-top:2px;letter-spacing:.06em;text-transform:uppercase;}
+.porto-meta{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+.porto-meta-item{padding:10px 16px;border-right:1px solid var(--border);}
+.porto-meta-item:last-child{border-right:none;}
+.porto-meta-lbl{font-size:8px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;}
+.porto-meta-val{font-size:12px;font-weight:700;color:var(--text);}
+.porto-meta-val.green{color:var(--green);}
+.porto-meta-val.red{color:var(--red);}
+.porto-asset-row{display:flex;align-items:center;justify-content:space-between;padding:7px 16px;border-bottom:1px solid var(--border);transition:background .1s;}
+.porto-asset-row:last-child{border-bottom:none;}
+.porto-asset-row:hover{background:var(--bg);}
+.porto-asset-name{font-size:11px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:7px;}
+.porto-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.porto-asset-val{font-size:11px;font-weight:700;color:var(--text);}
+.porto-asset-val.zero{color:var(--text4);font-weight:400;}
+
+.loading{text-align:center;padding:20px;color:var(--text4);font-size:11px;font-style:italic;}
+</style>
+</head>
+<body>
+
+<aside id="sidebar">
+  <div class="sb-brand"><span class="sb-brand-name">GST<em>.</em></span></div>
+  <nav class="sb-nav">
+    <a href="/dashboard.html" class="sb-item active"><span class="sb-icon">⊞</span>Dashboard</a>
+    <div class="sb-sep"></div>
+    <a href="/legacy.html" class="sb-item"><span class="sb-icon">◎</span>GST</a>
+    <a href="/finance.html" class="sb-item"><span class="sb-icon">◈</span>Finance</a>
+    <a href="/portfolio.html" class="sb-item"><span class="sb-icon">◉</span>Portfolio</a>
+  </nav>
+</aside>
+
+<div class="page-hdr">
+  <div class="page-title">Dashboard</div>
+  <div class="page-date" id="page-date"></div>
+</div>
+
+<div class="dash-content">
+
+  <!-- GST Card -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">GST Progress</span>
+      <span class="card-tag red" id="gst-tag">14 hari terakhir</span>
+    </div>
+    <div class="card-body">
+      <div class="gst-stats">
+        <div class="gst-stat"><div class="gst-stat-val red" id="gst-days">—</div><div class="gst-stat-lbl">Hari Log</div></div>
+        <div class="gst-stat"><div class="gst-stat-val" id="gst-lessons">—</div><div class="gst-stat-lbl">Lesson</div></div>
+        <div class="gst-stat"><div class="gst-stat-val" id="gst-todos">—</div><div class="gst-stat-lbl">Todo Done</div></div>
+      </div>
+      <div class="chart-wrap"><canvas id="gst-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Finance Card -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">Finance</span>
+      <span class="card-tag green" id="fin-tag">—</span>
+    </div>
+    <div class="card-body">
+      <div id="fin-rows"><div class="loading">Memuat...</div></div>
+      <div class="fin-bar-wrap">
+        <div class="fin-bar-lbl">
+          <span class="fin-bar-key">Savings Rate</span>
+          <span class="fin-bar-pct" id="fin-rate">—</span>
+        </div>
+        <div class="fin-bar"><div class="fin-bar-fill" id="fin-bar-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Portfolio Card -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">Portfolio</span>
+      <span class="card-tag gold" id="porto-tag">—</span>
+    </div>
+    <div class="porto-total">
+      <div class="porto-total-val" id="porto-total">—</div>
+      <div class="porto-total-lbl">Total Portfolio Value</div>
+    </div>
+    <div class="porto-meta">
+      <div class="porto-meta-item">
+        <div class="porto-meta-lbl">Total Deposited</div>
+        <div class="porto-meta-val" id="porto-dep">—</div>
+      </div>
+      <div class="porto-meta-item">
+        <div class="porto-meta-lbl">Unrealized G/L</div>
+        <div class="porto-meta-val" id="porto-gl">—</div>
+      </div>
+    </div>
+    <div id="porto-assets"><div class="loading">Memuat...</div></div>
+  </div>
+
+</div>
+
+<script>
+const DAYS = 14;
+const ACT_CATS = [
+  {key:'religion',  label:'Religion',      color:'rgba(59,130,246,.85)'},
+  {key:'work',      label:'Working Stage', color:'rgba(239,68,68,.85)'},
+  {key:'personal',  label:'Personal Wish', color:'rgba(245,158,11,.85)'},
+  {key:'exercise',  label:'Exercise',      color:'rgba(34,197,94,.85)'},
+  {key:'habit',     label:'Habit',         color:'rgba(139,92,246,.85)'},
+  {key:'humanity',  label:'Humanity',      color:'rgba(20,184,166,.85)'},
+];
+const PORTO_COLORS = ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#06b6d4','#ec4899'];
+
+function fmt(n){return 'Rp '+Math.round(n).toLocaleString('id-ID');}
+function fmtShort(n){
+  if(n>=1000000000) return 'Rp '+(n/1000000000).toFixed(2)+'M';
+  if(n>=1000000)    return 'Rp '+(n/1000000).toFixed(1)+'jt';
+  return fmt(n);
+}
+function currentMonth(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function lastNDates(n){
+  const dates=[];
+  for(let i=n-1;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    dates.push(d.toISOString().slice(0,10));
+  }
+  return dates;
+}
+
+async function init(){
+  document.getElementById('page-date').textContent =
+    new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const [gst, txs, snaps, assets] = await Promise.all([
+    fetch('/api/data').then(r=>r.json()).catch(()=>({})),
+    fetch('/api/transactions?month='+currentMonth()).then(r=>r.json()).catch(()=>[]),
+    fetch('/api/portfolio/snapshots').then(r=>r.json()).catch(()=>[]),
+    fetch('/api/portfolio/assets').then(r=>r.json()).catch(()=>[]),
+  ]);
+
+  renderGST(gst);
+  renderFinance(txs);
+  renderPortfolio(snaps, assets);
+}
+
+function renderGST(data){
+  const activities = data.activities || [];
+  const entries    = data.entries    || [];
+  const lessons    = (data.lessons   || []).reduce((n,l)=>{
+    try{return n+(JSON.parse(l.text)||[]).length;}catch{return n;}
+  },0);
+  const todoDone = (data.todos||[]).filter(t=>t.done).length;
+
+  document.getElementById('gst-days').textContent    = entries.length;
+  document.getElementById('gst-lessons').textContent = lessons;
+  document.getElementById('gst-todos').textContent   = todoDone;
+
+  const dates  = lastNDates(DAYS);
+  const labels = dates.map(d=>d.slice(5).replace('-','/'));
+  const datasets = ACT_CATS.map(c=>({
+    label: c.label,
+    data:  dates.map(date=>activities.filter(a=>a.date===date&&a.category===c.key).length),
+    backgroundColor: c.color,
+    borderRadius: 2,
+    stack: 's',
+  }));
+
+  new Chart(document.getElementById('gst-chart'),{
+    type:'bar',
+    data:{labels,datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{stacked:true, grid:{display:false}, ticks:{font:{family:'Poppins',size:8},color:'#aaa',maxRotation:45,minRotation:45}},
+        y:{stacked:true, grid:{color:'rgba(0,0,0,0.04)'}, ticks:{font:{family:'Poppins',size:8},color:'#aaa'}, min:0},
+      },
+    },
+  });
+}
+
+function renderFinance(txs){
+  let income=0, expense=0, invest=0;
+  (txs||[]).forEach(t=>{
+    const a = Number(t.amount)||0;
+    if(t.type==='income')       income  += a;
+    else if(t.type==='expense') expense += a;
+    else if(t.type==='invest')  invest  += a;
+  });
+  const sisa = income - expense - invest;
+  const rate = income>0 ? Math.round((sisa/income)*100) : 0;
+  const neg  = rate < 0;
+
+  const month = new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  document.getElementById('fin-tag').textContent = month;
+  document.getElementById('fin-rate').textContent = rate+'%';
+  document.getElementById('fin-rate').className = 'fin-bar-pct'+(neg?' neg':'');
+  const fill = document.getElementById('fin-bar-fill');
+  fill.style.width = Math.max(0,Math.min(100,Math.abs(rate)))+'%';
+  if(neg) fill.classList.add('neg');
+
+  document.getElementById('fin-rows').innerHTML = `
+    <div class="fin-row">
+      <span class="fin-label"><span class="fin-dot" style="background:var(--green)"></span>Income</span>
+      <span class="fin-val green">${fmtShort(income)}</span>
+    </div>
+    <div class="fin-row">
+      <span class="fin-label"><span class="fin-dot" style="background:var(--red)"></span>Life Cost</span>
+      <span class="fin-val red">${fmtShort(expense)}</span>
+    </div>
+    <div class="fin-row">
+      <span class="fin-label"><span class="fin-dot" style="background:var(--blue)"></span>Investment</span>
+      <span class="fin-val">${fmtShort(invest)}</span>
+    </div>
+    <div class="fin-row">
+      <span class="fin-label"><span class="fin-dot" style="background:var(--gold)"></span>Sisa</span>
+      <span class="fin-val ${sisa>=0?'green':'red'}">${fmtShort(Math.abs(sisa))}</span>
+    </div>
+  `;
+}
+
+function renderPortfolio(snaps, assets){
+  if(!assets?.length || !snaps?.length){
+    document.getElementById('porto-total').textContent = 'Rp 0';
+    document.getElementById('porto-assets').innerHTML = '<div class="loading">Belum ada snapshot</div>';
+    return;
+  }
+
+  const assetMap = Object.fromEntries(assets.map(a=>[a.id,a]));
+  const months   = [...new Set(snaps.map(s=>s.month))].sort();
+  const latest   = months[months.length-1];
+  const rows     = [];
+  let total = 0;
+
+  snaps.filter(s=>s.month===latest).forEach(s=>{
+    const asset  = assetMap[s.asset_id];
+    if(!asset) return;
+    const val    = Number(s.value)||0;
+    const rate   = Number(s.rate_usd)||0;
+    const valIdr = asset.currency==='USD' && rate>0 ? val*rate : val;
+    total += valIdr;
+    rows.push({name:asset.name, valIdr});
+  });
+
+  const totalDep = assets.reduce((s,a)=>s+(Number(a.total_deposited)||Number(a.deposited)||0),0);
+  const gl       = total - totalDep;
+
+  document.getElementById('porto-total').textContent = fmt(total);
+  document.getElementById('porto-dep').textContent   = totalDep>0 ? fmtShort(totalDep) : '—';
+  document.getElementById('porto-tag').textContent   = latest || '—';
+  const glEl = document.getElementById('porto-gl');
+  glEl.textContent  = totalDep>0 ? (gl>=0?'+':'')+fmtShort(gl) : '—';
+  glEl.className    = 'porto-meta-val '+(gl>=0?'green':'red');
+
+  rows.sort((a,b)=>b.valIdr-a.valIdr);
+  document.getElementById('porto-assets').innerHTML = rows.map((r,i)=>`
+    <div class="porto-asset-row">
+      <span class="porto-asset-name">
+        <span class="porto-dot" style="background:${PORTO_COLORS[i%PORTO_COLORS.length]}"></span>
+        ${r.name}
+      </span>
+      <span class="porto-asset-val ${r.valIdr===0?'zero':''}">${r.valIdr>0?fmt(r.valIdr):'Rp 0'}</span>
+    </div>
+  `).join('');
+}
+
+init();
+</script>
+</body>
+</html>

@@ -20,7 +20,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === '/') {
-    return NextResponse.redirect(new URL('/legacy.html', request.url))
+    return NextResponse.redirect(new URL('/dashboard.html', request.url))
   }
 
   return NextResponse.next()
