@@ -6,14 +6,14 @@ function sb() {
 }
 
 export async function GET() {
-  const { data, error } = await sb().from('reconciliations').select('*').order('created_at', { ascending: false })
+  const { data, error } = await sb().from('finance_reconciliations').select('*').order('created_at', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data || [])
 }
 
 export async function POST(req: Request) {
   const body = await req.json()
-  const { data, error } = await sb().from('reconciliations').insert(body).select().single()
+  const { data, error } = await sb().from('finance_reconciliations').insert(body).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }

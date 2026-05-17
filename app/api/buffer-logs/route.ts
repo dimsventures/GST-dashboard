@@ -6,14 +6,14 @@ function sb() {
 }
 
 export async function GET() {
-  const { data, error } = await sb().from('buffer_logs').select('*').order('created_at')
+  const { data, error } = await sb().from('finance_buffer_logs').select('*').order('created_at')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data || [])
 }
 
 export async function POST(req: Request) {
   const body = await req.json()
-  const { data, error } = await sb().from('buffer_logs').insert(body).select().single()
+  const { data, error } = await sb().from('finance_buffer_logs').insert(body).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const id = new URL(req.url).searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
-  const { error } = await sb().from('buffer_logs').delete().eq('id', id)
+  const { error } = await sb().from('finance_buffer_logs').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
