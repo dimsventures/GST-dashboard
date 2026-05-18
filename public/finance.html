@@ -284,9 +284,12 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 
   <!-- YTD SUMMARY -->
   <div class="card">
-    <div class="card-hdr" onclick="toggleYTD()" style="cursor:pointer;user-select:none;">
-      <div class="card-title">Year to Date</div>
-      <button class="ytd-toggle" id="ytd-toggle">▾</button>
+    <div class="card-hdr" style="flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="toggleYTD()">
+        <div class="card-title" id="ytd-title">Semua Waktu</div>
+        <button class="ytd-toggle" id="ytd-toggle" onclick="event.stopPropagation();toggleYTD()">▾</button>
+      </div>
+      <div id="ytd-yr-chips" style="display:flex;flex-wrap:wrap;gap:5px;" onclick="event.stopPropagation()"></div>
     </div>
     <div class="ytd-body" id="ytd-body" style="display:none;">
       <div class="sum-grid">
@@ -296,6 +299,16 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
         <div class="sum-box"><div class="sum-lbl">Savings Rate</div><div class="sum-val gold" id="ytd-rate">0%</div></div>
       </div>
     </div>
+  </div>
+
+  <!-- STACKED BAR CHART — ikut filter YTD -->
+  <div class="card">
+    <div class="card-hdr"><div class="card-title" id="chart-title">Expense per Bulan</div></div>
+    <div style="padding:10px 14px 6px;overflow-x:auto;">
+      <div id="fin-chart-legend" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
+      <div class="chart-wrap-fin"><canvas id="fin-chart-bar"></canvas></div>
+    </div>
+    <div id="fin-chart-table" style="overflow-x:auto;padding:0 14px 12px;display:none;"></div>
   </div>
 
   <!-- RINGKASAN BULAN INI -->
@@ -320,16 +333,6 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
     <div class="saverate-bar"><div class="saverate-fill" id="saverate-fill" style="width:0%"></div></div>
     <div class="breakdown" id="breakdown" style="display:none;"></div>
     <div class="breakdown" id="breakdown-invest" style="display:none;"></div>
-  </div>
-
-  <!-- STACKED BAR CHART -->
-  <div class="card">
-    <div class="card-hdr"><div class="card-title">Expense per Bulan</div></div>
-    <div style="padding:10px 14px 6px;">
-      <div id="fin-chart-legend" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
-      <div class="chart-wrap-fin"><canvas id="fin-chart-bar"></canvas></div>
-    </div>
-    <div id="fin-chart-table" style="overflow-x:auto;padding:0 14px 12px;display:none;"></div>
   </div>
 
 </div>
@@ -469,6 +472,7 @@ function fillReconFromLast(){
 }
 
 function render(){
+  renderYtdChips();
   renderTrxList();
   renderSummary();
   renderBuffer();
@@ -527,17 +531,42 @@ function renderCalendar(){
 }
 
 // ── STACKED BAR CHART ──
+let ytdYear=null; // null = semua waktu, '2024' = filter per tahun
+
+function renderYtdChips(){
+  const years=[...new Set(transactions.map(t=>t.date.slice(0,4)))].sort();
+  const chip=(label,val)=>{
+    const active=String(ytdYear||'')===String(val||'');
+    return `<button onclick="selectYtdYear(${val===null?'null':JSON.stringify(val)})" style="font-size:9px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid ${active?'var(--blk)':'var(--border)'};background:${active?'var(--blk)':'var(--bg)'};color:${active?'#fff':'var(--text2)'};cursor:pointer;transition:all .15s;">${label}</button>`;
+  };
+  document.getElementById('ytd-yr-chips').innerHTML=
+    chip('Semua',null)+years.map(y=>chip(y,y)).join('');
+}
+
+function selectYtdYear(y){
+  ytdYear=y;
+  document.getElementById('ytd-title').textContent=y?`Year to Date ${y}`:'Semua Waktu';
+  document.getElementById('chart-title').textContent=y?`Expense per Bulan ${y}`:'Expense per Bulan (Semua)';
+  renderYtdChips();
+  renderSummary();
+  renderFinChart();
+}
+
 let finChartInstance=null;
 const CAT_COLORS={'Housing':'rgba(239,68,68,.85)','Consumption':'rgba(245,158,11,.85)','Needs':'rgba(34,197,94,.85)',
   'Joy':'rgba(168,85,247,.85)','Transport':'rgba(59,130,246,.85)','Utilities':'rgba(20,184,166,.85)',
   'Electronic':'rgba(249,115,22,.85)','Charity':'rgba(236,72,153,.85)','Unexpected':'rgba(107,114,128,.85)'};
 
 function renderFinChart(){
-  const yr=currentMonth.slice(0,4);
-  const months=[...new Set(transactions.filter(t=>t.date.startsWith(yr)&&t.type==='expense').map(t=>t.date.slice(0,7)))].sort();
-  if(!months.length)return;
   const MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-  const labels=months.map(m=>{const mo=parseInt(m.slice(5))-1;return MN[mo];});
+  const expTrx=ytdYear
+    ?transactions.filter(t=>t.date.startsWith(ytdYear)&&t.type==='expense')
+    :transactions.filter(t=>t.type==='expense');
+  const months=[...new Set(expTrx.map(t=>t.date.slice(0,7)))].sort();
+  if(!months.length)return;
+  const labels=ytdYear
+    ?months.map(m=>{const mo=parseInt(m.slice(5))-1;return MN[mo];})
+    :months.map(m=>{const mo=parseInt(m.slice(5))-1;const yr=m.slice(2,4);return `${MN[mo]} '${yr}`;});
   const cats=Object.keys(CAT_COLORS);
   const datasets=cats.map(cat=>({
     label:cat,
@@ -768,9 +797,8 @@ function renderSummary(){
     ?invSorted.map(([k,v])=>`<div class="bk-row"><span class="bk-label">${k}</span><span class="bk-val" style="color:var(--blue)">${fmtRp(v)}</span></div>`).join('')
     :'<div style="font-size:10px;color:var(--text4);text-align:center;padding:8px;">Belum ada investasi.</div>';
 
-  // YTD
-  const yr=currentMonth.slice(0,4);
-  const yrTrx=transactions.filter(t=>t.date.startsWith(yr));
+  // YTD — ikut ytdYear filter
+  const yrTrx=ytdYear?transactions.filter(t=>t.date.startsWith(ytdYear)):transactions;
   const ytdIncome=yrTrx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const ytdExpense=yrTrx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   const ytdInvest=yrTrx.filter(t=>t.type==='investment').reduce((s,t)=>s+t.amount,0);
