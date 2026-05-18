@@ -6,17 +6,26 @@ function sb() {
 }
 
 export async function GET(req: Request) {
-  const url = new URL(req.url)
-  const date = url.searchParams.get('date')
+  const url   = new URL(req.url)
+  const date  = url.searchParams.get('date')
   const month = url.searchParams.get('month')
   const year  = url.searchParams.get('year')
-  let query = sb().from('finance_transactions').select('*').order('date').limit(5000)
-  if (date)  query = query.eq('date', date)
-  if (month) query = query.like('date', `${month}%`)
-  if (year)  query = query.like('date', `${year}-%`)
-  const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data || [])
+  const PAGE  = 500
+  const all: any[] = []
+  let from = 0
+  while (true) {
+    let q = sb().from('finance_transactions').select('*').order('date').range(from, from + PAGE - 1)
+    if (date)  q = q.eq('date', date)
+    if (month) q = q.like('date', `${month}%`)
+    if (year)  q = q.like('date', `${year}-%`)
+    const { data, error } = await q
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (!data?.length) break
+    all.push(...data)
+    if (data.length < PAGE) break
+    from += PAGE
+  }
+  return NextResponse.json(all)
 }
 
 export async function POST(req: Request) {
