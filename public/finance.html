@@ -440,13 +440,15 @@ async function init(){
   document.getElementById('date-inp').value=todayStr();
   document.getElementById('trx-date-filter').value=todayStr();
   switchType('expense',document.querySelector('.ttab'));
-  const [tr,bl,rc,pa]=await Promise.all([
-    api('/api/transactions'),
+  const yr=now.getFullYear();
+  const [tr25,tr,bl,rc,pa]=await Promise.all([
+    api('/api/transactions?year='+(yr-1)),
+    api('/api/transactions?year='+yr),
     api('/api/buffer-logs'),
     api('/api/reconciliations'),
     api('/api/portfolio/assets'),
   ]);
-  transactions=tr;bufferLogs=bl;reconciliations=rc;portfolioAssets=pa||[];
+  transactions=[...(tr25||[]),...(tr||[])];bufferLogs=bl;reconciliations=rc;portfolioAssets=pa||[];
   const lastDate=tr.length?tr.map(t=>t.date).sort().reverse()[0]:todayStr();
   document.getElementById('trx-date-filter').value=lastDate;
   document.getElementById('date-inp').value=todayStr();
