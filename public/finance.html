@@ -646,6 +646,7 @@ function changeMonth(d){
   const nd=new Date(y,m-1+d,1);
   currentMonth=monthStr(nd.getFullYear(),nd.getMonth());
   renderMonthLabel();renderSummary();
+  renderFinChart();
 }
 
 function switchType(type,el){
