@@ -271,8 +271,8 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
   <!-- TRX LIST -->
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title">Transaksi Hari Ini</div>
-      <input type="date" id="trx-date-filter" style="font-size:10px;border:1px solid var(--border);border-radius:var(--r2);padding:3px 7px;background:var(--bg);outline:none;color:var(--text2);" onchange="renderTrxList()">
+      <div class="card-title">Transaksi Bulan Ini</div>
+      <input type="month" id="trx-date-filter" style="font-size:10px;border:1px solid var(--border);border-radius:var(--r2);padding:3px 7px;background:var(--bg);outline:none;color:var(--text2);" onchange="renderTrxList()">
     </div>
     <div class="trx-list" id="trx-list"></div>
   </div>
@@ -436,7 +436,7 @@ async function init(){
   currentMonth=monthStr(now.getFullYear(),now.getMonth());
   renderMonthLabel();
   document.getElementById('date-inp').value=todayStr();
-  document.getElementById('trx-date-filter').value=todayStr();
+  document.getElementById('trx-date-filter').value=currentMonth;
   switchType('expense',document.querySelector('.ttab'));
   const yr=now.getFullYear();
   const START_YEAR=2023;
@@ -448,8 +448,7 @@ async function init(){
     api('/api/portfolio/assets'),
   ]);
   transactions=trxResults.flat();bufferLogs=bl;reconciliations=rc;portfolioAssets=pa||[];
-  const lastDate=tr.length?tr.map(t=>t.date).sort().reverse()[0]:todayStr();
-  document.getElementById('trx-date-filter').value=lastDate;
+  document.getElementById('trx-date-filter').value=currentMonth;
   document.getElementById('date-inp').value=todayStr();
   render();
   fillReconFromLast();
@@ -669,7 +668,8 @@ function changeMonth(d){
   const [y,m]=currentMonth.split('-').map(Number);
   const nd=new Date(y,m-1+d,1);
   currentMonth=monthStr(nd.getFullYear(),nd.getMonth());
-  renderMonthLabel();renderSummary();
+  document.getElementById('trx-date-filter').value=currentMonth;
+  renderMonthLabel();renderSummary();renderTrxList();
   renderFinChart();
 }
 
@@ -736,11 +736,15 @@ async function delTransaction(id){
 }
 
 function renderTrxList(){
-  const date=document.getElementById('trx-date-filter').value||todayStr();
+  const mo=document.getElementById('trx-date-filter').value||currentMonth;
   const list=document.getElementById('trx-list');
-  const items=transactions.filter(t=>t.date===date).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-  if(!items.length){list.innerHTML='<div class="trx-empty">Belum ada transaksi hari ini.</div>';return;}
-  list.innerHTML=items.map(t=>`
+  const items=transactions.filter(t=>t.date.startsWith(mo)).sort((a,b)=>b.date.localeCompare(a.date)||(new Date(b.created_at)-new Date(a.created_at)));
+  if(!items.length){list.innerHTML='<div class="trx-empty">Belum ada transaksi bulan ini.</div>';return;}
+  const MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  let lastDate='';
+  list.innerHTML=items.map(t=>{
+    const dayLabel=t.date!==lastDate?(lastDate=t.date,`<div style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.06em;padding:8px 14px 3px;text-transform:uppercase;">${parseInt(t.date.slice(8))} ${MN[parseInt(t.date.slice(5,7))-1]}</div>`):'';
+    return dayLabel+`
     <div class="trx-item">
       <div class="trx-dot" style="background:${TYPE_COLOR[t.type]||'#999'}"></div>
       <div class="trx-info">
@@ -751,7 +755,8 @@ function renderTrxList(){
         ${t.type==='income'?'+':'−'}${fmtRp(t.amount)}
       </div>
       <button class="trx-del" onclick="delTransaction('${t.id}')">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderSummary(){
