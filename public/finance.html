@@ -180,8 +180,8 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .ytd-body{transition:all .2s;}
 
 /* CHART */
-.chart-wrap-fin{position:relative;width:100%;overflow-x:auto;}
-.chart-wrap-fin canvas{min-width:500px;height:200px!important;}
+.chart-wrap-fin{position:relative;width:100%;overflow-x:auto;overflow-y:hidden;}
+.chart-wrap-fin canvas{height:210px!important;display:block;}
 
 @media(max-width:768px){
   .main{grid-template-columns:1fr;padding:8px;gap:8px;}
@@ -280,16 +280,16 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 </div>
 
 <!-- CENTER: MONTHLY SUMMARY -->
-<div style="display:flex;flex-direction:column;gap:12px;">
+<div style="display:flex;flex-direction:column;gap:12px;min-width:0;overflow:hidden;">
 
   <!-- YTD SUMMARY -->
   <div class="card">
-    <div class="card-hdr" style="flex-wrap:wrap;gap:8px;">
-      <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="toggleYTD()">
+    <div class="card-hdr" style="flex-wrap:wrap;row-gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0;" onclick="toggleYTD()">
         <div class="card-title" id="ytd-title">Semua Waktu</div>
         <button class="ytd-toggle" id="ytd-toggle" onclick="event.stopPropagation();toggleYTD()">▾</button>
       </div>
-      <div id="ytd-yr-chips" style="display:flex;flex-wrap:wrap;gap:5px;" onclick="event.stopPropagation()"></div>
+      <div id="ytd-yr-chips" style="display:flex;gap:4px;flex-wrap:wrap;" onclick="event.stopPropagation()"></div>
     </div>
     <div class="ytd-body" id="ytd-body" style="display:none;">
       <div class="sum-grid">
@@ -537,16 +537,17 @@ function renderYtdChips(){
   const years=[...new Set(transactions.map(t=>t.date.slice(0,4)))].sort();
   const chip=(label,val)=>{
     const active=String(ytdYear||'')===String(val||'');
-    return `<button onclick="selectYtdYear(${val===null?'null':JSON.stringify(val)})" style="font-size:9px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid ${active?'var(--blk)':'var(--border)'};background:${active?'var(--blk)':'var(--bg)'};color:${active?'#fff':'var(--text2)'};cursor:pointer;transition:all .15s;">${label}</button>`;
+    const base='font-size:9px;font-weight:700;padding:4px 11px;border-radius:20px;cursor:pointer;letter-spacing:.04em;transition:all .15s;border:1px solid ';
+    return `<button onclick="selectYtdYear(${val===null?'null':JSON.stringify(val)})" style="${base}${active?'var(--blk);background:var(--blk);color:#fff':'var(--border);background:var(--bg);color:var(--text2)'}">${label}</button>`;
   };
   document.getElementById('ytd-yr-chips').innerHTML=
-    chip('Semua',null)+years.map(y=>chip(y,y)).join('');
+    chip('All Time',null)+years.map(y=>chip(y,y)).join('');
 }
 
 function selectYtdYear(y){
   ytdYear=y;
-  document.getElementById('ytd-title').textContent=y?`Year to Date ${y}`:'Semua Waktu';
-  document.getElementById('chart-title').textContent=y?`Expense per Bulan ${y}`:'Expense per Bulan (Semua)';
+  document.getElementById('ytd-title').textContent=y||'Semua Waktu';
+  document.getElementById('chart-title').textContent=y?`Expense per Bulan — ${y}`:'Expense per Bulan — Semua';
   renderYtdChips();
   renderSummary();
   renderFinChart();
@@ -582,7 +583,11 @@ function renderFinChart(){
     </div>`).join('');
 
   const canvas=document.getElementById('fin-chart-bar');
-  canvas.style.width=Math.max(500,months.length*80)+'px';
+  const wrap=canvas.parentElement;
+  const containerW=wrap.clientWidth||700;
+  const minBarW=ytdYear?Math.max(40,Math.floor(containerW/months.length)):55;
+  const canvasW=Math.max(containerW,months.length*minBarW);
+  canvas.style.width=canvasW+'px';
   if(finChartInstance){finChartInstance.destroy();finChartInstance=null;}
   finChartInstance=new Chart(canvas,{
     type:'bar',
@@ -591,7 +596,7 @@ function renderFinChart(){
       responsive:false,maintainAspectRatio:false,animation:{duration:300},
       plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>`${ctx.dataset.label}: Rp ${ctx.raw.toLocaleString('id-ID')}`}}},
       scales:{
-        x:{stacked:true,grid:{display:false},ticks:{font:{family:'Poppins',size:9},color:'#999'}},
+        x:{stacked:true,grid:{display:false},ticks:{font:{family:'Poppins',size:9},color:'#999',maxRotation:months.length>15?45:0,minRotation:0}},
         y:{stacked:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{family:'Poppins',size:9},color:'#999',callback:v=>'Rp '+(v/1000).toFixed(0)+'k'}}
       }
     }
