@@ -180,8 +180,8 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .ytd-body{transition:all .2s;}
 
 /* CHART */
-.chart-wrap-fin{position:relative;width:100%;overflow-x:auto;overflow-y:hidden;}
-.chart-wrap-fin canvas{height:210px!important;display:block;}
+.chart-wrap-fin{position:relative;width:100%;height:210px;}
+.chart-wrap-fin canvas{width:100%!important;height:100%!important;}
 
 @media(max-width:768px){
   .main{grid-template-columns:1fr;padding:8px;gap:8px;}
@@ -284,20 +284,15 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 
   <!-- YTD SUMMARY -->
   <div class="card">
-    <div class="card-hdr" style="flex-wrap:wrap;row-gap:8px;">
-      <div style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0;" onclick="toggleYTD()">
-        <div class="card-title" id="ytd-title">Semua Waktu</div>
-        <button class="ytd-toggle" id="ytd-toggle" onclick="event.stopPropagation();toggleYTD()">▾</button>
-      </div>
-      <div id="ytd-yr-chips" style="display:flex;gap:4px;flex-wrap:wrap;" onclick="event.stopPropagation()"></div>
+    <div class="card-hdr">
+      <div class="card-title" id="ytd-title">Semua Waktu</div>
+      <div id="ytd-yr-chips" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
     </div>
-    <div class="ytd-body" id="ytd-body" style="display:none;">
-      <div class="sum-grid">
-        <div class="sum-box"><div class="sum-lbl">Total Income</div><div class="sum-val green" id="ytd-income">Rp 0</div></div>
-        <div class="sum-box"><div class="sum-lbl">Total Expense</div><div class="sum-val red" id="ytd-expense">Rp 0</div></div>
-        <div class="sum-box"><div class="sum-lbl">Total Invest</div><div class="sum-val blue" id="ytd-invest">Rp 0</div></div>
-        <div class="sum-box"><div class="sum-lbl">Savings Rate</div><div class="sum-val gold" id="ytd-rate">0%</div></div>
-      </div>
+    <div class="sum-grid">
+      <div class="sum-box"><div class="sum-lbl">Total Income</div><div class="sum-val green" id="ytd-income">Rp 0</div></div>
+      <div class="sum-box"><div class="sum-lbl">Total Expense</div><div class="sum-val red" id="ytd-expense">Rp 0</div></div>
+      <div class="sum-box"><div class="sum-lbl">Total Invest</div><div class="sum-val blue" id="ytd-invest">Rp 0</div></div>
+      <div class="sum-box"><div class="sum-lbl">Savings Rate</div><div class="sum-val gold" id="ytd-rate">0%</div></div>
     </div>
   </div>
 
@@ -478,7 +473,7 @@ function render(){
   renderBuffer();
   renderReconHistory();
   renderCalendar();
-  renderFinChart();
+  setTimeout(renderFinChart,50); // delay kecil biar container width sudah ter-render
   calcRecon();
 }
 
@@ -583,20 +578,15 @@ function renderFinChart(){
     </div>`).join('');
 
   const canvas=document.getElementById('fin-chart-bar');
-  const wrap=canvas.parentElement;
-  const containerW=wrap.clientWidth||700;
-  const minBarW=ytdYear?Math.max(40,Math.floor(containerW/months.length)):55;
-  const canvasW=Math.max(containerW,months.length*minBarW);
-  canvas.style.width=canvasW+'px';
   if(finChartInstance){finChartInstance.destroy();finChartInstance=null;}
   finChartInstance=new Chart(canvas,{
     type:'bar',
     data:{labels,datasets},
     options:{
-      responsive:false,maintainAspectRatio:false,animation:{duration:300},
+      responsive:true,maintainAspectRatio:false,animation:{duration:300},
       plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>`${ctx.dataset.label}: Rp ${ctx.raw.toLocaleString('id-ID')}`}}},
       scales:{
-        x:{stacked:true,grid:{display:false},ticks:{font:{family:'Poppins',size:9},color:'#999',maxRotation:months.length>15?45:0,minRotation:0}},
+        x:{stacked:true,grid:{display:false},ticks:{font:{family:'Poppins',size:months.length>20?8:9},color:'#999',maxRotation:months.length>15?45:0,minRotation:0}},
         y:{stacked:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{family:'Poppins',size:9},color:'#999',callback:v=>'Rp '+(v/1000).toFixed(0)+'k'}}
       }
     }
