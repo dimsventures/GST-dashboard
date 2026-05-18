@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url)
   const date = url.searchParams.get('date')
   const month = url.searchParams.get('month')
-  let query = sb().from('finance_transactions').select('*').order('created_at')
+  let query = sb().from('finance_transactions').select('*').order('date').limit(10000)
   if (date) query = query.eq('date', date)
   if (month) query = query.like('date', `${month}%`)
   const { data, error } = await query
