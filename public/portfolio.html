@@ -546,9 +546,12 @@ async function saveWithdrawal(){
   }
   const wd=await api('/api/portfolio/withdrawals','POST',body);
   withdrawals.unshift(wd);
+  // Reload financeTransactions supaya Total Deposited langsung update
+  const ft=await api('/api/transactions');
+  financeTransactions=(ft||[]).filter(t=>t.type==='investment'&&t.category==='Deposit'&&t.asset_id);
   document.getElementById('wd-amount').value='';
   document.getElementById('wd-note').value='';
-  renderWithdrawals();
+  render();
 }
 function renderWithdrawals(){
   const el=document.getElementById('wd-list');
