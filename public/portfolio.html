@@ -199,8 +199,8 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
       <label class="mlbl">Alokasi ke</label>
       <select class="mini-sel" id="wd-type" onchange="updateWdAlloc()" style="margin-bottom:6px;">
         <option value="finance_expense">Finance — Expense</option>
-        <option value="finance_income">Finance — Income</option>
         <option value="finance_buffer">Finance — Buffer</option>
+        <option value="invest_thinkandgrow">Invest — Think and Grow</option>
         <option value="reinvest">Re-invest ke aset lain</option>
       </select>
       <div id="wd-alloc-extra" style="margin-bottom:10px;"></div>
@@ -526,6 +526,9 @@ async function saveWithdrawal(){
     const cat=type==='finance_expense'?(document.getElementById('wd-cat')?.value||'Unexpected'):finType;
     body.finance_type=finType;body.finance_category=cat;
     await api('/api/transactions','POST',{date:date,type:finType,category:cat,amount:amt,note:'[Porto] '+(note||cat)});
+  }else if(type==='invest_thinkandgrow'){
+    body.finance_type='investment';body.finance_category='Think and Grow';
+    await api('/api/transactions','POST',{date:date,type:'investment',category:'Think and Grow',amount:amt,note:'[Porto] '+(note||'Think and Grow')});
   }else if(type==='reinvest'){
     body.target_asset_id=document.getElementById('wd-target')?.value;
     body.finance_type='reinvest';
