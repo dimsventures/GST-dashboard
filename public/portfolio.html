@@ -2,7 +2,13 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GST">
+<meta name="theme-color" content="#1a0505">
+<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="manifest" href="/manifest.json">
 <title>Portfolio — GST HQ</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -129,8 +135,8 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 
 @media(max-width:768px){.main{grid-template-columns:1fr;}}
 /* SIDEBAR */
-#sidebar{position:fixed;left:0;top:0;bottom:0;width:200px;background:#111;z-index:400;display:flex;flex-direction:column;}
-.sb-brand{height:52px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;}
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:200px;background:#1a0505;z-index:400;display:flex;flex-direction:column;}
+.sb-brand{height:52px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid rgba(255,120,120,.12);flex-shrink:0;}
 .sb-brand-name{font-size:14px;font-weight:700;color:#fff;letter-spacing:.05em;}
 .sb-brand-name em{color:#d12b2b;font-style:normal;}
 .sb-nav{padding:10px 0;flex:1;}
@@ -138,7 +144,27 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .sb-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.06);}
 .sb-item.active{color:#fff;background:rgba(255,255,255,.08);border-left-color:#d12b2b;}
 .sb-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0;}
-.sb-sep{height:1px;background:rgba(255,255,255,.07);margin:6px 0;}
+.sb-sep{height:1px;background:rgba(255,120,120,.12);margin:6px 0;}
+#sidebar{transition:width .25s ease;}
+#sidebar.collapsed{width:60px;overflow:hidden;}
+#sidebar.collapsed .sb-label{display:none;}
+#sidebar.collapsed .sb-item{justify-content:center;padding:10px 0;}
+#sidebar.collapsed .sb-brand-name{display:none;}
+#sb-toggle{position:absolute;top:16px;right:-11px;width:22px;height:22px;background:#d12b2b;border:none;border-radius:50%;cursor:pointer;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;z-index:410;box-shadow:0 2px 6px rgba(0,0,0,.3);}
+body{transition:padding-left .25s ease;}
+body.sb-collapsed{padding-left:60px;}
+#sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:390;}
+.sb-hamburger{display:none;position:fixed;top:12px;left:12px;z-index:420;background:#d12b2b;border:none;border-radius:8px;width:38px;height:38px;cursor:pointer;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+@media(max-width:768px){
+  #sidebar{left:-220px !important;width:200px !important;transition:left .25s ease;top:0;}
+  #sidebar.mobile-open{left:0 !important;}
+  #sb-overlay.active{display:block;}
+  body,body.sb-collapsed{padding-left:0 !important;}
+  .sb-hamburger{display:flex;}
+  #sb-toggle{display:none;}
+  body{font-size:13px;}
+  .card{border-radius:8px;}
+}
 </style>
 </head>
 <body>
@@ -146,11 +172,11 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 <aside id="sidebar">
   <div class="sb-brand"><span class="sb-brand-name">GST<em>.</em></span></div>
   <nav class="sb-nav">
-    <a href="/dashboard.html" class="sb-item" id="sb-dashboard"><span class="sb-icon">⊞</span>Dashboard</a>
+    <a href="/dashboard.html" class="sb-item" id="sb-dashboard"><span class="sb-icon">⊞</span><span class="sb-label">Dashboard</span></a>
     <div class="sb-sep"></div>
-    <a href="/legacy.html" class="sb-item" id="sb-gst"><span class="sb-icon">◎</span>GST</a>
-    <a href="/finance.html" class="sb-item" id="sb-finance"><span class="sb-icon">◈</span>Finance</a>
-    <a href="/portfolio.html" class="sb-item" id="sb-portfolio"><span class="sb-icon">◉</span>Portfolio</a>
+    <a href="/legacy.html" class="sb-item" id="sb-gst"><span class="sb-icon">◎</span><span class="sb-label">GST</span></a>
+    <a href="/finance.html" class="sb-item" id="sb-finance"><span class="sb-icon">◈</span><span class="sb-label">Finance</span></a>
+    <a href="/portfolio.html" class="sb-item" id="sb-portfolio"><span class="sb-icon">◉</span><span class="sb-label">Portfolio</span></a>
   </nav>
 </aside>
 <script>(function(){const m={'/dashboard.html':'sb-dashboard','/legacy.html':'sb-gst','/finance.html':'sb-finance','/portfolio.html':'sb-portfolio'};const id=m[location.pathname];if(id)document.getElementById(id)?.classList.add('active');})();</script>
@@ -616,6 +642,42 @@ function renderWithdrawals(){
 }
 
 init();
+</script>
+<div id="sb-overlay" onclick="closeSidebar()"></div>
+<button class="sb-hamburger" onclick="openMobileSidebar()">☰</button>
+<script>
+(function(){
+  const sb=document.getElementById('sidebar');
+  const body=document.body;
+  const overlay=document.getElementById('sb-overlay');
+  const isMobile=()=>window.innerWidth<=768;
+  const toggleBtn=document.createElement('button');
+  toggleBtn.id='sb-toggle';
+  toggleBtn.innerHTML='◀';
+  toggleBtn.onclick=toggleSidebar;
+  sb.style.position='fixed';
+  sb.appendChild(toggleBtn);
+  if(!isMobile()&&localStorage.getItem('sb_collapsed')==='1'){
+    sb.classList.add('collapsed');
+    body.classList.add('sb-collapsed');
+    toggleBtn.innerHTML='▶';
+  }
+  window.toggleSidebar=function(){
+    if(isMobile())return;
+    const c=sb.classList.toggle('collapsed');
+    body.classList.toggle('sb-collapsed',c);
+    toggleBtn.innerHTML=c?'▶':'◀';
+    localStorage.setItem('sb_collapsed',c?'1':'0');
+  };
+  window.openMobileSidebar=function(){
+    sb.classList.add('mobile-open');
+    overlay.classList.add('active');
+  };
+  window.closeSidebar=function(){
+    sb.classList.remove('mobile-open');
+    overlay.classList.remove('active');
+  };
+})();
 </script>
 </body>
 </html>
