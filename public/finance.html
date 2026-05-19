@@ -513,7 +513,6 @@ function renderCalendar(){
     const exp=dayExpense(dstr);
     let cls='fin-cday';
     if(dstr===today)cls+=' today';
-    if(selMo===calMoStr&&dstr!==today)cls+=' selected';
     const el=document.createElement('div');el.className=cls;
     el.innerHTML=`<div class="fin-day-num">${d}</div>${exp?`<div class="fin-day-exp">${fmtK(exp)}</div>`:''}`;
     el.onclick=()=>calSelectDay(dstr);grid.appendChild(el);
