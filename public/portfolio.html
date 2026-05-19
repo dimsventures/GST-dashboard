@@ -397,8 +397,10 @@ async function saveSnapshots(){
   btn.textContent='Menyimpan...';btn.disabled=true;
   try{
     for(const a of activeAssets){
-      const val=parseInt(document.getElementById('snap-val-'+a.id)?.value);
-      if(isNaN(val)||val<=0)continue;
+      const valStr=document.getElementById('snap-val-'+a.id)?.value;
+      if(valStr===''||valStr===null||valStr===undefined)continue;
+      const val=parseInt(valStr);
+      if(isNaN(val)||val<0)continue;
       let note=document.getElementById('snap-note-'+a.id)?.value||'';
       const rate=document.getElementById('snap-rate-'+a.id)?.value;
       if(rate)note=`rate:${rate}${note?' '+note:''}`;
@@ -535,8 +537,12 @@ async function saveWithdrawal(){
     await api('/api/transactions','POST',reversal);
     await api('/api/transactions','POST',{date:date,type:'investment',category:'Think and Grow',amount:amt,note:'[Porto] '+(note||'Think and Grow')});
   }else if(type==='reinvest'){
-    body.target_asset_id=document.getElementById('wd-target')?.value;
+    const targetId=document.getElementById('wd-target')?.value;
+    body.target_asset_id=targetId;
     body.finance_type='reinvest';
+    // Kurangi deposit source asset + tambah deposit target asset
+    await api('/api/transactions','POST',reversal);
+    if(targetId) await api('/api/transactions','POST',{date:date,type:'investment',category:'Deposit',amount:amt,asset_id:targetId,note:'[Porto] Reinvest '+(note||'')});
   }
   const wd=await api('/api/portfolio/withdrawals','POST',body);
   withdrawals.unshift(wd);
