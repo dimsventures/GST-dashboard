@@ -374,7 +374,7 @@ function snapMonthChange(d){
   const [y,m]=snapMonth.split('-').map(Number);
   const nd=new Date(y,m-1+d,1);
   snapMonth=monthStr(nd.getFullYear(),nd.getMonth());
-  renderSnapMonthLabel();renderSnapTable();
+  renderSnapMonthLabel();renderSnapTable();renderSummary();
 }
 function renderSnapTable(){
   const activeAssets=assets.filter(a=>a.is_active);
@@ -414,19 +414,21 @@ async function saveSnapshots(){
 }
 
 // ── SUMMARY ──
-function latestSnapshot(assetId){
-  const snaps=snapshots.filter(s=>s.asset_id===assetId).sort((a,b)=>b.month.localeCompare(a.month));
+function snapshotAt(assetId, month){
+  // Ambil snapshot terbaru untuk aset ini sampai bulan yang dipilih
+  const snaps=snapshots.filter(s=>s.asset_id===assetId&&s.month<=month).sort((a,b)=>b.month.localeCompare(a.month));
   return snaps[0]||null;
 }
-function totalDepositedForAsset(assetId){
-  return financeTransactions.filter(t=>t.asset_id===assetId).reduce((sum,t)=>sum+(t.amount||0),0);
+function totalDepositedForAsset(assetId, month){
+  // Akumulasi deposit s/d bulan yang dipilih
+  return financeTransactions.filter(t=>t.asset_id===assetId&&t.date.slice(0,7)<=month).reduce((sum,t)=>sum+(t.amount||0),0);
 }
 function renderSummary(){
   const activeAssets=assets.filter(a=>a.is_active);
   let totalVal=0,totalDep=0;
   activeAssets.forEach(a=>{
-    const snap=latestSnapshot(a.id);
-    if(snap){totalVal+=snap.current_value;totalDep+=totalDepositedForAsset(a.id);}
+    const snap=snapshotAt(a.id,snapMonth);
+    if(snap){totalVal+=snap.current_value;totalDep+=totalDepositedForAsset(a.id,snapMonth);}
   });
   const gl=totalVal-totalDep;
   const roi=totalDep>0?((gl/totalDep)*100):0;
@@ -442,9 +444,9 @@ function renderSummary(){
   const bd=document.getElementById('asset-breakdown');
   if(!activeAssets.length){bd.innerHTML='<div style="padding:14px;font-size:10px;color:var(--text4);text-align:center;">Tidak ada aset.</div>';return;}
   bd.innerHTML=activeAssets.map(a=>{
-    const snap=latestSnapshot(a.id);
+    const snap=snapshotAt(a.id,snapMonth);
     const val=snap?.current_value||0;
-    const dep=totalDepositedForAsset(a.id);
+    const dep=totalDepositedForAsset(a.id,snapMonth);
     const gl=val-dep;const roi=dep>0?((gl/dep)*100):0;
     const pct=totalVal>0?(val/totalVal*100):0;
     return`<div class="bk-asset">
