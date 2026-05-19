@@ -482,14 +482,15 @@ function calPrev(){calM--;if(calM<0){calM=11;calY--;}renderCalendar();}
 function calNext(){calM++;if(calM>11){calM=0;calY++;}renderCalendar();}
 function calSelectDay(dstr){
   document.getElementById('date-inp').value=dstr;
-  document.getElementById('trx-date-filter').value=dstr;
+  document.getElementById('trx-date-filter').value=dstr.slice(0,7);
   renderCalendar();renderTrxList();
 }
 function renderCalendar(){
   const MN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   document.getElementById('fin-cal-lbl').textContent=`${MN[calM]} ${calY}`;
   const today=todayStr();
-  const selected=document.getElementById('trx-date-filter').value||today;
+  const selMo=document.getElementById('trx-date-filter').value||currentMonth;
+  const calMoStr=`${calY}-${String(calM+1).padStart(2,'0')}`;
   const grid=document.getElementById('fin-cal-grid');
   grid.querySelectorAll('.fin-cday').forEach(el=>el.remove());
   const firstDay=new Date(calY,calM,1).getDay();
@@ -512,7 +513,7 @@ function renderCalendar(){
     const exp=dayExpense(dstr);
     let cls='fin-cday';
     if(dstr===today)cls+=' today';
-    if(dstr===selected&&dstr!==today)cls+=' selected';
+    if(selMo===calMoStr&&dstr!==today)cls+=' selected';
     const el=document.createElement('div');el.className=cls;
     el.innerHTML=`<div class="fin-day-num">${d}</div>${exp?`<div class="fin-day-exp">${fmtK(exp)}</div>`:''}`;
     el.onclick=()=>calSelectDay(dstr);grid.appendChild(el);
@@ -532,7 +533,7 @@ function renderYtdChips(){
   const chip=(label,val)=>{
     const active=String(ytdYear||'')===String(val||'');
     const base='font-size:9px;font-weight:700;padding:4px 11px;border-radius:20px;cursor:pointer;letter-spacing:.04em;transition:all .15s;border:1px solid ';
-    return `<button onclick="selectYtdYear(${val===null?'null':JSON.stringify(val)})" style="${base}${active?'var(--blk);background:var(--blk);color:#fff':'var(--border);background:var(--bg);color:var(--text2)'}">${label}</button>`;
+    return `<button data-yr="${val||''}" onclick="selectYtdYear(this.dataset.yr||null)" style="${base}${active?'var(--blk);background:var(--blk);color:#fff':'var(--border);background:var(--bg);color:var(--text2)'}">${label}</button>`;
   };
   document.getElementById('ytd-yr-chips').innerHTML=
     chip('All Time',null)+years.map(y=>chip(y,y)).join('');
