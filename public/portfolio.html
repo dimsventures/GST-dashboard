@@ -521,13 +521,18 @@ async function saveWithdrawal(){
   if(!assetId||!amt||amt<=0){alert('Lengkapi nominal dulu.');return;}
   const date=document.getElementById('wd-date').value||todayStr();
   let body={asset_id:assetId,date:date,amount:amt,note:note||null};
+  const realization={date:date,type:'income',category:'Penarikan Portfolio',amount:amt,note:'[Porto] Realisasi '+(note||'')};
   if(type.startsWith('finance_')){
     const finType=type.replace('finance_','');
     const cat=type==='finance_expense'?(document.getElementById('wd-cat')?.value||'Unexpected'):finType;
     body.finance_type=finType;body.finance_category=cat;
+    // income dulu (uang masuk ke kas), lalu expense ke tujuan → SISA tetap 0
+    await api('/api/transactions','POST',realization);
     await api('/api/transactions','POST',{date:date,type:finType,category:cat,amount:amt,note:'[Porto] '+(note||cat)});
   }else if(type==='invest_thinkandgrow'){
     body.finance_type='investment';body.finance_category='Think and Grow';
+    // income (realisasi) + investment (think and grow) → SISA tetap 0
+    await api('/api/transactions','POST',realization);
     await api('/api/transactions','POST',{date:date,type:'investment',category:'Think and Grow',amount:amt,note:'[Porto] '+(note||'Think and Grow')});
   }else if(type==='reinvest'){
     body.target_asset_id=document.getElementById('wd-target')?.value;
