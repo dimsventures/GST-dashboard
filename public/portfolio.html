@@ -522,7 +522,7 @@ async function saveWithdrawal(){
   const date=document.getElementById('wd-date').value||todayStr();
   let body={asset_id:assetId,date:date,amount:amt,note:note||null};
   // Reversal deposit: investment negatif = pengembalian modal (bukan income)
-  const reversal={date:date,type:'investment',category:'Deposit',amount:-amt,note:'[Porto] Tarik '+(note||'')};
+  const reversal={date:date,type:'investment',category:'Deposit',amount:-amt,asset_id:assetId,note:'[Porto] Tarik '+(note||'')};
   if(type.startsWith('finance_')){
     const finType=type.replace('finance_','');
     const cat=type==='finance_expense'?(document.getElementById('wd-cat')?.value||'Unexpected'):finType;
