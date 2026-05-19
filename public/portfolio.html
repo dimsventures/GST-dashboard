@@ -376,6 +376,21 @@ function snapMonthChange(d){
   snapMonth=monthStr(nd.getFullYear(),nd.getMonth());
   renderSnapMonthLabel();renderSnapTable();renderSummary();
 }
+function numFmt(n){return Math.round(n).toLocaleString('id-ID');}
+function numParse(s){return parseInt((s||'').replace(/\./g,''))||0;}
+function onSnapIdrInput(el){
+  const raw=numParse(el.value);
+  el.value=raw>0?numFmt(raw):'';
+}
+function onSnapUsdInput(id){
+  const usdEl=document.getElementById('snap-val-'+id);
+  const rateEl=document.getElementById('snap-rate-'+id);
+  const prevEl=document.getElementById('snap-idr-prev-'+id);
+  const usd=parseFloat(usdEl?.value||0);
+  const rate=parseFloat(rateEl?.value||usdRate||0);
+  const idr=Math.round(usd*rate);
+  if(prevEl) prevEl.textContent=idr>0?'≈ '+fmtRp(idr):'';
+}
 function renderSnapTable(){
   const activeAssets=assets.filter(a=>a.is_active);
   const tbody=document.getElementById('snap-tbody');
@@ -383,12 +398,28 @@ function renderSnapTable(){
   tbody.innerHTML=activeAssets.map(a=>{
     const snap=snapshots.find(s=>s.asset_id===a.id&&s.month===snapMonth);
     const isUSD=a.currency==='USD';
-    return`<tr>
-      <td><div class="snap-asset-name">${a.name}<span class="snap-asset-cur">${a.currency}</span></div></td>
-      <td><input type="number" class="snap-inp" id="snap-val-${a.id}" value="${snap?.current_value||''}" placeholder="0" style="border-color:var(--green);"></td>
-      <td>${isUSD?`<input type="number" class="snap-inp" id="snap-rate-${a.id}" value="${snap?.note?.match(/rate:(\d+)/)?.[1]||(usdRate||'')}" placeholder="${usdRate||'rate'}" style="width:70px;">`:'-'}</td>
-      <td><input type="text" class="snap-inp" id="snap-note-${a.id}" value="${snap?.note&&!snap.note.includes('rate:')?snap.note:''}" placeholder="catatan" style="font-weight:400;"></td>
-    </tr>`;
+    if(isUSD){
+      const savedRate=snap?.note?.match(/rate:(\d+)/)?.[1]||(usdRate||'');
+      const savedUsd=snap?.note?.match(/usd:([\d.]+)/)?.[1]||'';
+      const savedIdr=snap?.current_value||0;
+      return`<tr>
+        <td><div class="snap-asset-name">${a.name}<span class="snap-asset-cur">USD</span></div></td>
+        <td>
+          <input type="number" class="snap-inp" id="snap-val-${a.id}" value="${savedUsd}" placeholder="Nilai USD" step="0.01" style="border-color:var(--green);" oninput="onSnapUsdInput('${a.id}')">
+          <div id="snap-idr-prev-${a.id}" style="font-size:9px;color:var(--text4);margin-top:2px;">${savedIdr?'≈ '+fmtRp(savedIdr):''}</div>
+        </td>
+        <td><input type="number" class="snap-inp" id="snap-rate-${a.id}" value="${savedRate}" placeholder="${usdRate||'rate'}" style="width:90px;" oninput="onSnapUsdInput('${a.id}')"></td>
+        <td><input type="text" class="snap-inp" id="snap-note-${a.id}" value="${snap?.note?.replace(/rate:\d+\s*/,'').replace(/usd:[\d.]+\s*/,'')||''}" placeholder="catatan" style="font-weight:400;"></td>
+      </tr>`;
+    }else{
+      const savedIdr=snap?.current_value;
+      return`<tr>
+        <td><div class="snap-asset-name">${a.name}<span class="snap-asset-cur">IDR</span></div></td>
+        <td><input type="text" class="snap-inp" id="snap-val-${a.id}" value="${savedIdr!=null&&savedIdr!==''?numFmt(savedIdr):''}" placeholder="0" style="border-color:var(--green);" oninput="onSnapIdrInput(this)"></td>
+        <td>-</td>
+        <td><input type="text" class="snap-inp" id="snap-note-${a.id}" value="${snap?.note||''}" placeholder="catatan" style="font-weight:400;"></td>
+      </tr>`;
+    }
   }).join('');
 }
 async function saveSnapshots(){
@@ -397,13 +428,25 @@ async function saveSnapshots(){
   btn.textContent='Menyimpan...';btn.disabled=true;
   try{
     for(const a of activeAssets){
-      const valStr=document.getElementById('snap-val-'+a.id)?.value;
-      if(valStr===''||valStr===null||valStr===undefined)continue;
-      const val=parseInt(valStr);
-      if(isNaN(val)||val<0)continue;
-      let note=document.getElementById('snap-note-'+a.id)?.value||'';
-      const rate=document.getElementById('snap-rate-'+a.id)?.value;
-      if(rate)note=`rate:${rate}${note?' '+note:''}`;
+      const isUSD=a.currency==='USD';
+      let val,note='';
+      if(isUSD){
+        const usdStr=document.getElementById('snap-val-'+a.id)?.value;
+        if(usdStr===''||usdStr===undefined||usdStr===null)continue;
+        const usd=parseFloat(usdStr);
+        if(isNaN(usd)||usd<0)continue;
+        const rate=parseFloat(document.getElementById('snap-rate-'+a.id)?.value||usdRate||0);
+        val=Math.round(usd*rate);
+        note=`rate:${Math.round(rate)} usd:${usd}`;
+        const extra=document.getElementById('snap-note-'+a.id)?.value||'';
+        if(extra)note+=` ${extra}`;
+      }else{
+        const valStr=document.getElementById('snap-val-'+a.id)?.value;
+        if(valStr===''||valStr===null||valStr===undefined)continue;
+        val=numParse(valStr);
+        if(isNaN(val)||val<0)continue;
+        note=document.getElementById('snap-note-'+a.id)?.value||'';
+      }
       const s=await api('/api/portfolio/snapshots','POST',{asset_id:a.id,month:snapMonth,current_value:val,note:note||null});
       const idx=snapshots.findIndex(x=>x.asset_id===a.id&&x.month===snapMonth);
       if(idx>=0)snapshots[idx]=s;else snapshots.push(s);
