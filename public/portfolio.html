@@ -204,6 +204,8 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
         <option value="reinvest">Re-invest ke aset lain</option>
       </select>
       <div id="wd-alloc-extra" style="margin-bottom:10px;"></div>
+      <label class="mlbl">Tanggal</label>
+      <input type="date" class="mini-inp" id="wd-date" style="margin-bottom:10px;">
       <input type="text" class="mini-inp" id="wd-note" placeholder="Catatan" style="margin-bottom:10px;">
       <button class="btn-sm red" onclick="saveWithdrawal()">Tarik Dana</button>
     </div>
@@ -289,6 +291,7 @@ async function api(path,method='GET',body=null){
 
 async function init(){
   const now=new Date();
+  document.getElementById('wd-date').value=todayStr();
   snapMonth=monthStr(now.getFullYear(),now.getMonth());
   renderSnapMonthLabel();
   const [a,s,w,ft]=await Promise.all([
@@ -516,13 +519,13 @@ async function saveWithdrawal(){
   const type=document.getElementById('wd-type').value;
   const note=document.getElementById('wd-note').value.trim();
   if(!assetId||!amt||amt<=0){alert('Lengkapi nominal dulu.');return;}
-  const today=todayStr();
-  let body={asset_id:assetId,date:today,amount:amt,note:note||null};
+  const date=document.getElementById('wd-date').value||todayStr();
+  let body={asset_id:assetId,date:date,amount:amt,note:note||null};
   if(type.startsWith('finance_')){
     const finType=type.replace('finance_','');
     const cat=type==='finance_expense'?(document.getElementById('wd-cat')?.value||'Unexpected'):finType;
     body.finance_type=finType;body.finance_category=cat;
-    await api('/api/transactions','POST',{date:today,type:finType,category:cat,amount:amt,note:'[Porto] '+(note||cat)});
+    await api('/api/transactions','POST',{date:date,type:finType,category:cat,amount:amt,note:'[Porto] '+(note||cat)});
   }else if(type==='reinvest'){
     body.target_asset_id=document.getElementById('wd-target')?.value;
     body.finance_type='reinvest';
