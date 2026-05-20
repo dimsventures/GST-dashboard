@@ -253,16 +253,27 @@ async function init(){
   document.getElementById('page-date').textContent =
     new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
-  const [gst, txs, snaps, assets] = await Promise.all([
+  const [gst, txs, assets, positions] = await Promise.all([
     fetch('/api/data').then(r=>r.json()).catch(()=>({})),
     fetch('/api/transactions?month='+currentMonth()).then(r=>r.json()).catch(()=>[]),
-    fetch('/api/portfolio/snapshots').then(r=>r.json()).catch(()=>[]),
     fetch('/api/portfolio/assets').then(r=>r.json()).catch(()=>[]),
+    fetch('/api/portfolio/positions').then(r=>r.json()).catch(()=>[]),
   ]);
 
   renderGST(gst);
   renderFinance(txs);
-  renderPortfolio(snaps, assets);
+
+  const activePos = (positions||[]).filter(p=>p.is_active&&Number(p.qty)>0);
+  const tickers = activePos.map(p=>p.ticker);
+  if(tickers.length){
+    const usdTicker = assets.some(a=>a.currency==='USD') ? ',USDIDR=X' : '';
+    fetch('/api/portfolio/market-price?tickers='+tickers.join(',')+usdTicker)
+      .then(r=>r.json()).then(prices=>{
+        renderPortfolio(assets, activePos, prices);
+      }).catch(()=>renderPortfolio(assets, activePos, {}));
+  } else {
+    renderPortfolio(assets, activePos, {});
+  }
 }
 
 function renderGST(data){
@@ -341,49 +352,59 @@ function renderFinance(txs){
   `;
 }
 
-function renderPortfolio(snaps, assets){
-  if(!assets?.length || !snaps?.length){
-    document.getElementById('porto-total').textContent = 'Rp 0';
-    document.getElementById('porto-assets').innerHTML = '<div class="loading">Belum ada snapshot</div>';
+function renderPortfolio(assets, activePos, prices){
+  const usdRate = prices['USDIDR=X']?.price || 0;
+
+  function mktVal(p){
+    const pr = prices[p.ticker]?.price || 0;
+    if(!pr) return 0;
+    if(p.ticker_type==='stock_idr') return Number(p.qty)*100*pr;
+    if(p.ticker_type==='crypto') return Number(p.qty)*pr*usdRate;
+    return 0;
+  }
+  function costBasis(p){
+    const qty=Number(p.qty), avg=Number(p.avg_buy_price);
+    if(p.ticker_type==='stock_idr') return qty*100*avg;
+    if(p.ticker_type==='crypto') return qty*avg*usdRate;
+    return 0;
+  }
+
+  let totalVal=0, totalCost=0;
+  activePos.forEach(p=>{ totalVal+=mktVal(p); totalCost+=costBasis(p); });
+
+  const totalCash = (assets||[]).filter(a=>a.is_active).reduce((s,a)=>{
+    const c=Number(a.cash_idle)||0;
+    return s + (a.currency==='USD' ? c*usdRate : c);
+  },0);
+  totalVal += totalCash;
+
+  const totalDep = (assets||[]).filter(a=>a.is_active).reduce((s,a)=>s+(Number(a.total_deposited)||0),0);
+  const gl = totalVal - totalDep;
+
+  document.getElementById('porto-total').textContent = fmt(totalVal);
+  document.getElementById('porto-total').style.color = totalVal>0?'var(--green)':'var(--red)';
+  document.getElementById('porto-dep').textContent = totalDep>0 ? fmtShort(totalDep) : '—';
+  document.getElementById('porto-tag').textContent = currentMonth();
+  const glEl = document.getElementById('porto-gl');
+  glEl.textContent = totalDep>0 ? (gl>=0?'+':'')+fmtShort(gl) : '—';
+  glEl.className = 'porto-meta-val '+(gl>=0?'green':'red');
+
+  if(!activePos.length && !totalCash){
+    document.getElementById('porto-assets').innerHTML = '<div class="loading">Belum ada posisi.</div>';
     return;
   }
 
-  const assetMap = Object.fromEntries(assets.map(a=>[a.id,a]));
-  const months   = [...new Set(snaps.map(s=>s.month))].sort();
-  const latest   = months[months.length-1];
-  const rows     = [];
-  let total = 0;
-
-  snaps.filter(s=>s.month===latest).forEach(s=>{
-    const asset  = assetMap[s.asset_id];
-    if(!asset) return;
-    const val    = Number(s.value)||0;
-    const rate   = Number(s.rate_usd)||0;
-    const valIdr = asset.currency==='USD' && rate>0 ? val*rate : val;
-    total += valIdr;
-    rows.push({name:asset.name, valIdr});
-  });
-
-  const totalDep = assets.reduce((s,a)=>s+(Number(a.total_deposited)||Number(a.deposited)||0),0);
-  const gl       = total - totalDep;
-
-  document.getElementById('porto-total').textContent = fmt(total);
-  document.getElementById('porto-dep').textContent   = totalDep>0 ? fmtShort(totalDep) : '—';
-  document.getElementById('porto-tag').textContent   = latest || '—';
-  const glEl = document.getElementById('porto-gl');
-  glEl.textContent  = totalDep>0 ? (gl>=0?'+':'')+fmtShort(gl) : '—';
-  glEl.className    = 'porto-meta-val '+(gl>=0?'green':'red');
-
-  rows.sort((a,b)=>b.valIdr-a.valIdr);
+  const rows = activePos.map(p=>({name:p.ticker, val:mktVal(p)})).filter(r=>r.val>0);
+  rows.sort((a,b)=>b.val-a.val);
   document.getElementById('porto-assets').innerHTML = rows.map((r,i)=>`
     <div class="porto-asset-row">
       <span class="porto-asset-name">
         <span class="porto-dot" style="background:${PORTO_COLORS[i%PORTO_COLORS.length]}"></span>
         ${r.name}
       </span>
-      <span class="porto-asset-val ${r.valIdr===0?'zero':''}">${r.valIdr>0?fmt(r.valIdr):'Rp 0'}</span>
+      <span class="porto-asset-val">${fmt(r.val)}</span>
     </div>
-  `).join('');
+  `).join('') || '<div class="loading">Menunggu market data...</div>';
 }
 
 init();
