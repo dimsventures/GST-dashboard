@@ -424,7 +424,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 
 @media(max-width:768px){
   /* Header */
-  header{height:48px;padding:0 14px;padding-left:56px;}
+  header{height:48px;padding:0 14px;}
   .hdr-lessons{display:none;}
   #analog-clock{display:none;}
   .live-dot{display:none;}
@@ -491,13 +491,13 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 body{transition:padding-left .25s ease;}
 body.sb-collapsed{padding-left:60px;}
 #sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:390;}
-.sb-hamburger{display:none;position:fixed;top:12px;left:12px;z-index:420;background:#d12b2b;border:none;border-radius:8px;width:38px;height:38px;cursor:pointer;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+.sb-hamburger{display:none;background:#d12b2b;border:none;border-radius:8px;width:38px;height:38px;cursor:pointer;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.25);flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 @media(max-width:768px){
   #sidebar{left:-220px !important;width:200px !important;transition:left .25s ease;top:0;}
   #sidebar.mobile-open{left:0 !important;}
   #sb-overlay.active{display:block;}
   body,body.sb-collapsed{padding-left:0 !important;}
-  .sb-hamburger{display:flex;}
+  .sb-hamburger{display:flex;margin-right:10px;}
   #sb-toggle{display:none;}
   body{font-size:13px;}
   .card{border-radius:8px;}
@@ -523,6 +523,7 @@ body.sb-collapsed{padding-left:60px;}
 <script>(function(){const m={'/dashboard.html':'sb-dashboard','/legacy.html':'sb-gst','/finance.html':'sb-finance','/portfolio.html':'sb-portfolio'};const id=m[location.pathname];if(id)document.getElementById(id)?.classList.add('active');})();</script>
 
 <header>
+  <button class="sb-hamburger" onclick="openMobileSidebar()">☰</button>
   <div style="display:flex;align-items:center;gap:14px;flex-shrink:0;">
     <div class="logo" style="font-size: 15px" id="hello-name">Hello</div>
     <div class="live-pill" style="border-left:1px solid var(--border);padding-left:14px;">
@@ -1975,7 +1976,6 @@ function renderGoals(){
 init();
 </script>
 <div id="sb-overlay" onclick="closeSidebar()"></div>
-<button class="sb-hamburger" onclick="openMobileSidebar()">☰</button>
 <script>
 (function(){
   const sb=document.getElementById('sidebar');
