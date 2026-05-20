@@ -199,7 +199,7 @@ body.sb-collapsed{padding-left:60px;}
 <script>(function(){const m={'/dashboard.html':'sb-dashboard','/legacy.html':'sb-gst','/finance.html':'sb-finance','/portfolio.html':'sb-portfolio'};const id=m[location.pathname];if(id)document.getElementById(id)?.classList.add('active');})();</script>
 
 <header>
-  <button class="sb-hamburger" onclick="openMobileSidebar()">☰</button>
+  <button class="sb-hamburger">☰</button>
   <div class="logo">GST <span>Portfolio</span></div>
 </header>
 
@@ -316,7 +316,7 @@ body.sb-collapsed{padding-left:60px;}
   </div>
 </div>
 
-<div id="sb-overlay" onclick="closeSidebar()"></div>
+<div id="sb-overlay"></div>
 
 <script>
 let assets=[],snapshots=[],withdrawals=[],positions=[],financeTransactions=[];
@@ -935,25 +935,35 @@ init();
 
 <script>
 (function(){
-  const sb=document.getElementById('sidebar');
-  const body=document.body;
-  const overlay=document.getElementById('sb-overlay');
-  const isMobile=()=>window.innerWidth<=768;
-  const toggleBtn=document.createElement('button');
-  toggleBtn.id='sb-toggle';toggleBtn.innerHTML='◀';toggleBtn.onclick=toggleSidebar;
-  sb.style.position='fixed';sb.appendChild(toggleBtn);
+  var sb=document.getElementById('sidebar');
+  var body=document.body;
+  var overlay=document.getElementById('sb-overlay');
+  var hamburger=document.querySelector('.sb-hamburger');
+  var isMobile=function(){return window.innerWidth<=768;};
+  var toggleBtn=document.createElement('button');
+  toggleBtn.id='sb-toggle';
+  toggleBtn.innerHTML='◀';
+  sb.appendChild(toggleBtn);
   if(!isMobile()&&localStorage.getItem('sb_collapsed')==='1'){
-    sb.classList.add('collapsed');body.classList.add('sb-collapsed');toggleBtn.innerHTML='▶';
+    sb.classList.add('collapsed');
+    body.classList.add('sb-collapsed');
+    toggleBtn.innerHTML='▶';
   }
-  window.toggleSidebar=function(){
+  toggleBtn.addEventListener('click',function(){
     if(isMobile())return;
-    const c=sb.classList.toggle('collapsed');
+    var c=sb.classList.toggle('collapsed');
     body.classList.toggle('sb-collapsed',c);
     toggleBtn.innerHTML=c?'▶':'◀';
     localStorage.setItem('sb_collapsed',c?'1':'0');
-  };
-  window.openMobileSidebar=function(){sb.classList.add('mobile-open');overlay.classList.add('active');};
-  window.closeSidebar=function(){sb.classList.remove('mobile-open');overlay.classList.remove('active');};
+  });
+  if(hamburger)hamburger.addEventListener('click',function(){
+    sb.classList.add('mobile-open');
+    overlay.classList.add('active');
+  });
+  if(overlay)overlay.addEventListener('click',function(){
+    sb.classList.remove('mobile-open');
+    overlay.classList.remove('active');
+  });
 })();
 </script>
 </body>
