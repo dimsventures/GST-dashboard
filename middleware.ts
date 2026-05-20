@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
-async function sessionToken() {
-  const data = new TextEncoder().encode(process.env.DASHBOARD_PASSWORD || '')
-  const hash = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
+function decodeJwt(token: string): { sub: string; exp: number } | null {
+  try {
+    return JSON.parse(atob(token.split('.')[1]))
+  } catch {
+    return null
+  }
 }
 
 export async function middleware(request: NextRequest) {
@@ -14,9 +17,51 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const cookie = request.cookies.get('gst_auth')
-  if (!cookie || cookie.value !== await sessionToken()) {
+  const accessToken = request.cookies.get('sb_access_token')?.value
+  const refreshToken = request.cookies.get('sb_refresh_token')?.value
+
+  if (!accessToken) {
     return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  const payload = decodeJwt(accessToken)
+  if (!payload?.sub) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  const now = Math.floor(Date.now() / 1000)
+  const isExpired = payload.exp && payload.exp < now
+
+  if (isExpired) {
+    if (!refreshToken) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    try {
+      const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!)
+      const { data, error } = await sb.auth.refreshSession({ refresh_token: refreshToken })
+
+      if (error || !data.session) {
+        return NextResponse.redirect(new URL('/login', request.url))
+      }
+
+      const response = pathname === '/'
+        ? NextResponse.redirect(new URL('/dashboard.html', request.url))
+        : NextResponse.next()
+
+      const cookieOpts = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax' as const,
+        maxAge: 60 * 60 * 24 * 30,
+        path: '/',
+      }
+      response.cookies.set('sb_access_token', data.session.access_token, cookieOpts)
+      response.cookies.set('sb_refresh_token', data.session.refresh_token, cookieOpts)
+      return response
+    } catch {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
   }
 
   if (pathname === '/') {
@@ -27,5 +72,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon.svg|manifest.json).*)'],
 }

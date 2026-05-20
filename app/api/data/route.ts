@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getAuthContext } from '@/lib/auth'
 
-function sb() {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!)
-}
-
-export async function GET() {
-  const db = sb()
+export async function GET(req: Request) {
+  const ctx = getAuthContext(req)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const db = ctx.db
   const [e, l, t, g, w, a] = await Promise.all([
     db.from('gst_entries').select('*').order('date'),
     db.from('gst_lessons').select('*').order('date'),

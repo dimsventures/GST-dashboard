@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function sb() {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!)
-}
+import { getAuthContext } from '@/lib/auth'
 
 export async function GET(req: Request) {
+  const ctx = getAuthContext(req)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const url   = new URL(req.url)
   const date  = url.searchParams.get('date')
   const month = url.searchParams.get('month')
@@ -14,7 +12,7 @@ export async function GET(req: Request) {
   const all: any[] = []
   let from = 0
   while (true) {
-    let q = sb().from('finance_transactions').select('*').order('date').range(from, from + PAGE - 1)
+    let q = ctx.db.from('finance_transactions').select('*').order('date').range(from, from + PAGE - 1)
     if (date)  q = q.eq('date', date)
     if (month) q = q.like('date', `${month}%`)
     if (year)  q = q.like('date', `${year}-%`)
@@ -29,16 +27,20 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const ctx = getAuthContext(req)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
-  const { data, error } = await sb().from('finance_transactions').insert(body).select().single()
+  const { data, error } = await ctx.db.from('finance_transactions').insert(body).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
 
 export async function DELETE(req: Request) {
+  const ctx = getAuthContext(req)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const id = new URL(req.url).searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
-  const { error } = await sb().from('finance_transactions').delete().eq('id', id)
+  const { error } = await ctx.db.from('finance_transactions').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

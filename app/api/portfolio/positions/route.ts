@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getAuthContext } from '@/lib/auth'
 
-function sb() {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!)
-}
-
-export async function GET() {
-  const { data, error } = await sb()
+export async function GET(req: Request) {
+  const ctx = getAuthContext(req)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data, error } = await ctx.db
     .from('portfolio_positions')
     .select('*')
     .order('created_at')
@@ -15,6 +13,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const ctx = getAuthContext(req)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
   const { action, ...rest } = body
 
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'id, add_qty, buy_price required' }, { status: 400 })
     }
 
-    const { data: pos, error: fetchErr } = await sb()
+    const { data: pos, error: fetchErr } = await ctx.db
       .from('portfolio_positions')
       .select('*')
       .eq('id', id)
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     const newAvg = (oldUnits * oldAvg + addUnits * addPrice) / (oldUnits + addUnits)
     const newQty = oldQty + addQty
 
-    const { data, error } = await sb()
+    const { data, error } = await ctx.db
       .from('portfolio_positions')
       .update({
         qty: newQty,
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'id, sell_qty required' }, { status: 400 })
     }
 
-    const { data: pos, error: fetchErr } = await sb()
+    const { data: pos, error: fetchErr } = await ctx.db
       .from('portfolio_positions')
       .select('*')
       .eq('id', id)
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     }
 
     if (newQty === 0) {
-      const { data, error } = await sb()
+      const { data, error } = await ctx.db
         .from('portfolio_positions')
         .update({ qty: 0, is_active: false, updated_at: new Date().toISOString() })
         .eq('id', id)
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
       return NextResponse.json(data)
     }
 
-    const { data, error } = await sb()
+    const { data, error } = await ctx.db
       .from('portfolio_positions')
       .update({ qty: newQty, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'ticker and asset_id required' }, { status: 400 })
   }
 
-  const { data, error } = await sb()
+  const { data, error } = await ctx.db
     .from('portfolio_positions')
     .insert({
       ticker: ticker.toUpperCase(),
@@ -122,11 +122,13 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
+  const ctx = getAuthContext(req)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
   const { id, ...rest } = body
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
-  const { data, error } = await sb()
+  const { data, error } = await ctx.db
     .from('portfolio_positions')
     .update({ ...rest, updated_at: new Date().toISOString() })
     .eq('id', id)
@@ -137,9 +139,11 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const ctx = getAuthContext(req)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const id = new URL(req.url).searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
-  const { error } = await sb().from('portfolio_positions').delete().eq('id', id)
+  const { error } = await ctx.db.from('portfolio_positions').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
