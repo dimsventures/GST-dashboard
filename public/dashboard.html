@@ -204,7 +204,10 @@ body.sb-collapsed{padding-left:60px;}
   <div class="card">
     <div class="card-hdr">
       <span class="card-title">Finance</span>
-      <span class="card-tag green" id="fin-tag">—</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="card-tag green" id="fin-tag">—</span>
+        <button id="fin-eye" onclick="toggleFinHide()" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--text3);padding:0;line-height:1;">👁</button>
+      </div>
     </div>
     <div class="card-body">
       <div id="fin-rows"><div class="loading">Memuat...</div></div>
@@ -250,7 +253,7 @@ const ACT_CATS = [
   {key:'humanity',  label:'Humanity',      color:'rgba(20,184,166,.85)'},
 ];
 const PORTO_COLORS = ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#06b6d4','#ec4899'];
-let dashAllocChart=null,portoHidden=false;
+let dashAllocChart=null,portoHidden=false,finHidden=false;
 let gstData={},gstChart=null,gstFilter='month';
 
 function fmt(n){return 'Rp '+Math.round(n).toLocaleString('id-ID');}
@@ -470,6 +473,7 @@ function closeGSTModal(){
 }
 
 function renderFinance(txs){
+  window._lastFinTxs=txs;
   let income=0, expense=0, invest=0, deposit=0;
   (txs||[]).forEach(t=>{
     const a = Number(t.amount)||0;
@@ -486,10 +490,12 @@ function renderFinance(txs){
 
   const month = new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});
   document.getElementById('fin-tag').textContent = month;
-  document.getElementById('fin-rate').textContent = rate+'%';
+  const h=finHidden;
+  const mask='••••••';
+  document.getElementById('fin-rate').textContent = h?mask:rate+'%';
   document.getElementById('fin-rate').className = 'fin-bar-pct'+(neg?' neg':'');
   const fill = document.getElementById('fin-bar-fill');
-  fill.style.width = Math.max(0,Math.min(100,Math.abs(rate)))+'%';
+  fill.style.width = h?'0%':Math.max(0,Math.min(100,Math.abs(rate)))+'%';
   if(neg) fill.classList.add('neg');
 
   var dailyHtml='';
@@ -502,29 +508,35 @@ function renderFinance(txs){
       var daily=Math.round(sisa/diff);
       dailyHtml=`<div class="fin-row" style="background:var(--bg);border-radius:4px;padding:7px 8px;margin-top:2px;">
         <span class="fin-label" style="font-size:9px;">Est. Harian <span style="color:var(--text4);">(${diff}d)</span></span>
-        <span class="fin-val ${daily>0?'green':'red'}" style="font-size:11px;">${fmtShort(Math.abs(daily))}</span>
+        <span class="fin-val ${daily>0?'green':'red'}" style="font-size:11px;">${h?mask:fmtShort(Math.abs(daily))}</span>
       </div>`;
     }
   }
   document.getElementById('fin-rows').innerHTML = `
     <div class="fin-row">
       <span class="fin-label"><span class="fin-dot" style="background:var(--green)"></span>Income</span>
-      <span class="fin-val green">${fmtShort(income)}</span>
+      <span class="fin-val green">${h?mask:fmtShort(income)}</span>
     </div>
     <div class="fin-row">
       <span class="fin-label"><span class="fin-dot" style="background:var(--red)"></span>Life Cost</span>
-      <span class="fin-val red">${fmtShort(expense)}</span>
+      <span class="fin-val red">${h?mask:fmtShort(expense)}</span>
     </div>
     <div class="fin-row">
       <span class="fin-label"><span class="fin-dot" style="background:var(--blue)"></span>Investment</span>
-      <span class="fin-val">${fmtShort(invest)}</span>
+      <span class="fin-val">${h?mask:fmtShort(invest)}</span>
     </div>
     <div class="fin-row">
       <span class="fin-label"><span class="fin-dot" style="background:var(--gold)"></span>Sisa</span>
-      <span class="fin-val ${sisa>=0?'green':'red'}">${fmtShort(Math.abs(sisa))}</span>
+      <span class="fin-val ${sisa>=0?'green':'red'}">${h?mask:fmtShort(Math.abs(sisa))}</span>
     </div>
     ${dailyHtml}
   `;
+}
+
+function toggleFinHide(){
+  finHidden=!finHidden;
+  document.getElementById('fin-eye').textContent=finHidden?'🙈':'👁';
+  if(window._lastFinTxs)renderFinance(window._lastFinTxs);
 }
 
 function renderPortfolio(assets, activePos, prices, usdRate, investTxs){
