@@ -262,6 +262,22 @@ body.sb-collapsed{padding-left:60px;}
   </div>
 
   <div class="card">
+    <div class="card-hdr" style="flex-wrap:wrap;gap:8px;">
+      <div class="card-title">Cumulative Return</div>
+      <div style="display:flex;gap:4px;margin-left:auto;">
+        <button onclick="setBenchPeriod('ytd',this)" class="bench-period" style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;">YTD</button>
+        <button onclick="setBenchPeriod('1y',this)" class="bench-period" style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;">1Y</button>
+        <button onclick="setBenchPeriod('all',this)" class="bench-period active-period" style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid var(--blk);background:var(--blk);color:#fff;cursor:pointer;">All</button>
+      </div>
+    </div>
+    <div id="bench-legend" style="display:flex;gap:10px;flex-wrap:wrap;padding:6px 14px 0;"></div>
+    <div style="position:relative;height:260px;padding:10px 14px 14px;">
+      <canvas id="bench-chart" style="display:none;"></canvas>
+    </div>
+    <div id="bench-loading" style="text-align:center;padding:40px 20px;font-size:10px;color:var(--text4);font-style:italic;">Memuat data benchmark...</div>
+  </div>
+
+  <div class="card">
     <div class="card-hdr">
       <div class="card-title">Portfolio Positions</div>
       <div style="display:flex;align-items:center;gap:6px;">
@@ -379,6 +395,7 @@ async function init(){
   financeTransactions=(ft||[]).filter(t=>t.type==='investment'&&t.category==='Deposit'&&t.asset_id);
   await fetchMarketPrices();
   render();
+  fetchBenchmarks(); // non-blocking, updates chart when data arrives
 }
 
 async function fetchMarketPrices(){
@@ -444,6 +461,7 @@ function render(){
   renderWithdrawals();
   renderWdAssetSelect();
   updateWdAlloc();
+  if(benchmarkData)renderBenchmarkChart(benchPeriod);
 }
 
 function renderAssets(){
@@ -803,6 +821,157 @@ function renderChart(){
       }
     }
   });
+}
+
+// ── BENCHMARK CHART ──
+let benchmarkData=null,benchChart=null,benchPeriod='all';
+const BENCH_COLORS={portfolio:'#10b981',ihsg:'#8b5cf6',btc:'#f59e0b',gold:'#c9841a'};
+const MNS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
+function getPortfolioMonthlyValues(){
+  const allMonths=[...new Set(snapshots.map(s=>s.month))].sort();
+  return allMonths.map(m=>({
+    month:m,
+    value:assets.filter(a=>a.is_active).reduce((sum,a)=>{
+      const snap=snapshots.filter(s=>s.asset_id===a.id&&s.month<=m).sort((x,y)=>y.month.localeCompare(x.month))[0];
+      return sum+(snap?.current_value||0);
+    },0)
+  }));
+}
+
+function filterByPeriod(arr,period){
+  const now=new Date();
+  let from;
+  if(period==='ytd')from=`${now.getFullYear()}-01`;
+  else if(period==='1y'){const d=new Date(now);d.setFullYear(d.getFullYear()-1);from=d.toISOString().slice(0,7);}
+  else from=arr[0]?.month||'2000-01';
+  return arr.filter(d=>d.month>=from);
+}
+
+function toCumReturn(arr,key){
+  const base=arr[0]?.[key];
+  if(!base)return arr.map(()=>null);
+  return arr.map(d=>d[key]!=null?+((d[key]-base)/base*100).toFixed(2):null);
+}
+
+function renderBenchmarkChart(period){
+  benchPeriod=period;
+  const porto=getPortfolioMonthlyValues();
+  const portoFiltered=filterByPeriod(porto,period);
+  if(!portoFiltered.length)return;
+
+  const benchFiltered=(benchmarkData||[]).map(b=>({
+    ...b,
+    filtered:filterByPeriod(b.data.map(d=>({month:d.month,price:d.price})),period)
+  }));
+
+  const allMonths=[...new Set([
+    ...portoFiltered.map(d=>d.month),
+    ...benchFiltered.flatMap(b=>b.filtered.map(d=>d.month))
+  ])].sort().filter(m=>m>=portoFiltered[0].month);
+
+  const portoByMonth=Object.fromEntries(portoFiltered.map(d=>[d.month,d.value]));
+  const portoValues=allMonths.map(m=>portoByMonth[m]??null);
+  const portoBase=portoValues.find(v=>v!=null);
+  const portoCum=portoValues.map(v=>v!=null&&portoBase?+((v-portoBase)/portoBase*100).toFixed(2):null);
+
+  const labels=allMonths.map(m=>`${MNS[+m.slice(5)-1]} '${m.slice(2,4)}`);
+
+  const hidden=JSON.parse(sessionStorage.getItem('bench_hidden')||'{}');
+
+  const datasets=[
+    {label:'Portfolio',key:'portfolio',data:portoCum,borderColor:BENCH_COLORS.portfolio,backgroundColor:'rgba(16,185,129,.06)',borderWidth:2,tension:.3,pointRadius:2,spanGaps:true,fill:false,hidden:!!hidden.portfolio},
+    ...benchFiltered.map(b=>{
+      const byMonth=Object.fromEntries(b.filtered.map(d=>[d.month,d.price]));
+      const vals=allMonths.map(m=>byMonth[m]??null);
+      const base=vals.find(v=>v!=null);
+      const cum=vals.map(v=>v!=null&&base?+((v-base)/base*100).toFixed(2):null);
+      return{label:b.label,key:b.key,data:cum,borderColor:BENCH_COLORS[b.key]||'#999',borderWidth:1.5,tension:.3,pointRadius:1.5,spanGaps:true,fill:false,hidden:!!hidden[b.key]};
+    })
+  ];
+
+  const canvas=document.getElementById('bench-chart');
+  if(!canvas)return;
+  document.getElementById('bench-loading').style.display='none';
+  canvas.style.display='block';
+  if(benchChart){benchChart.destroy();benchChart=null;}
+
+  benchChart=new Chart(canvas,{
+    type:'line',
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>{const v=ctx.raw;return v!=null?`${ctx.dataset.label}: ${v>=0?'+':''}${v.toFixed(1)}%`:'';}}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{font:{family:'Poppins',size:9},color:'#aaa',maxRotation:45,minRotation:45}},
+        y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:'Poppins',size:9},color:'#aaa',callback:v=>(v>=0?'+':'')+v.toFixed(0)+'%'}}
+      }
+    }
+  });
+
+  renderBenchLegend(datasets,portoCum,benchFiltered.map(b=>{
+    const byMonth=Object.fromEntries(b.filtered.map(d=>[d.month,d.price]));
+    const vals=allMonths.map(m=>byMonth[m]??null);
+    const base=vals.find(v=>v!=null);
+    const last=vals.filter(v=>v!=null).at(-1);
+    return{key:b.key,label:b.label,pct:base&&last?((last-base)/base*100):null};
+  }),portoBase,portoValues.filter(v=>v!=null).at(-1));
+}
+
+function renderBenchLegend(datasets,portoCum,benchPcts,portoBase,portoLast){
+  const leg=document.getElementById('bench-legend');
+  if(!leg)return;
+  const portoPct=portoBase&&portoLast?((portoLast-portoBase)/portoBase*100):null;
+  const items=[
+    {key:'portfolio',label:'Portfolio',pct:portoPct,color:BENCH_COLORS.portfolio},
+    ...benchPcts.map(b=>({...b,color:BENCH_COLORS[b.key]||'#999'}))
+  ];
+  leg.innerHTML=items.map(item=>{
+    const hidden=!benchChart||benchChart.data.datasets.find(d=>d.key===item.key)?.hidden;
+    const pctStr=item.pct!=null?(item.pct>=0?'+':'')+item.pct.toFixed(1)+'%':'—';
+    const col=item.pct!=null?(item.pct>=0?'var(--green)':'var(--red)'):'var(--text3)';
+    return`<div onclick="toggleBenchSeries('${item.key}')" style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:3px 8px;border-radius:20px;border:1px solid ${hidden?'var(--border)':item.color};background:${hidden?'transparent':item.color+'18'};transition:all .15s;">
+      <span style="width:10px;height:3px;border-radius:2px;background:${hidden?'var(--border)':item.color};display:inline-block;"></span>
+      <span style="font-size:9px;font-weight:700;color:${hidden?'var(--text4)':item.color};">${item.label}</span>
+      <span style="font-size:9px;font-weight:700;color:${hidden?'var(--text4)':col};">${pctStr}</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleBenchSeries(key){
+  if(!benchChart)return;
+  const ds=benchChart.data.datasets.find(d=>d.key===key);
+  if(!ds)return;
+  ds.hidden=!ds.hidden;
+  const stored=JSON.parse(sessionStorage.getItem('bench_hidden')||'{}');
+  stored[key]=ds.hidden;
+  sessionStorage.setItem('bench_hidden',JSON.stringify(stored));
+  benchChart.update();
+  renderBenchmarkChart(benchPeriod);
+}
+
+function setBenchPeriod(p,btn){
+  benchPeriod=p;
+  document.querySelectorAll('.bench-period').forEach(b=>{
+    b.style.background='var(--bg)';b.style.color='var(--text2)';b.style.borderColor='var(--border)';
+  });
+  btn.style.background='var(--blk)';btn.style.color='#fff';btn.style.borderColor='var(--blk)';
+  renderBenchmarkChart(p);
+}
+
+async function fetchBenchmarks(){
+  try{
+    const data=await api('/api/portfolio/benchmark?range=5y');
+    benchmarkData=data.benchmarks||[];
+    renderBenchmarkChart(benchPeriod);
+  }catch(e){
+    const el=document.getElementById('bench-loading');
+    if(el)el.textContent='Gagal memuat benchmark data.';
+  }
 }
 
 // ── MODALS ──
