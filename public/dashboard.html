@@ -195,23 +195,19 @@ body.sb-collapsed{padding-left:60px;}
   <div class="card">
     <div class="card-hdr">
       <span class="card-title">Portfolio</span>
-      <span class="card-tag gold" id="porto-tag">—</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="card-tag gold" id="porto-tag">—</span>
+        <button id="porto-eye" onclick="togglePortoHide()" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--text3);padding:0;line-height:1;">👁</button>
+      </div>
     </div>
     <div class="porto-total">
       <div class="porto-total-val" id="porto-total">—</div>
       <div class="porto-total-lbl">Total Portfolio Value</div>
     </div>
-    <div class="porto-meta">
-      <div class="porto-meta-item">
-        <div class="porto-meta-lbl">Total Deposited</div>
-        <div class="porto-meta-val" id="porto-dep">—</div>
-      </div>
-      <div class="porto-meta-item">
-        <div class="porto-meta-lbl">Unrealized G/L</div>
-        <div class="porto-meta-val" id="porto-gl">—</div>
-      </div>
+    <div style="position:relative;height:170px;padding:8px 12px 0;">
+      <canvas id="dash-alloc-chart"></canvas>
     </div>
-    <div id="porto-assets"><div class="loading">Memuat...</div></div>
+    <div id="dash-alloc-legend" style="padding:6px 14px 12px;"></div>
   </div>
 
 </div>
@@ -227,6 +223,7 @@ const ACT_CATS = [
   {key:'humanity',  label:'Humanity',      color:'rgba(20,184,166,.85)'},
 ];
 const PORTO_COLORS = ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#06b6d4','#ec4899'];
+let dashAllocChart=null,portoHidden=false;
 
 function fmt(n){return 'Rp '+Math.round(n).toLocaleString('id-ID');}
 function fmtShort(n){
@@ -385,7 +382,6 @@ function renderFinance(txs){
 }
 
 function renderPortfolio(assets, activePos, prices, usdRate, investTxs){
-
   function mktVal(p){
     const pr = prices[p.ticker]?.price || 0;
     if(!pr) return 0;
@@ -396,41 +392,78 @@ function renderPortfolio(assets, activePos, prices, usdRate, investTxs){
 
   let totalVal=0;
   activePos.forEach(p=>{ totalVal+=mktVal(p); });
-
   const totalCash = (assets||[]).filter(a=>a.is_active).reduce((s,a)=>{
     const c=Number(a.cash_idle)||0;
     return s + (a.currency==='USD' ? c*usdRate : c);
   },0);
   totalVal += totalCash;
 
-  const totalDep = (investTxs||[]).reduce((s,t)=>s+(Number(t.amount)||0),0);
-  const gl = totalVal - totalDep;
-
-  document.getElementById('porto-total').textContent = fmt(totalVal);
-  document.getElementById('porto-total').style.color = totalVal>0?'var(--green)':'var(--red)';
-  document.getElementById('porto-dep').textContent = totalDep>0 ? fmtShort(totalDep) : '—';
   document.getElementById('porto-tag').textContent = currentMonth();
-  const glEl = document.getElementById('porto-gl');
-  glEl.textContent = totalDep>0 ? (gl>=0?'+':'')+fmtShort(gl) : '—';
-  glEl.className = 'porto-meta-val '+(gl>=0?'green':'red');
+  const totalEl = document.getElementById('porto-total');
+  totalEl.style.color = totalVal>0?'var(--green)':'var(--red)';
 
-  if(!activePos.length && !totalCash){
-    document.getElementById('porto-assets').innerHTML = '<div class="loading">Belum ada posisi.</div>';
-    return;
+  // Merge duplicate tickers for allocation
+  const merged={};
+  activePos.forEach(p=>{ const mv=mktVal(p); if(mv>0) merged[p.ticker]=(merged[p.ticker]||0)+mv; });
+  const labels=Object.keys(merged).sort((a,b)=>merged[b]-merged[a]);
+  const values=labels.map(l=>merged[l]);
+  if(totalCash>0){labels.push('Cash');values.push(totalCash);}
+
+  const raw=fmt(totalVal);
+  const setVis=(hide)=>{
+    totalEl.textContent=hide?'••••••':raw;
+    const leg=document.getElementById('dash-alloc-legend');
+    if(leg)leg.style.visibility=hide?'hidden':'visible';
+  };
+  setVis(portoHidden);
+
+  // Doughnut chart
+  const colors=labels.map((l,i)=>l==='Cash'?'#9ca3af':PORTO_COLORS[i%PORTO_COLORS.length]);
+  const canvas=document.getElementById('dash-alloc-chart');
+  if(dashAllocChart){dashAllocChart.destroy();dashAllocChart=null;}
+  if(values.length&&canvas){
+    dashAllocChart=new Chart(canvas,{
+      type:'doughnut',
+      data:{labels,datasets:[{data:values,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},
+      options:{
+        responsive:true,maintainAspectRatio:false,cutout:'62%',
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw/totalVal*100).toFixed(1)}%)`}}
+        }
+      }
+    });
   }
 
-  const rows = activePos.map(p=>({name:p.ticker, val:mktVal(p)})).filter(r=>r.val>0);
-  if(totalCash>0) rows.push({name:'Cash', val:totalCash, isCash:true});
-  rows.sort((a,b)=>b.val-a.val);
-  document.getElementById('porto-assets').innerHTML = rows.length ? rows.map((r,i)=>`
-    <div class="porto-asset-row">
-      <span class="porto-asset-name">
-        <span class="porto-dot" style="background:${r.isCash?'#6b7280':PORTO_COLORS[i%PORTO_COLORS.length]}"></span>
-        ${r.name}
-      </span>
-      <span class="porto-asset-val ${r.isChat?'zero':''}">${fmt(r.val)}</span>
-    </div>
-  `).join('') : '<div class="loading">Menunggu market data...</div>';
+  // Legend
+  const leg=document.getElementById('dash-alloc-legend');
+  if(leg)leg.innerHTML=labels.map((l,i)=>{
+    const v=values[i],pct=(v/totalVal*100).toFixed(1),col=colors[i];
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span style="width:7px;height:7px;border-radius:50%;background:${col};flex-shrink:0;display:inline-block;"></span>
+        <span style="font-size:10px;font-weight:600;color:var(--text);">${l}</span>
+      </div>
+      <div>
+        <span style="font-size:10px;font-weight:700;color:${l==='Cash'?'var(--gold)':'var(--text)'};">${fmtShort(v)}</span>
+        <span style="font-size:9px;color:var(--text3);margin-left:5px;">${pct}%</span>
+      </div>
+    </div>`;
+  }).join('');
+  if(portoHidden&&leg)leg.style.visibility='hidden';
+}
+
+function togglePortoHide(){
+  portoHidden=!portoHidden;
+  document.getElementById('porto-eye').textContent=portoHidden?'🙈':'👁';
+  const totalEl=document.getElementById('porto-total');
+  if(dashAllocChart){
+    const leg=document.getElementById('dash-alloc-legend');
+    // re-use raw value stored in chart data
+    const totalVal=dashAllocChart.data.datasets[0].data.reduce((s,v)=>s+v,0);
+    totalEl.textContent=portoHidden?'••••••':fmt(totalVal);
+    if(leg)leg.style.visibility=portoHidden?'hidden':'visible';
+  }
 }
 
 init();
