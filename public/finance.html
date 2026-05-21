@@ -906,17 +906,17 @@ function renderSummary(){
   const yrTrx=ytdYear?transactions.filter(t=>t.date.startsWith(ytdYear)):transactions;
   const ytdIncome=yrTrx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const ytdExpense=yrTrx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  const ytdInvest=yrTrx.filter(t=>t.type==='investment').reduce((s,t)=>s+t.amount,0);
-  const ytdTng=ytdIncome-ytdExpense-ytdInvest;
-  const pct=v=>ytdIncome>0?Math.round(v/ytdIncome*100):0;
+  const ytdDeposit=yrTrx.filter(t=>t.type==='investment'&&t.category==='Deposit').reduce((s,t)=>s+t.amount,0);
+  const ytdTng=yrTrx.filter(t=>t.type==='investment'&&t.category==='Think & Grow').reduce((s,t)=>s+t.amount,0);
+  const pct=v=>ytdIncome>0?Math.round(Math.abs(v)/ytdIncome*100):0;
   document.getElementById('ytd-income').textContent=fmtRp(ytdIncome);
   document.getElementById('ytd-expense').textContent=fmtRp(ytdExpense);
   document.getElementById('ytd-expense-pct').textContent=ytdIncome>0?pct(ytdExpense)+'%':'';
-  document.getElementById('ytd-invest').textContent=fmtRp(ytdInvest);
-  document.getElementById('ytd-invest-pct').textContent=ytdIncome>0?pct(ytdInvest)+'%':'';
+  document.getElementById('ytd-invest').textContent=fmtRp(ytdDeposit);
+  document.getElementById('ytd-invest-pct').textContent=ytdIncome>0?pct(ytdDeposit)+'%':'';
   document.getElementById('ytd-tng').textContent=fmtRp(Math.abs(ytdTng));
   document.getElementById('ytd-tng').style.color=ytdTng>=0?'var(--gold)':'var(--red)';
-  document.getElementById('ytd-tng-pct').textContent=ytdIncome>0?pct(Math.abs(ytdTng))+'%':'';
+  document.getElementById('ytd-tng-pct').textContent=ytdIncome>0?pct(ytdTng)+'%':'';
   document.getElementById('ytd-tng-pct').style.color=ytdTng>=0?'var(--gold)':'var(--red)';
 }
 
