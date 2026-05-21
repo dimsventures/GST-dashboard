@@ -253,9 +253,10 @@ async function init(){
   document.getElementById('page-date').textContent =
     new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
-  const [gst, txs, assets, positions] = await Promise.all([
+  const [gst, txs, allTxs, assets, positions] = await Promise.all([
     fetch('/api/data').then(r=>r.json()).catch(()=>({})),
     fetch('/api/transactions?month='+currentMonth()).then(r=>r.json()).catch(()=>[]),
+    fetch('/api/transactions').then(r=>r.json()).catch(()=>[]),
     fetch('/api/portfolio/assets').then(r=>r.json()).catch(()=>[]),
     fetch('/api/portfolio/positions').then(r=>r.json()).catch(()=>[]),
   ]);
@@ -263,16 +264,31 @@ async function init(){
   renderGST(gst);
   renderFinance(txs);
 
+  const investTxs = (allTxs||[]).filter(t=>t.type==='investment'&&t.category==='Deposit'&&t.asset_id);
   const activePos = (positions||[]).filter(p=>p.is_active&&Number(p.qty)>0);
-  const tickers = activePos.map(p=>p.ticker);
-  if(tickers.length){
-    const usdTicker = assets.some(a=>a.currency==='USD') ? ',USDIDR=X' : '';
-    fetch('/api/portfolio/market-price?tickers='+tickers.join(',')+usdTicker)
-      .then(r=>r.json()).then(prices=>{
-        renderPortfolio(assets, activePos, prices);
-      }).catch(()=>renderPortfolio(assets, activePos, {}));
+
+  const symbols = [];
+  activePos.forEach(p=>{
+    if(p.ticker_type==='stock_idr') symbols.push(p.ticker+'.JK');
+    else if(p.ticker_type==='crypto') symbols.push(p.ticker+'-USD');
+    else symbols.push(p.ticker);
+  });
+  const needsUsd = assets.some(a=>a.is_active&&a.currency==='USD') || activePos.some(p=>p.ticker_type==='crypto');
+  if(needsUsd) symbols.push('USDIDR=X');
+
+  if(symbols.filter(s=>s!=='USDIDR=X').length){
+    fetch('/api/portfolio/market-price?tickers='+[...new Set(symbols)].join(','))
+      .then(r=>r.json()).then(data=>{
+        const prices={};
+        let usdRate=0;
+        (data.prices||[]).forEach(p=>{
+          if(p.symbol==='USDIDR=X') usdRate=p.price;
+          else prices[p.ticker]=p;
+        });
+        renderPortfolio(assets, activePos, prices, usdRate, investTxs);
+      }).catch(()=>renderPortfolio(assets, activePos, {}, 0, investTxs));
   } else {
-    renderPortfolio(assets, activePos, {});
+    renderPortfolio(assets, activePos, {}, 0, investTxs);
   }
 }
 
@@ -367,8 +383,7 @@ function renderFinance(txs){
   `;
 }
 
-function renderPortfolio(assets, activePos, prices){
-  const usdRate = prices['USDIDR=X']?.price || 0;
+function renderPortfolio(assets, activePos, prices, usdRate, investTxs){
 
   function mktVal(p){
     const pr = prices[p.ticker]?.price || 0;
@@ -377,15 +392,9 @@ function renderPortfolio(assets, activePos, prices){
     if(p.ticker_type==='crypto') return Number(p.qty)*pr*usdRate;
     return 0;
   }
-  function costBasis(p){
-    const qty=Number(p.qty), avg=Number(p.avg_buy_price);
-    if(p.ticker_type==='stock_idr') return qty*100*avg;
-    if(p.ticker_type==='crypto') return qty*avg*usdRate;
-    return 0;
-  }
 
-  let totalVal=0, totalCost=0;
-  activePos.forEach(p=>{ totalVal+=mktVal(p); totalCost+=costBasis(p); });
+  let totalVal=0;
+  activePos.forEach(p=>{ totalVal+=mktVal(p); });
 
   const totalCash = (assets||[]).filter(a=>a.is_active).reduce((s,a)=>{
     const c=Number(a.cash_idle)||0;
@@ -393,7 +402,7 @@ function renderPortfolio(assets, activePos, prices){
   },0);
   totalVal += totalCash;
 
-  const totalDep = (assets||[]).filter(a=>a.is_active).reduce((s,a)=>s+(Number(a.total_deposited)||0),0);
+  const totalDep = (investTxs||[]).reduce((s,t)=>s+(Number(t.amount)||0),0);
   const gl = totalVal - totalDep;
 
   document.getElementById('porto-total').textContent = fmt(totalVal);
@@ -410,16 +419,17 @@ function renderPortfolio(assets, activePos, prices){
   }
 
   const rows = activePos.map(p=>({name:p.ticker, val:mktVal(p)})).filter(r=>r.val>0);
+  if(totalCash>0) rows.push({name:'Cash', val:totalCash, isCash:true});
   rows.sort((a,b)=>b.val-a.val);
-  document.getElementById('porto-assets').innerHTML = rows.map((r,i)=>`
+  document.getElementById('porto-assets').innerHTML = rows.length ? rows.map((r,i)=>`
     <div class="porto-asset-row">
       <span class="porto-asset-name">
-        <span class="porto-dot" style="background:${PORTO_COLORS[i%PORTO_COLORS.length]}"></span>
+        <span class="porto-dot" style="background:${r.isCash?'#6b7280':PORTO_COLORS[i%PORTO_COLORS.length]}"></span>
         ${r.name}
       </span>
-      <span class="porto-asset-val">${fmt(r.val)}</span>
+      <span class="porto-asset-val ${r.isChat?'zero':''}">${fmt(r.val)}</span>
     </div>
-  `).join('') || '<div class="loading">Menunggu market data...</div>';
+  `).join('') : '<div class="loading">Menunggu market data...</div>';
 }
 
 init();
