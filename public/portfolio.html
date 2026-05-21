@@ -257,6 +257,11 @@ body.sb-collapsed{padding-left:60px;}
 <!-- CENTER -->
 <div>
   <div class="card">
+    <div class="card-hdr"><div class="card-title">Deposit vs Portfolio Value</div></div>
+    <div class="chart-wrap-porto"><canvas id="porto-chart"></canvas></div>
+  </div>
+
+  <div class="card">
     <div class="card-hdr">
       <div class="card-title">Portfolio Positions</div>
       <div style="display:flex;align-items:center;gap:6px;">
@@ -275,11 +280,6 @@ body.sb-collapsed{padding-left:60px;}
       </div>
       <button class="btn-save" id="btn-snap" onclick="saveSnapshots()">💾 Simpan Snapshot</button>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="card-hdr"><div class="card-title">Deposit vs Portfolio Value</div></div>
-    <div class="chart-wrap-porto"><canvas id="porto-chart"></canvas></div>
   </div>
 </div>
 
@@ -302,6 +302,14 @@ body.sb-collapsed{padding-left:60px;}
     <div class="card-hdr"><div class="card-title">Breakdown Posisi</div></div>
     <div id="pos-breakdown"></div>
   </div>
+
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">Alokasi Portfolio</div></div>
+    <div style="position:relative;height:200px;padding:12px 16px;">
+      <canvas id="alloc-chart"></canvas>
+    </div>
+    <div id="alloc-legend" style="padding:0 14px 14px;"></div>
+  </div>
 </div>
 
 </div>
@@ -323,7 +331,7 @@ body.sb-collapsed{padding-left:60px;}
 <script>
 let assets=[],snapshots=[],withdrawals=[],positions=[],financeTransactions=[];
 let marketPrices={},usdIdrRate=0,fetchedAt=null;
-let snapMonth='',portoChart=null;
+let snapMonth='',portoChart=null,allocChart=null;
 
 const TYPE_LABEL={stocks_idr:'Saham IDR',crypto_idr:'Crypto IDR',crypto_usd:'Crypto USD',wallet_usd:'Wallet USD',stocks_usd:'Saham USD',other:'Lainnya'};
 const typeColor={stocks_idr:'#3b82f6',crypto_idr:'#8b5cf6',crypto_usd:'#f59e0b',wallet_usd:'#ec4899',stocks_usd:'#14b8a6',other:'#6b7280'};
@@ -623,7 +631,7 @@ function renderSummary(){
   document.getElementById('roi-pill').innerHTML=`<span class="roi-pill ${roi>=0?'pos':'neg'}">${fmtPct(roi)} ROI</span>`;
 
   const bd=document.getElementById('pos-breakdown');
-  if(!activePos.length){bd.innerHTML='<div style="padding:14px;font-size:10px;color:var(--text4);text-align:center;">Belum ada posisi.</div>';return;}
+  if(!activePos.length&&!totalCash){bd.innerHTML='<div style="padding:14px;font-size:10px;color:var(--text4);text-align:center;">Belum ada posisi.</div>';renderAllocChart([],[],totalVal,totalCash);return;}
 
   const sorted=[...activePos].sort((a,b)=>calcMarketValue(b)-calcMarketValue(a));
   bd.innerHTML=sorted.map(pos=>{
@@ -644,6 +652,69 @@ function renderSummary(){
       <div class="bk-item-meta">
         <span>${Number(pos.qty)}${pos.ticker_type==='stock_idr'?' lot':' unit'} @ ${asset?.type==='stocks_idr'?fmtRp(Number(pos.avg_buy_price)):fmtUsd(Number(pos.avg_buy_price))}</span>
         <span style="color:${gl>=0?'var(--green)':'var(--red)'}">${mv>0?fmtPct(glPct):'—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Cash row — no PnL
+  if(totalCash>0){
+    const cashPct=totalVal>0?(totalCash/totalVal*100):0;
+    bd.innerHTML+=`<div class="bk-item">
+      <div class="bk-item-hdr">
+        <div class="bk-item-name"><span style="width:7px;height:7px;border-radius:50%;background:#9ca3af;display:inline-block;"></span>Cash</div>
+        <div class="bk-item-val" style="color:var(--gold)">${fmtRp(totalCash)}</div>
+      </div>
+      <div class="bk-item-bar"><div class="bk-item-fill" style="width:${cashPct.toFixed(1)}%;background:#9ca3af;"></div></div>
+      <div class="bk-item-meta"><span>Semua broker</span><span style="color:var(--text3);">${cashPct.toFixed(1)}%</span></div>
+    </div>`;
+  }
+
+  renderAllocChart(sorted,activePos,totalVal,totalCash);
+}
+
+const ALLOC_COLORS=['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#06b6d4','#ec4899','#f97316','#14b8a6','#84cc16'];
+
+function renderAllocChart(sorted,activePos,totalVal,totalCash){
+  // Merge same tickers
+  const merged={};
+  activePos.forEach(p=>{
+    const mv=calcMarketValue(p);
+    if(!mv)return;
+    merged[p.ticker]=(merged[p.ticker]||0)+mv;
+  });
+  const labels=Object.keys(merged).sort((a,b)=>merged[b]-merged[a]);
+  const values=labels.map(l=>merged[l]);
+  if(totalCash>0){labels.push('Cash');values.push(totalCash);}
+
+  const canvas=document.getElementById('alloc-chart');
+  if(!canvas)return;
+  if(allocChart){allocChart.destroy();allocChart=null;}
+  if(!values.length)return;
+
+  const colors=labels.map((l,i)=>l==='Cash'?'#9ca3af':ALLOC_COLORS[i%ALLOC_COLORS.length]);
+  allocChart=new Chart(canvas,{
+    type:'doughnut',
+    data:{labels,datasets:[{data:values,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmtRp(ctx.raw)} (${(ctx.raw/totalVal*100).toFixed(1)}%)`}}
+      }
+    }
+  });
+
+  const leg=document.getElementById('alloc-legend');
+  if(leg)leg.innerHTML=labels.map((l,i)=>{
+    const v=values[i],pct=(v/totalVal*100).toFixed(1),col=colors[i];
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0;display:inline-block;"></span>
+        <span style="font-size:11px;font-weight:600;color:var(--text);">${l}</span>
+      </div>
+      <div>
+        <span style="font-size:11px;font-weight:700;color:${l==='Cash'?'var(--gold)':'var(--text)'};">${fmtRp(v)}</span>
+        <span style="font-size:10px;color:var(--text3);margin-left:6px;">${pct}%</span>
       </div>
     </div>`;
   }).join('');
