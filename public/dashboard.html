@@ -61,7 +61,7 @@ body.sb-collapsed{padding-left:60px;}
   body{font-size:13px;}
   .dash-content{grid-template-columns:1fr !important;padding:12px;gap:12px;}
   .card{border-radius:8px;min-width:0;width:100%;}
-  .gst-stats{grid-template-columns:repeat(3,1fr);gap:6px;}
+  .gst-ov-grid{grid-template-columns:repeat(2,1fr);}
   .chart-wrap canvas{min-width:0;width:100%;}
   .porto-meta{grid-template-columns:1fr 1fr;}
   .porto-item{padding:8px 12px;font-size:11px;}
@@ -85,12 +85,28 @@ body.sb-collapsed{padding-left:60px;}
 .card-tag.gold{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border);}
 .card-body{padding:16px;}
 
-/* GST */
-.gst-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.gst-stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;}
-.gst-stat-val{font-size:20px;font-weight:700;color:var(--text);}
-.gst-stat-val.red{color:var(--red);}
-.gst-stat-lbl{font-size:8px;color:var(--text3);font-weight:500;margin-top:2px;letter-spacing:.05em;text-transform:uppercase;}
+/* GST OVERVIEW (red box) */
+.gst-ov{background:var(--red);border-radius:8px;padding:14px 16px;margin-bottom:12px;}
+.gst-ov-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.gst-ov-title{font-size:9px;font-weight:700;letter-spacing:.12em;color:#fff;text-transform:uppercase;}
+.gst-ov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+.gst-ov-box{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:var(--r2);padding:9px 10px 7px;transition:all .15s;}
+.gst-ov-box.click{cursor:pointer;}
+.gst-ov-box.click:hover{border-color:rgba(255,255,255,.4);transform:translateY(-1px);}
+.gst-ov-val{font-size:20px;font-weight:700;color:#fff;line-height:1;}
+.gst-ov-val.gold{color:#fde68a;}
+.gst-ov-val.muted{color:#fecaca;}
+.gst-ov-lbl{font-size:8px;font-weight:500;color:rgba(255,255,255,.65);margin-top:2px;text-transform:uppercase;letter-spacing:.04em;}
+/* GST filter */
+.gst-filter{font-family:'Poppins',sans-serif;font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;transition:all .15s;letter-spacing:.04em;}
+.gst-filter.gst-active{background:var(--blk);color:#fff;border-color:var(--blk);}
+/* GST modal */
+.gst-moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;padding:16px;}
+.gst-modal{background:#fff;border-radius:12px;width:100%;max-width:460px;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.18);}
+.gst-mhdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.gst-mtitle{font-size:13px;font-weight:700;}
+.gst-mbody{padding:4px 16px 16px;overflow-y:auto;}
+.gst-mclose{background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3);line-height:1;padding:2px;}
 .chart-wrap{position:relative;height:150px;}
 
 /* FINANCE */
@@ -161,13 +177,25 @@ body.sb-collapsed{padding-left:60px;}
   <div class="card">
     <div class="card-hdr">
       <span class="card-title">GST Progress</span>
-      <span class="card-tag red" id="gst-tag">14 hari terakhir</span>
+      <span class="card-tag red" id="gst-tag">Bulan Ini</span>
     </div>
     <div class="card-body">
-      <div class="gst-stats">
-        <div class="gst-stat"><div class="gst-stat-val red" id="gst-days">—</div><div class="gst-stat-lbl">Hari Log</div></div>
-        <div class="gst-stat"><div class="gst-stat-val" id="gst-lessons">—</div><div class="gst-stat-lbl">Lesson</div></div>
-        <div class="gst-stat"><div class="gst-stat-val" id="gst-todos">—</div><div class="gst-stat-lbl">Todo Done</div></div>
+      <div class="gst-ov">
+        <div class="gst-ov-hdr">
+          <div class="gst-ov-title">Overview</div>
+          <canvas id="dash-clock" width="32" height="32" style="border-radius:50%;background:#fff;flex-shrink:0;"></canvas>
+        </div>
+        <div class="gst-ov-grid">
+          <div class="gst-ov-box"><div class="gst-ov-val" id="ov-hari">—</div><div class="gst-ov-lbl">Hari</div></div>
+          <div class="gst-ov-box click" onclick="openGSTModal('dream')"><div class="gst-ov-val" id="ov-dream">—</div><div class="gst-ov-lbl">Dream</div></div>
+          <div class="gst-ov-box click" onclick="openGSTModal('lesson')"><div class="gst-ov-val gold" id="ov-lesson">—</div><div class="gst-ov-lbl">Lesson</div></div>
+          <div class="gst-ov-box click" onclick="openGSTModal('goals')"><div class="gst-ov-val muted" id="ov-left">—</div><div class="gst-ov-lbl">Left</div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;margin-bottom:10px;">
+        <button onclick="setGSTFilter('month',this)" class="gst-filter gst-active">Bulan Ini</button>
+        <button onclick="setGSTFilter('ytd',this)" class="gst-filter">YTD</button>
+        <button onclick="setGSTFilter('all',this)" class="gst-filter">All Time</button>
       </div>
       <div class="chart-wrap"><canvas id="gst-chart"></canvas></div>
     </div>
@@ -224,6 +252,7 @@ const ACT_CATS = [
 ];
 const PORTO_COLORS = ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#06b6d4','#ec4899'];
 let dashAllocChart=null,portoHidden=false;
+let gstData={},gstChart=null,gstFilter='month';
 
 function fmt(n){return 'Rp '+Math.round(n).toLocaleString('id-ID');}
 function fmtShort(n){
@@ -290,40 +319,153 @@ async function init(){
   }
 }
 
+const MN_SHORT=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
 function renderGST(data){
-  const activities = data.activities || [];
-  const entries    = data.entries    || [];
-  const lessons    = (data.lessons   || []).reduce((n,l)=>{
-    try{return n+(JSON.parse(l.text)||[]).length;}catch{return n;}
-  },0);
-  const todoDone = (data.todos||[]).filter(t=>t.done).length;
+  gstData=data;
+  const entries  = data.entries  || [];
+  const wishes   = data.wishes   || [];
+  const goals    = data.goals    || [];
+  const lessons  = (data.lessons || []).reduce((n,l)=>{try{return n+(JSON.parse(l.text)||[]).length;}catch{return n;}},0);
+  const now=new Date();
+  const eoy=new Date(now.getFullYear(),11,31);
+  const daysLeft=Math.ceil((eoy-now)/86400000);
 
-  document.getElementById('gst-days').textContent    = entries.length;
-  document.getElementById('gst-lessons').textContent = lessons;
-  document.getElementById('gst-todos').textContent   = todoDone;
+  document.getElementById('ov-hari').textContent   = entries.length;
+  document.getElementById('ov-dream').textContent  = wishes.length;
+  document.getElementById('ov-lesson').textContent = lessons;
+  document.getElementById('ov-left').textContent   = daysLeft;
 
-  const dates  = lastNDates(DAYS);
-  const labels = dates.map(d=>d.slice(5).replace('-','/'));
-  const datasets = ACT_CATS.map(c=>({
-    label: c.label,
-    data:  dates.map(date=>activities.filter(a=>a.date===date&&a.category===c.key).length),
-    backgroundColor: c.color,
-    borderRadius: 2,
-    stack: 's',
+  startDashClock();
+  renderGSTChart(gstFilter);
+}
+
+function startDashClock(){
+  const canvas=document.getElementById('dash-clock');
+  if(!canvas)return;
+  const draw=()=>{
+    const ctx=canvas.getContext('2d'),n=new Date();
+    const w=canvas.width,cx=w/2,cy=w/2,r=cx-1.5;
+    ctx.clearRect(0,0,w,w);
+    ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();
+    ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;ctx.stroke();
+    const hrs=n.getHours()%12,mins=n.getMinutes(),secs=n.getSeconds();
+    const ha=(hrs*30+mins*0.5)*Math.PI/180;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+(r*.5)*Math.sin(ha),cy-(r*.5)*Math.cos(ha));
+    ctx.strokeStyle='#111';ctx.lineWidth=2;ctx.lineCap='round';ctx.stroke();
+    const ma=(mins*6+secs*.1)*Math.PI/180;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+(r*.72)*Math.sin(ma),cy-(r*.72)*Math.cos(ma));
+    ctx.strokeStyle='#374151';ctx.lineWidth=1.5;ctx.lineCap='round';ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,2.5,0,2*Math.PI);ctx.fillStyle='#d12b2b';ctx.fill();
+  };
+  draw();
+  if(!window._dashClockTimer)window._dashClockTimer=setInterval(draw,1000);
+}
+
+function renderGSTChart(filter){
+  gstFilter=filter;
+  const activities=gstData.activities||[];
+  let labels=[],dates=[];
+  const now=new Date(),yr=now.getFullYear(),mo=now.getMonth();
+
+  if(filter==='month'){
+    const daysInMonth=new Date(yr,mo+1,0).getDate();
+    const prefix=`${yr}-${String(mo+1).padStart(2,'0')}`;
+    dates=Array.from({length:daysInMonth},(_,i)=>`${prefix}-${String(i+1).padStart(2,'0')}`);
+    labels=dates.map(d=>d.slice(8));
+    document.getElementById('gst-tag').textContent=MN_SHORT[mo]+' '+yr;
+  } else if(filter==='ytd'){
+    const months=Array.from({length:mo+1},(_,i)=>`${yr}-${String(i+1).padStart(2,'0')}`);
+    labels=months.map(m=>MN_SHORT[+m.slice(5)-1]);
+    dates=months;
+    document.getElementById('gst-tag').textContent='YTD '+yr;
+  } else {
+    const allM=[...new Set(activities.map(a=>a.date.slice(0,7)))].sort();
+    labels=allM.map(m=>`${MN_SHORT[+m.slice(5)-1]} '${m.slice(2,4)}`);
+    dates=allM;
+    document.getElementById('gst-tag').textContent='All Time';
+  }
+
+  const isMonth=filter==='month';
+  const datasets=ACT_CATS.map(c=>({
+    label:c.label,
+    data:dates.map(d=>activities.filter(a=>(isMonth?a.date===d:a.date.startsWith(d))&&a.category===c.key).length),
+    backgroundColor:c.color,borderRadius:2,stack:'s'
   }));
 
-  new Chart(document.getElementById('gst-chart'),{
-    type:'bar',
-    data:{labels,datasets},
+  if(gstChart){gstChart.destroy();gstChart=null;}
+  gstChart=new Chart(document.getElementById('gst-chart'),{
+    type:'bar',data:{labels,datasets},
     options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}, tooltip:{mode:'index',intersect:false}},
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
       scales:{
-        x:{stacked:true, grid:{display:false}, ticks:{font:{family:'Poppins',size:8},color:'#aaa',maxRotation:45,minRotation:45}},
-        y:{stacked:true, grid:{color:'rgba(0,0,0,0.04)'}, ticks:{font:{family:'Poppins',size:8},color:'#aaa'}, min:0},
-      },
-    },
+        x:{stacked:true,grid:{display:false},ticks:{font:{family:'Poppins',size:filter==='all'?7:8},color:'#aaa',maxRotation:45,minRotation:45,maxTicksLimit:filter==='all'?24:undefined}},
+        y:{stacked:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:'Poppins',size:8},color:'#aaa'},min:0},
+      }
+    }
   });
+}
+
+function setGSTFilter(f,btn){
+  document.querySelectorAll('.gst-filter').forEach(b=>{b.classList.remove('gst-active');});
+  btn.classList.add('gst-active');
+  renderGSTChart(f);
+}
+
+// ── GST MODALS ──
+function openGSTModal(type){
+  const overlay=document.getElementById('gst-moverlay');
+  const title=document.getElementById('gst-mtitle');
+  const body=document.getElementById('gst-mbody');
+  overlay.style.display='flex';
+
+  if(type==='dream'){
+    title.textContent='✦ Dream List';
+    const wishes=gstData.wishes||[];
+    const done=wishes.filter(w=>w.done),undone=wishes.filter(w=>!w.done);
+    const row=w=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;">
+      <span style="font-size:14px;margin-top:1px;color:${w.done?'var(--green)':'var(--text4)'};">${w.done?'✓':'○'}</span>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:${w.done?'var(--text3)':'var(--text)'};">${w.text}</div>
+        ${w.done&&w.achievement_story?`<div style="font-size:10px;color:var(--text3);margin-top:3px;font-style:italic;">${w.achievement_story}</div>`:''}
+      </div>
+    </div>`;
+    body.innerHTML=undone.map(row).join('')+(done.length?`<div style="font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--text3);margin:12px 0 4px;text-transform:uppercase;">Tercapai</div>`+done.map(row).join(''):'')
+      ||'<div style="text-align:center;padding:24px;color:var(--text4);">Belum ada dream.</div>';
+
+  } else if(type==='lesson'){
+    title.textContent='Lessons This Year';
+    const yr=new Date().getFullYear();
+    const allItems=[];
+    (gstData.lessons||[]).forEach(l=>{try{(JSON.parse(l.text)||[]).forEach(it=>allItems.push(it));}catch{}});
+    const thisYear=allItems.filter(it=>!it.ts||new Date(it.ts).getFullYear()===yr).reverse();
+    body.innerHTML=thisYear.length
+      ?`<div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin:10px 0 8px;text-transform:uppercase;">Hidup ${yr} mengajarkan...</div>`
+        +thisYear.map(it=>`<div style="padding:9px 0;border-bottom:1px solid var(--border);">
+          <div style="font-size:12px;color:var(--text);line-height:1.5;">${it.text}</div>
+          ${it.ts?`<div style="font-size:9px;color:var(--text4);margin-top:3px;">${new Date(it.ts).toLocaleDateString('id-ID',{day:'numeric',month:'long'})}</div>`:''}
+        </div>`).join('')
+      :'<div style="text-align:center;padding:24px;color:var(--text4);">Belum ada lesson tahun ini.</div>';
+
+  } else if(type==='goals'){
+    title.textContent='Goals Belum Tercapai';
+    const goals=(gstData.goals||[]).filter(g=>!g.done);
+    const yr=new Date().getFullYear();
+    const annual=goals.filter(g=>g.scope==='year'||(!g.scope&&g.yr===yr));
+    const monthly=goals.filter(g=>g.scope==='month');
+    const section=(arr,lbl)=>arr.length?`<div style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin:10px 0 4px;text-transform:uppercase;">${lbl}</div>`
+      +arr.map(g=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:600;color:var(--text);">${g.text}</div>
+        ${g.ym?`<div style="font-size:9px;color:var(--text4);margin-top:2px;">${g.ym}</div>`:''}
+      </div>`).join(''):'';
+    body.innerHTML=section(annual,'Tahunan')+section(monthly,'Bulanan')
+      ||'<div style="text-align:center;padding:24px;color:var(--text4);">Semua goals tercapai! 🎉</div>';
+  }
+}
+
+function closeGSTModal(){
+  document.getElementById('gst-moverlay').style.display='none';
 }
 
 function renderFinance(txs){
@@ -472,6 +614,17 @@ function togglePortoHide(){
 init();
 </script>
 <div id="sb-overlay"></div>
+
+<!-- GST Modal -->
+<div class="gst-moverlay" id="gst-moverlay" onclick="if(event.target===this)closeGSTModal()">
+  <div class="gst-modal">
+    <div class="gst-mhdr">
+      <div class="gst-mtitle" id="gst-mtitle"></div>
+      <button class="gst-mclose" onclick="closeGSTModal()">✕</button>
+    </div>
+    <div class="gst-mbody" id="gst-mbody"></div>
+  </div>
+</div>
 <script>
 (function(){
   var sb=document.getElementById('sidebar');
