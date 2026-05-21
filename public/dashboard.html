@@ -327,15 +327,18 @@ function renderGST(data){
 }
 
 function renderFinance(txs){
-  let income=0, expense=0, invest=0;
+  let income=0, expense=0, invest=0, deposit=0;
   (txs||[]).forEach(t=>{
     const a = Number(t.amount)||0;
     if(t.type==='income')           income  += a;
     else if(t.type==='expense')     expense += a;
-    else if(t.type==='investment')  invest  += a;
+    else if(t.type==='investment'){
+      invest += a;
+      if(t.category==='Deposit') deposit += a;
+    }
   });
   const sisa = income - expense - invest;
-  const rate = income>0 ? Math.round((invest/income)*100) : 0;
+  const rate = income>0 ? Math.round((deposit/income)*100) : 0;
   const neg  = rate < 0;
 
   const month = new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});

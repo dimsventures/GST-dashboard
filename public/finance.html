@@ -869,8 +869,9 @@ function renderSummary(){
   const income=moTrx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const expense=moTrx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   const invest=moTrx.filter(t=>t.type==='investment').reduce((s,t)=>s+t.amount,0);
+  const deposit=moTrx.filter(t=>t.type==='investment'&&t.category==='Deposit').reduce((s,t)=>s+t.amount,0);
   const sisa=income-expense-invest;
-  const rate=income>0?Math.round((invest/income)*100):0;
+  const rate=income>0?Math.round((deposit/income)*100):0;
   if(numbersHidden){
     hiddenVals['s-income']=fmtRp(income);hiddenVals['s-expense']=fmtRp(expense);
     hiddenVals['s-invest']=fmtRp(invest);hiddenVals['s-sisa']=fmtRp(sisa);
