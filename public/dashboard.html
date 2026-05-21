@@ -332,6 +332,20 @@ function renderFinance(txs){
   fill.style.width = Math.max(0,Math.min(100,Math.abs(rate)))+'%';
   if(neg) fill.classList.add('neg');
 
+  var dailyHtml='';
+  var endStr=localStorage.getItem('gst_budget_end')||'';
+  if(endStr){
+    var today=new Date();today.setHours(0,0,0,0);
+    var end=new Date(endStr+'T00:00:00');
+    var diff=Math.ceil((end-today)/(1000*60*60*24));
+    if(diff>0){
+      var daily=Math.round(sisa/diff);
+      dailyHtml=`<div class="fin-row" style="background:var(--bg);border-radius:4px;padding:7px 8px;margin-top:2px;">
+        <span class="fin-label" style="font-size:9px;">Est. Harian <span style="color:var(--text4);">(${diff}d)</span></span>
+        <span class="fin-val ${daily>0?'green':'red'}" style="font-size:11px;">${fmtShort(Math.abs(daily))}</span>
+      </div>`;
+    }
+  }
   document.getElementById('fin-rows').innerHTML = `
     <div class="fin-row">
       <span class="fin-label"><span class="fin-dot" style="background:var(--green)"></span>Income</span>
@@ -349,6 +363,7 @@ function renderFinance(txs){
       <span class="fin-label"><span class="fin-dot" style="background:var(--gold)"></span>Sisa</span>
       <span class="fin-val ${sisa>=0?'green':'red'}">${fmtShort(Math.abs(sisa))}</span>
     </div>
+    ${dailyHtml}
   `;
 }
 
