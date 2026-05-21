@@ -8,8 +8,8 @@ export async function GET(req: Request) {
   const [e, l, t, g, w, a] = await Promise.all([
     db.from('gst_entries').select('*').order('date'),
     db.from('gst_lessons').select('*').order('date'),
-    db.from('gst_todos').select('*'),
-    db.from('gst_goals').select('*'),
+    db.from('gst_todos').select('*').order('created_at', { ascending: false }),
+    db.from('gst_goals').select('*').order('created_at', { ascending: false }),
     db.from('gst_wishes').select('*').order('created_at'),
     db.from('gst_activities').select('*').order('created_at'),
   ])

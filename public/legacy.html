@@ -1519,7 +1519,7 @@ function addTodo(){
   const text=inp.value.trim();if(!text)return;
   const cat=todoCat==='Semua'?guessCat(text):todoCat;
   const t={id:crypto.randomUUID(),text,cat,done:false,doneDate:null};
-  todos.push(t);saveTodoDB(t);
+  todos.unshift(t);saveTodoDB(t);
   inp.value='';
   document.getElementById('cat-hint').classList.remove('show');
   renderTodos();renderStats();
@@ -1886,7 +1886,7 @@ function addGoal(){
   const inp=document.getElementById('gi');const text=inp.value.trim();if(!text)return;
   const yr=goalNavYr,ym=`${goalNavY}-${p2(goalNavM+1)}`;
   const g={id:crypto.randomUUID(),text,scope:goalTab,yr:goalTab==='year'?yr:null,ym:goalTab==='month'?ym:null,done:false,doneDate:null};
-  goals.push(g);saveGoalDB(g);
+  goals.unshift(g);saveGoalDB(g);
   inp.value='';renderGoals();
 }
 let goalAchieveId=null,goalAchieveCat=null;
