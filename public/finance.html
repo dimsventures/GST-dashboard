@@ -420,7 +420,7 @@ body.sb-collapsed{padding-left:60px;}
         <span class="recon-diff-lbl">Selisih</span>
         <span class="recon-diff-val" id="rc-diff">Rp 0</span>
       </div>
-      <div id="rc-warn" style="font-size:9px;color:var(--red);margin-top:4px;display:none;">Ada transaksi yang belum tercatat.</div>
+      <div id="rc-warn" style="font-size:9px;margin-top:4px;display:none;"></div>
       <button class="btn-recon" onclick="saveRecon()" style="margin-top:10px;">Simpan Audit</button>
     </div>
     <div class="recon-history" id="recon-history"></div>
@@ -980,7 +980,10 @@ function calcRecon(){
   const diffEl=document.getElementById('rc-diff');
   diffEl.textContent=(diff>=0?'+':'')+fmtRp(diff);
   diffEl.className='recon-diff-val '+(diff===0?'ok':'warn');
-  document.getElementById('rc-warn').style.display=diff!==0?'block':'none';
+  const warnEl=document.getElementById('rc-warn');
+  if(diff===0){warnEl.style.display='none';}
+  else if(diff>0){warnEl.style.display='block';warnEl.style.color='var(--gold)';warnEl.textContent='Cek dompetmu sekarang!';}
+  else{warnEl.style.display='block';warnEl.style.color='var(--red)';warnEl.textContent='Ada transaksi yang belum tercatat.';}
   document.getElementById('recon-badge').textContent=diff===0?'✓ Balance':'⚠ Selisih';
   document.getElementById('recon-badge').style.color=diff===0?'var(--green)':'var(--red)';
 }
