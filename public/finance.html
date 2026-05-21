@@ -321,20 +321,38 @@ body.sb-collapsed{padding-left:60px;}
   <!-- YTD SUMMARY -->
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title" id="ytd-title">Semua Waktu</div>
+      <div class="card-title" id="ytd-title">Your Cashflow</div>
       <div id="ytd-yr-chips" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
     </div>
     <div class="sum-grid">
       <div class="sum-box"><div class="sum-lbl">Total Income</div><div class="sum-val green" id="ytd-income">Rp 0</div></div>
-      <div class="sum-box"><div class="sum-lbl">Total Expense</div><div class="sum-val red" id="ytd-expense">Rp 0</div></div>
-      <div class="sum-box"><div class="sum-lbl">Total Invest</div><div class="sum-val blue" id="ytd-invest">Rp 0</div></div>
-      <div class="sum-box"><div class="sum-lbl">Savings Rate</div><div class="sum-val gold" id="ytd-rate">0%</div></div>
+      <div class="sum-box">
+        <div class="sum-lbl">Total Expense</div>
+        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
+          <div class="sum-val red" id="ytd-expense">Rp 0</div>
+          <span id="ytd-expense-pct" style="font-size:11px;font-weight:700;color:var(--red);opacity:.75;"></span>
+        </div>
+      </div>
+      <div class="sum-box">
+        <div class="sum-lbl">Total Deposit</div>
+        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
+          <div class="sum-val blue" id="ytd-invest">Rp 0</div>
+          <span id="ytd-invest-pct" style="font-size:11px;font-weight:700;color:var(--blue);opacity:.75;"></span>
+        </div>
+      </div>
+      <div class="sum-box">
+        <div class="sum-lbl">Total Think &amp; Grow</div>
+        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
+          <div class="sum-val gold" id="ytd-tng">Rp 0</div>
+          <span id="ytd-tng-pct" style="font-size:11px;font-weight:700;color:var(--gold);opacity:.75;"></span>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- STACKED BAR CHART — ikut filter YTD -->
   <div class="card">
-    <div class="card-hdr"><div class="card-title" id="chart-title">Expense per Bulan</div></div>
+    <div class="card-hdr"><div class="card-title" id="chart-title">Expense per Bulan — 2026</div></div>
     <div style="padding:10px 14px 6px;overflow-x:auto;">
       <div id="fin-chart-legend" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
       <div class="chart-wrap-fin"><canvas id="fin-chart-bar"></canvas></div>
@@ -575,7 +593,7 @@ function renderCalendar(){
 }
 
 // ── STACKED BAR CHART ──
-let ytdYear=null; // null = semua waktu, '2024' = filter per tahun
+let ytdYear=String(new Date().getFullYear()); // default tahun berjalan
 
 function renderYtdChips(){
   const years=[...new Set(transactions.map(t=>t.date.slice(0,4)))].sort();
@@ -586,11 +604,11 @@ function renderYtdChips(){
   };
   document.getElementById('ytd-yr-chips').innerHTML=
     chip('All Time',null)+years.map(y=>chip(y,y)).join('');
+  document.getElementById('chart-title').textContent=ytdYear?`Expense per Bulan — ${ytdYear}`:'Expense per Bulan — Semua';
 }
 
 function selectYtdYear(y){
   ytdYear=y;
-  document.getElementById('ytd-title').textContent=y||'Semua Waktu';
   document.getElementById('chart-title').textContent=y?`Expense per Bulan — ${y}`:'Expense per Bulan — Semua';
   renderYtdChips();
   renderSummary();
@@ -889,11 +907,17 @@ function renderSummary(){
   const ytdIncome=yrTrx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const ytdExpense=yrTrx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   const ytdInvest=yrTrx.filter(t=>t.type==='investment').reduce((s,t)=>s+t.amount,0);
-  const ytdRate=ytdIncome>0?Math.round((ytdInvest/ytdIncome)*100):0;
+  const ytdTng=ytdIncome-ytdExpense-ytdInvest;
+  const pct=v=>ytdIncome>0?Math.round(v/ytdIncome*100):0;
   document.getElementById('ytd-income').textContent=fmtRp(ytdIncome);
   document.getElementById('ytd-expense').textContent=fmtRp(ytdExpense);
+  document.getElementById('ytd-expense-pct').textContent=ytdIncome>0?pct(ytdExpense)+'%':'';
   document.getElementById('ytd-invest').textContent=fmtRp(ytdInvest);
-  document.getElementById('ytd-rate').textContent=ytdRate+'%';
+  document.getElementById('ytd-invest-pct').textContent=ytdIncome>0?pct(ytdInvest)+'%':'';
+  document.getElementById('ytd-tng').textContent=fmtRp(Math.abs(ytdTng));
+  document.getElementById('ytd-tng').style.color=ytdTng>=0?'var(--gold)':'var(--red)';
+  document.getElementById('ytd-tng-pct').textContent=ytdIncome>0?pct(Math.abs(ytdTng))+'%':'';
+  document.getElementById('ytd-tng-pct').style.color=ytdTng>=0?'var(--gold)':'var(--red)';
 }
 
 function renderBuffer(){
