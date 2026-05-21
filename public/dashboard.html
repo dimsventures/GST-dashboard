@@ -195,7 +195,6 @@ body.sb-collapsed{padding-left:60px;}
       <div style="display:flex;gap:4px;margin-bottom:10px;">
         <button onclick="setGSTFilter('month',this)" class="gst-filter gst-active">Bulan Ini</button>
         <button onclick="setGSTFilter('ytd',this)" class="gst-filter">YTD</button>
-        <button onclick="setGSTFilter('all',this)" class="gst-filter">All Time</button>
       </div>
       <div class="chart-wrap"><canvas id="gst-chart"></canvas></div>
     </div>
@@ -374,22 +373,21 @@ function renderGSTChart(filter){
     dates=Array.from({length:daysInMonth},(_,i)=>`${prefix}-${String(i+1).padStart(2,'0')}`);
     labels=dates.map(d=>d.slice(8));
     document.getElementById('gst-tag').textContent=MN_SHORT[mo]+' '+yr;
-  } else if(filter==='ytd'){
-    const months=Array.from({length:mo+1},(_,i)=>`${yr}-${String(i+1).padStart(2,'0')}`);
-    labels=months.map(m=>MN_SHORT[+m.slice(5)-1]);
-    dates=months;
-    document.getElementById('gst-tag').textContent='YTD '+yr;
   } else {
-    const allM=[...new Set(activities.map(a=>a.date.slice(0,7)))].sort();
-    labels=allM.map(m=>`${MN_SHORT[+m.slice(5)-1]} '${m.slice(2,4)}`);
-    dates=allM;
-    document.getElementById('gst-tag').textContent='All Time';
+    // YTD: daily from Jan 1 of current year to today
+    const start=new Date(yr,0,1);
+    const end=new Date();
+    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+      const s=d.toISOString().slice(0,10);
+      dates.push(s);
+      labels.push(d.getDate()===1?MN_SHORT[d.getMonth()]:'');
+    }
+    document.getElementById('gst-tag').textContent='YTD '+yr;
   }
 
-  const isMonth=filter==='month';
   const datasets=ACT_CATS.map(c=>({
     label:c.label,
-    data:dates.map(d=>activities.filter(a=>(isMonth?a.date===d:a.date.startsWith(d))&&a.category===c.key).length),
+    data:dates.map(d=>activities.filter(a=>a.date===d&&a.category===c.key).length),
     backgroundColor:c.color,borderRadius:2,stack:'s'
   }));
 
@@ -398,9 +396,12 @@ function renderGSTChart(filter){
     type:'bar',data:{labels,datasets},
     options:{
       responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      plugins:{legend:{display:false},tooltip:{
+        mode:'index',intersect:false,
+        callbacks:{title:ctx=>dates[ctx[0].dataIndex]||''}
+      }},
       scales:{
-        x:{stacked:true,grid:{display:false},ticks:{font:{family:'Poppins',size:filter==='all'?7:8},color:'#aaa',maxRotation:45,minRotation:45,maxTicksLimit:filter==='all'?24:undefined}},
+        x:{stacked:true,grid:{display:false},ticks:{font:{family:'Poppins',size:8},color:'#aaa',maxRotation:0,autoSkip:false}},
         y:{stacked:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:'Poppins',size:8},color:'#aaa'},min:0},
       }
     }
