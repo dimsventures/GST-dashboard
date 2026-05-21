@@ -907,7 +907,7 @@ function renderSummary(){
   const ytdIncome=yrTrx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const ytdExpense=yrTrx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   const ytdDeposit=yrTrx.filter(t=>t.type==='investment'&&t.category==='Deposit').reduce((s,t)=>s+t.amount,0);
-  const ytdTng=yrTrx.filter(t=>t.type==='investment'&&t.category==='Think & Grow').reduce((s,t)=>s+t.amount,0);
+  const ytdTng=yrTrx.filter(t=>t.type==='investment'&&t.category!=='Deposit').reduce((s,t)=>s+t.amount,0);
   const pct=v=>ytdIncome>0?Math.round(Math.abs(v)/ytdIncome*100):0;
   document.getElementById('ytd-income').textContent=fmtRp(ytdIncome);
   document.getElementById('ytd-expense').textContent=fmtRp(ytdExpense);
