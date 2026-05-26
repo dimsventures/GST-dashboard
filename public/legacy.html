@@ -1124,7 +1124,7 @@ async function confirmAchieveWish(){
   if(!story){alert('Ceritakan dulu gimana lo mencapai ini! 💪');return;}
   if(!wishAchieveCat){alert('Pilih kategori untuk 10 poin aktivitas dulu!');return;}
   const w=wishes.find(x=>x.id===id);if(!w)return;
-  w.done=true;w.doneDate=todayStr();w.achievementStory=story;
+  w.done=true;w.doneDate=todayStr();w.achievementStory=story;w.achieveCategory=wishAchieveCat;
   saveWishDB(w);
   const today=todayStr();
   for(let i=0;i<10;i++){
@@ -1133,6 +1133,21 @@ async function confirmAchieveWish(){
   }
   modal.classList.remove('open');
   renderStats();renderChain();
+}
+async function cancelAchieveWish(id){
+  if(!confirm('Batalkan pencapaian wish ini? 10 poin aktivitas akan dihapus.'))return;
+  const w=wishes.find(x=>x.id===id);if(!w)return;
+  const prevDate=w.doneDate;
+  const prevCat=w.achieveCategory;
+  const prefix='[W] '+w.text;
+  w.done=false;w.doneDate=null;w.achievementStory=null;w.achieveCategory=null;
+  saveWishDB(w);
+  const toDelete=activities
+    .filter(a=>a.date===prevDate&&a.text===prefix&&(!prevCat||a.category===prevCat))
+    .slice(0,10);
+  await Promise.all(toDelete.map(a=>api('/api/activities?id='+a.id,'DELETE').catch(console.error)));
+  activities=activities.filter(a=>!toDelete.find(d=>d.id===a.id));
+  renderWishList();renderStats();renderChain();
 }
 function openWishesModal(){
   const modal=document.getElementById('wish-modal');
@@ -1150,7 +1165,7 @@ function renderWishList(){
     <div class="wish-item${w.done?' wish-done':''}">
       <div class="wish-cb-wrap">
         ${w.done
-          ?'<div class="wish-cb checked">✓</div>'
+          ?`<div class="wish-cb checked" onclick="cancelAchieveWish('${w.id}')" style="cursor:pointer;" title="Klik untuk batalkan pencapaian">✓</div>`
           :`<div class="wish-cb" onclick="openAchieveWish('${w.id}')"></div>`}
       </div>
       <div class="wish-content">
