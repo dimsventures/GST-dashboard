@@ -418,6 +418,17 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 /* MODAL */
 .moverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
 .moverlay.open{display:flex;}
+/* CONFIRM DIALOG */
+.confirm-box{background:var(--white);border-radius:16px;border:1.5px solid var(--border);width:100%;max-width:360px;box-shadow:var(--s3);padding:32px 24px 22px;text-align:center;transform:scale(.88) translateY(8px);opacity:0;transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .18s ease;}
+.moverlay.open .confirm-box{transform:scale(1) translateY(0);opacity:1;}
+.confirm-icon{font-size:40px;margin-bottom:12px;line-height:1;display:block;}
+.confirm-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.01em;}
+.confirm-desc{font-size:11.5px;color:var(--text2);line-height:1.65;margin-bottom:24px;}
+.confirm-btns{display:flex;gap:8px;}
+.confirm-btn-cancel{flex:1;padding:10px 14px;border:1.5px solid var(--border);background:var(--bg);color:var(--text2);border-radius:8px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.confirm-btn-cancel:hover{border-color:var(--border2);color:var(--text);}
+.confirm-btn-ok{flex:1;padding:10px 14px;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:#fff;}
+.confirm-btn-ok:hover{filter:brightness(.88);}
 .modal{background:var(--white);border-radius:10px;border:1.5px solid var(--border);width:100%;max-width:510px;max-height:88vh;overflow-y:auto;box-shadow:var(--s3);}
 .modal::-webkit-scrollbar{width:4px;}
 .modal::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
@@ -974,6 +985,19 @@ body.sb-collapsed{padding-left:60px;}
   </div>
 </div>
 
+<!-- CONFIRM MODAL -->
+<div class="moverlay" id="confirm-modal">
+  <div class="confirm-box">
+    <span class="confirm-icon" id="confirm-icon">⚠️</span>
+    <div class="confirm-title" id="confirm-title">Yakin?</div>
+    <div class="confirm-desc" id="confirm-desc"></div>
+    <div class="confirm-btns">
+      <button class="confirm-btn-cancel" onclick="closeConfirm()">Batal</button>
+      <button class="confirm-btn-ok" id="confirm-ok-btn">Lanjut</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── DATA ──
 const PRE=[];
@@ -1097,10 +1121,22 @@ function addWish(){
   inp.value='';renderStats();
 }
 function delWish(id){
-  if(!confirm('Hapus wish ini?'))return;
-  wishes=wishes.filter(w=>w.id!==id);delWishDB(id);renderStats();
+  showConfirm('Wish ini akan dihapus permanen.',()=>{
+    wishes=wishes.filter(w=>w.id!==id);delWishDB(id);renderStats();renderWishList();
+  },{title:'Hapus Wish?',icon:'🗑️',okLabel:'Hapus'});
 }
 let wishAchieveCat=null;
+function showConfirm(desc,onOk,opts={}){
+  document.getElementById('confirm-desc').textContent=desc;
+  document.getElementById('confirm-title').textContent=opts.title||'Yakin?';
+  document.getElementById('confirm-icon').textContent=opts.icon||'⚠️';
+  const okBtn=document.getElementById('confirm-ok-btn');
+  okBtn.textContent=opts.okLabel||'Ya, lanjut';
+  okBtn.style.background=opts.danger===false?'var(--blk)':'var(--red)';
+  okBtn.onclick=()=>{closeConfirm();onOk();};
+  document.getElementById('confirm-modal').classList.add('open');
+}
+function closeConfirm(){document.getElementById('confirm-modal').classList.remove('open');}
 function selectWishCat(cat){
   wishAchieveCat=cat;
   document.querySelectorAll('.wish-cat-btn').forEach(b=>{
@@ -1136,20 +1172,21 @@ async function confirmAchieveWish(){
   modal.classList.remove('open');
   renderStats();renderChain();
 }
-async function cancelAchieveWish(id){
-  if(!confirm('Batalkan pencapaian wish ini? 10 poin aktivitas akan dihapus.'))return;
-  const w=wishes.find(x=>x.id===id);if(!w)return;
-  const prevDate=w.doneDate;
-  const prevCat=w.achieveCategory;
-  const prefix='[W] '+w.text;
-  w.done=false;w.doneDate=null;w.achievementStory=null;w.achieveCategory=null;
-  saveWishDB(w);
-  const toDelete=activities
-    .filter(a=>a.date===prevDate&&a.text===prefix&&(!prevCat||a.category===prevCat))
-    .slice(0,10);
-  await Promise.all(toDelete.map(a=>api('/api/activities?id='+a.id,'DELETE').catch(console.error)));
-  activities=activities.filter(a=>!toDelete.find(d=>d.id===a.id));
-  renderWishList();renderStats();renderChain();
+function cancelAchieveWish(id){
+  showConfirm('10 poin aktivitas yang ditambahkan akan dihapus.',async()=>{
+    const w=wishes.find(x=>x.id===id);if(!w)return;
+    const prevDate=w.doneDate;
+    const prevCat=w.achieveCategory;
+    const prefix='[W] '+w.text;
+    w.done=false;w.doneDate=null;w.achievementStory=null;w.achieveCategory=null;
+    saveWishDB(w);
+    const toDelete=activities
+      .filter(a=>a.date===prevDate&&a.text===prefix&&(!prevCat||a.category===prevCat))
+      .slice(0,10);
+    await Promise.all(toDelete.map(a=>api('/api/activities?id='+a.id,'DELETE').catch(console.error)));
+    activities=activities.filter(a=>!toDelete.find(d=>d.id===a.id));
+    renderWishList();renderStats();renderChain();
+  },{title:'Batalkan Wish?',icon:'💔',okLabel:'Ya, batalkan'});
 }
 function openWishesModal(){
   const modal=document.getElementById('wish-modal');
@@ -1225,14 +1262,14 @@ function importJSON(ev){
       const obj=JSON.parse(e.target.result);
       const d=obj.data||obj;
       if(!d||(typeof d!=='object'))throw new Error('Format tidak dikenali');
-      const ok=confirm('Restore data dari backup?\n\nIni akan mengganti SEMUA data sekarang dengan isi file. Pastikan kamu sudah Export backup terbaru kalau belum.');
-      if(!ok){ev.target.value='';return;}
-      if(Array.isArray(d.entries))entries=d.entries;
-      if(Array.isArray(d.lessons))lessons=d.lessons;
-      if(Array.isArray(d.todos))todos=d.todos;
-      if(Array.isArray(d.goals))goals=d.goals;
-      save();render();
-      alert('✓ Data berhasil di-import.');
+      showConfirm('Ini akan mengganti SEMUA data sekarang dengan isi file backup.',()=>{
+        if(Array.isArray(d.entries))entries=d.entries;
+        if(Array.isArray(d.lessons))lessons=d.lessons;
+        if(Array.isArray(d.todos))todos=d.todos;
+        if(Array.isArray(d.goals))goals=d.goals;
+        save();render();
+        ev.target.value='';
+      },{title:'Restore Backup?',icon:'📦',okLabel:'Ya, restore',danger:false});
     }catch(err){
       alert('✗ Gagal import: '+err.message);
     }
@@ -1526,13 +1563,14 @@ function updateLsnCatsList(){
   if(dl)dl.innerHTML=[...cats].sort().map(c=>`<option value="${escCat(c)}">`).join('');
 }
 function delLesson(date,itemId){
-  if(!confirm('Hapus lesson ini?'))return;
-  api('/api/lesson-items?id='+itemId,'DELETE').catch(console.error);
-  const idx=lessons.findIndex(l=>l.date===date);
-  if(idx<0)return;
-  lessons[idx].items=(lessons[idx].items||[]).filter(i=>i.id!==itemId);
-  if(!lessons[idx].items.length)lessons.splice(idx,1);
-  renderLessons();renderChain();renderStats();renderHdrLessons();
+  showConfirm('Pelajaran ini akan dihapus permanen.',()=>{
+    api('/api/lesson-items?id='+itemId,'DELETE').catch(console.error);
+    const idx=lessons.findIndex(l=>l.date===date);
+    if(idx<0)return;
+    lessons[idx].items=(lessons[idx].items||[]).filter(i=>i.id!==itemId);
+    if(!lessons[idx].items.length)lessons.splice(idx,1);
+    renderLessons();renderChain();renderStats();renderHdrLessons();
+  },{title:'Hapus Lesson?',icon:'🗑️',okLabel:'Hapus'});
 }
 function renderHdrLessons(){
   const track=document.getElementById('hdr-lessons-track');
@@ -1773,6 +1811,7 @@ function closeLessonsModal(){document.getElementById('lmo').classList.remove('op
 document.getElementById('lmo').addEventListener('click',function(e){if(e.target===this)closeLessonsModal();});
 document.getElementById('wish-modal').addEventListener('click',function(e){if(e.target===this)closeWishesModal();});
 document.getElementById('achieve-wish-modal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+document.getElementById('confirm-modal').addEventListener('click',function(e){if(e.target===this)closeConfirm();});
 
 function openGoalsModal(){
   const yr=new Date().getFullYear();const m=new Date().getMonth();const ymStr=`${yr}-${p2(m+1)}`;
@@ -1994,16 +2033,18 @@ async function toggleGoal(id){
     const btn=document.getElementById('goal-achieve-confirm');btn.disabled=true;btn.style.opacity='.4';btn.style.cursor='not-allowed';
     document.getElementById('goal-achieve-modal').classList.add('open');
   }else{
-    if(!confirm('Batalkan pencapaian goal ini? Poin aktivitas yang ditambahkan akan dihapus.'))return;
-    const prevDate=g.doneDate;const n=g.scope==='year'?7:3;
-    const prefix='[G] '+g.text;
-    g.done=false;g.doneDate=null;saveGoalDB(g);
-    const toDelete=activities
-      .filter(a=>a.date===prevDate&&a.text===prefix&&(!g.achieveCategory||a.category===g.achieveCategory))
-      .slice(0,n);
-    await Promise.all(toDelete.map(a=>api('/api/activities?id='+a.id,'DELETE').catch(console.error)));
-    activities=activities.filter(a=>!toDelete.find(d=>d.id===a.id));
-    render();
+    showConfirm((g.scope==='year'?'7':'3')+' poin aktivitas yang ditambahkan akan dihapus.',async()=>{
+      const prevDate=g.doneDate;const n=g.scope==='year'?7:3;
+      const prefix='[G] '+g.text;
+      const prevCat=g.achieveCategory;
+      g.done=false;g.doneDate=null;g.achieveCategory=null;saveGoalDB(g);
+      const toDelete=activities
+        .filter(a=>a.date===prevDate&&a.text===prefix&&(!prevCat||a.category===prevCat))
+        .slice(0,n);
+      await Promise.all(toDelete.map(a=>api('/api/activities?id='+a.id,'DELETE').catch(console.error)));
+      activities=activities.filter(a=>!toDelete.find(d=>d.id===a.id));
+      render();
+    },{title:'Batalkan Goal?',icon:'🎯',okLabel:'Ya, batalkan'});
   }
 }
 
