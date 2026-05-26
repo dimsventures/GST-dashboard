@@ -45,10 +45,6 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/login', request.url))
       }
 
-      const response = pathname === '/'
-        ? NextResponse.redirect(new URL('/dashboard.html', request.url))
-        : NextResponse.next()
-
       const cookieOpts = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -56,6 +52,28 @@ export async function middleware(request: NextRequest) {
         maxAge: 60 * 60 * 24 * 30,
         path: '/',
       }
+
+      let response: NextResponse
+      if (pathname === '/') {
+        response = NextResponse.redirect(new URL('/dashboard.html', request.url))
+      } else {
+        // Forward new token to the API route via modified request headers
+        // so that API route handlers use the fresh token, not the expired one
+        const requestHeaders = new Headers(request.headers)
+        const existingCookie = requestHeaders.get('cookie') || ''
+        const cleanedCookie = existingCookie
+          .replace(/sb_access_token=[^;]*(;\s*)?/g, '')
+          .replace(/sb_refresh_token=[^;]*(;\s*)?/g, '')
+          .replace(/;\s*$/, '')
+        const newCookie = [
+          cleanedCookie,
+          `sb_access_token=${data.session.access_token}`,
+          `sb_refresh_token=${data.session.refresh_token}`,
+        ].filter(Boolean).join('; ')
+        requestHeaders.set('cookie', newCookie)
+        response = NextResponse.next({ request: { headers: requestHeaders } })
+      }
+
       response.cookies.set('sb_access_token', data.session.access_token, cookieOpts)
       response.cookies.set('sb_refresh_token', data.session.refresh_token, cookieOpts)
       return response

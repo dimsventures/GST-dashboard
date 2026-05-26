@@ -967,8 +967,20 @@ async function api(path,method='GET',body=null){
   return r.json();
 }
 
+// ── TOKEN REFRESH ──
+async function refreshTokenIfNeeded(){
+  try{
+    const r=await fetch('/api/auth/me');
+    if(r.status===401){
+      const ref=await fetch('/api/auth',{method:'PUT'});
+      if(!ref.ok)location.href='/login';
+    }
+  }catch(e){console.error('token refresh check failed',e);}
+}
+
 // ── INIT ──
 async function init(){
+  await refreshTokenIfNeeded();
   fetch('/api/auth/me').then(r=>r.ok?r.json():null).then(u=>{if(u){const el=document.getElementById('hello-name');if(el)el.textContent='Hello '+u.name;const sb=document.getElementById('sb-user');if(sb)sb.textContent=u.name;}}).catch(()=>{});
   const {entries:en,lessons:ls,todos:td,goals:gl,wishes:ws,activities:ac}=await api('/api/data');
   activities=Array.isArray(ac)?ac:[];
@@ -996,6 +1008,8 @@ async function init(){
   calY=now.getFullYear(); calM=now.getMonth();
   wkStart=mondayOf(now);
   startClock(); render(); startQuoteRotation();
+  // Refresh token every 45 min so it doesn't expire mid-session (Supabase tokens last 1h)
+  setInterval(()=>{fetch('/api/auth',{method:'PUT'}).catch(()=>{});}, 45*60*1000);
 }
 
 function defGoals(){return[];}
