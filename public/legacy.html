@@ -1029,7 +1029,12 @@ async function init(){
   activities=Array.isArray(ac)?ac:[];
 
   entries=Array.isArray(en)?en:[];
-  lessons=Array.isArray(ls)?ls.map(l=>{let items;try{const p=JSON.parse(l.text);items=Array.isArray(p)?p:[{id:crypto.randomUUID(),text:l.text,ts:l.locked||l.date}];}catch(e){items=[{id:crypto.randomUUID(),text:l.text,ts:l.locked||l.date}];}return{...l,items};}):[];
+  const lsMap={};
+  (Array.isArray(ls)?ls:[]).forEach(item=>{
+    if(!lsMap[item.date])lsMap[item.date]={date:item.date,items:[]};
+    lsMap[item.date].items.push(item);
+  });
+  lessons=Object.values(lsMap).sort((a,b)=>a.date.localeCompare(b.date));
   if(Array.isArray(td)&&td.length){
     todos=td.map(t=>({...t,doneDate:t.done_date||null}));
   }else{
@@ -1063,15 +1068,6 @@ function save(){
   const dstr=logDate||todayStr();
   const e=entries.find(x=>x.date===dstr);
   if(e){const {id,...rest}=e;api('/api/entries','POST',rest).catch(console.error);}
-  const l=lessons.find(x=>x.date===dstr);
-  if(l){api('/api/lessons','POST',{date:l.date,text:JSON.stringify(l.items||[]),locked:l.locked||dstr}).catch(console.error);}
-}
-function saveLessonsForDate(date){
-  const l=lessons.find(x=>x.date===date);if(!l)return;
-  api('/api/lessons','POST',{date:l.date,text:JSON.stringify(l.items||[]),locked:l.locked||date}).catch(console.error);
-}
-function delLessonDB(date){
-  api('/api/lessons?date='+date,'DELETE').catch(console.error);
 }
 function saveTodoDB(t){
   api('/api/todos','POST',{id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:t.doneDate||null}).catch(console.error);
@@ -1492,17 +1488,18 @@ function toggleRow(dstr){
 
 // ── LESSONS ──
 function lockLesson(){
-  const text=document.getElementById('lta').value.trim();
-  if(!text)return;
+  const text=document.getElementById('lta').value.trim();if(!text)return;
   const cat=document.getElementById('lta-cat').value.trim()||null;
   const today=todayStr();
-  const newItem={id:crypto.randomUUID(),text,ts:new Date().toISOString(),category:cat};
-  const idx=lessons.findIndex(l=>l.date===today);
-  if(idx>=0){lessons[idx].items=lessons[idx].items||[];lessons[idx].items.push(newItem);}
-  else lessons.push({date:today,items:[newItem],locked:today});
   document.getElementById('lta').value='';
   document.getElementById('lta-cat').value='';
-  saveLessonsForDate(today);updateLsnCatsList();renderLessons();renderChain();renderStats();renderHdrLessons();
+  api('/api/lesson-items','POST',{date:today,text,category:cat,ts:new Date().toISOString()}).then(item=>{
+    if(!item||item.error)return;
+    const idx=lessons.findIndex(l=>l.date===today);
+    if(idx>=0)lessons[idx].items.push(item);
+    else lessons.push({date:today,items:[item]});
+    updateLsnCatsList();renderLessons();renderChain();renderStats();renderHdrLessons();
+  }).catch(console.error);
 }
 function updateLsnCatsList(){
   const cats=new Set();
@@ -1513,11 +1510,11 @@ function updateLsnCatsList(){
 }
 function delLesson(date,itemId){
   if(!confirm('Hapus lesson ini?'))return;
+  api('/api/lesson-items?id='+itemId,'DELETE').catch(console.error);
   const idx=lessons.findIndex(l=>l.date===date);
   if(idx<0)return;
   lessons[idx].items=(lessons[idx].items||[]).filter(i=>i.id!==itemId);
-  if(!lessons[idx].items.length){delLessonDB(date);lessons.splice(idx,1);}
-  else saveLessonsForDate(date);
+  if(!lessons[idx].items.length)lessons.splice(idx,1);
   renderLessons();renderChain();renderStats();renderHdrLessons();
 }
 function renderHdrLessons(){
@@ -1627,11 +1624,14 @@ async function confirmLearning(){
   const text=document.getElementById('learning-result-text').value.trim();
   if(text){
     const today=todayStr();
-    const newItem={id:crypto.randomUUID(),text:'[Learning] '+document.getElementById('learning-todo-text').textContent+' → '+text,ts:new Date().toISOString()};
-    const idx=lessons.findIndex(l=>l.date===today);
-    if(idx>=0){lessons[idx].items=lessons[idx].items||[];lessons[idx].items.push(newItem);}
-    else{lessons.push({date:today,items:[newItem]});}
-    saveLessonsForDate(today);
+    try{
+      const item=await api('/api/lesson-items','POST',{date:today,text:'[Learning] '+document.getElementById('learning-todo-text').textContent+' → '+text,category:'Learning',ts:new Date().toISOString()});
+      if(item&&!item.error){
+        const idx=lessons.findIndex(l=>l.date===today);
+        if(idx>=0){lessons[idx].items=lessons[idx].items||[];lessons[idx].items.push(item);}
+        else{lessons.push({date:today,items:[item]});}
+      }
+    }catch(e){console.error(e);}
   }
   closeLearningModal();
   if(learningTodoId)await completeTodo(learningTodoId);
