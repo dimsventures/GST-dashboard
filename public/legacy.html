@@ -66,12 +66,13 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .hdr-data{display:flex;gap:6px;}
 .btn-data{font-family:'Poppins',sans-serif;font-size:10px;font-weight:600;letter-spacing:.04em;padding:6px 10px;background:var(--white);border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;transition:all .15s;}
 .btn-data:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
-.hdr-lessons{position:absolute;left:310px;right:290px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;}
-.hdr-lessons-track{position:relative;width:100%;height:32px;display:flex;align-items:center;justify-content:center;pointer-events:auto;}
-.hdr-lesson-item{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:8px;padding:5px 14px;background:#fff5f5;border:1px solid #fecaca;border-radius:6px;font-family:'Poppins',sans-serif;font-size:11px;color:#7f1d1d;max-width:90%;white-space:nowrap;opacity:0;transition:opacity .6s ease;pointer-events:none;}
-.hdr-lesson-item.visible{opacity:1;pointer-events:auto;}
+.hdr-lessons{position:absolute;left:310px;right:290px;top:0;bottom:0;display:flex;align-items:center;overflow:hidden;pointer-events:none;}
+@keyframes ticker-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.hdr-lessons-track{display:inline-flex;align-items:center;white-space:nowrap;animation:ticker-scroll var(--ticker-dur,40s) linear infinite;pointer-events:auto;}
+.hdr-lessons-track:hover{animation-play-state:paused;}
+.hdr-lesson-item{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;background:#fff5f5;border:1px solid #fecaca;border-radius:6px;font-family:'Poppins',sans-serif;font-size:11px;color:#7f1d1d;white-space:nowrap;margin-right:24px;flex-shrink:0;}
 .hdr-lesson-item .hdr-lesson-date{font-weight:700;color:var(--red);font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
-.hdr-lesson-item .hdr-lesson-text{color:#991b1b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hdr-lesson-item .hdr-lesson-text{color:#991b1b;}
 .hdr-lesson-empty{font-family:'Poppins',sans-serif;font-size:11px;color:var(--text3);font-style:italic;}
 .live-pill{display:flex;align-items:center;gap:6px;font-family:'Poppins',sans-serif;font-size:10px;color:var(--text3);}
 .live-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1.4s ease infinite;}
@@ -1470,20 +1471,13 @@ function renderHdrLessons(){
   const esc=(s)=>(s||'').replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"})[c]);
   const past=[];
   [...lessons].filter(l=>l.date<today).sort((a,b)=>b.date.localeCompare(a.date)).forEach(l=>(l.items||[{text:l.text||'',date:l.date}]).forEach(item=>past.push({date:l.date,text:item.text})));
-  if(!past.length){track.innerHTML='<div class="hdr-lesson-empty">Belum ada pelajaran terkunci.</div>';return;}
-  track.innerHTML=past.map((l,i)=>{
-    const txt=esc(l.text);
-    return `<div class="hdr-lesson-item${i===0?' visible':''}"><span class="hdr-lesson-date">🔒 ${fmt(l.date)}</span><span class="hdr-lesson-text">${txt}</span></div>`;
-  }).join('');
-  if(past.length>1){
-    let cur=0;
-    const items=track.querySelectorAll('.hdr-lesson-item');
-    window._lsnTimer=setInterval(()=>{
-      items[cur].classList.remove('visible');
-      cur=(cur+1)%items.length;
-      items[cur].classList.add('visible');
-    },5000);
-  }
+  if(!past.length){track.innerHTML='<div class="hdr-lesson-empty">Belum ada pelajaran terkunci.</div>';track.style.animation='none';return;}
+  const itemHTML=past.map(l=>`<div class="hdr-lesson-item"><span class="hdr-lesson-date">🔒 ${fmt(l.date)}</span><span class="hdr-lesson-text">${esc(l.text)}</span></div>`).join('');
+  track.innerHTML=itemHTML+itemHTML;
+  const totalChars=past.reduce((s,l)=>s+l.text.length,0);
+  const dur=Math.max(12,Math.min(80,past.length*6+(totalChars*0.05)));
+  track.style.setProperty('--ticker-dur',dur+'s');
+  track.style.animation='';
 }
 
 function renderLessons(){
