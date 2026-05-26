@@ -1935,7 +1935,7 @@ function addGoal(){
 }
 let goalAchieveId=null,goalAchieveCat=null;
 
-function toggleGoal(id){
+async function toggleGoal(id){
   const g=goals.find(x=>x.id===id);if(!g)return;
   if(!g.done){
     goalAchieveId=id;goalAchieveCat=null;
@@ -1947,9 +1947,12 @@ function toggleGoal(id){
   }else{
     if(!confirm('Batalkan pencapaian goal ini? Poin aktivitas yang ditambahkan akan dihapus.'))return;
     const prevDate=g.doneDate;const n=g.scope==='year'?7:3;
+    const prefix='[G] '+g.text;
     g.done=false;g.doneDate=null;saveGoalDB(g);
-    const toDelete=activities.filter(a=>a.date===prevDate&&a.text==='[G] '+g.text).slice(0,n);
-    toDelete.forEach(a=>{api('/api/activities?id='+a.id,'DELETE').catch(console.error);});
+    const toDelete=activities
+      .filter(a=>a.date===prevDate&&a.text===prefix&&(!g.achieveCategory||a.category===g.achieveCategory))
+      .slice(0,n);
+    await Promise.all(toDelete.map(a=>api('/api/activities?id='+a.id,'DELETE').catch(console.error)));
     activities=activities.filter(a=>!toDelete.find(d=>d.id===a.id));
     render();
   }
@@ -1970,7 +1973,7 @@ async function confirmGoalAchieve(){
   if(!goalAchieveId||!goalAchieveCat)return;
   const g=goals.find(x=>x.id===goalAchieveId);if(!g)return;
   const n=g.scope==='year'?7:3;const today=todayStr();
-  g.done=true;g.doneDate=today;saveGoalDB(g);
+  g.done=true;g.doneDate=today;g.achieveCategory=goalAchieveCat;saveGoalDB(g);
   for(let i=0;i<n;i++){
     try{const act=await api('/api/activities','POST',{date:today,category:goalAchieveCat,text:'[G] '+g.text});activities.push(act);}
     catch(e){console.error(e);}
