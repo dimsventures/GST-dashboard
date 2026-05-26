@@ -12,8 +12,8 @@ export async function GET(req: Request) {
     db.from('gst_goals').select('*').order('created_at', { ascending: false }),
     db.from('gst_wishes').select('*').order('created_at'),
     db.from('gst_activities').select('*')
-      .gte('date', `${new Date().getFullYear()}-01-01`)
-      .order('created_at'),
+      .order('created_at', { ascending: false })
+      .limit(1000),
   ])
   if (a.error) console.error('[data/activities] Supabase error:', a.error)
   return NextResponse.json({
