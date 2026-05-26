@@ -983,6 +983,7 @@ async function init(){
   await refreshTokenIfNeeded();
   fetch('/api/auth/me').then(r=>r.ok?r.json():null).then(u=>{if(u){const el=document.getElementById('hello-name');if(el)el.textContent='Hello '+u.name;const sb=document.getElementById('sb-user');if(sb)sb.textContent=u.name;}}).catch(()=>{});
   const {entries:en,lessons:ls,todos:td,goals:gl,wishes:ws,activities:ac}=await api('/api/data');
+  console.log('[init] activities from DB:', ac?.length, ac?.slice(0,3));
   activities=Array.isArray(ac)?ac:[];
 
   entries=Array.isArray(en)?en:[];

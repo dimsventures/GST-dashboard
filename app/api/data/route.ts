@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     db.from('gst_wishes').select('*').order('created_at'),
     db.from('gst_activities').select('*').order('created_at'),
   ])
+  if (a.error) console.error('[data/activities] Supabase error:', a.error)
   return NextResponse.json({
     entries:    e.data || [],
     lessons:    l.data || [],
