@@ -1643,9 +1643,13 @@ async function addActivity(cat){
   const btn=inp.nextElementSibling;btn.disabled=true;
   try{
     const act=await api('/api/activities','POST',{date:dstr,category:cat,text});
+    console.log('[activities] saved:', act);
     activities.push(act);inp.value='';
     renderActList(cat);render();
-  }catch(err){alert('Gagal simpan: '+err.message);}
+  }catch(err){
+    console.error('[activities] save error:', err);
+    alert('Gagal simpan aktivitas.\n\nError: '+err.message+'\n\nCoba refresh halaman lalu coba lagi.');
+  }
   finally{btn.disabled=false;}
   inp.focus();
 }
