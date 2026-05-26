@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     db.from('gst_wishes').select('*').order('created_at'),
     db.from('gst_activities').select('*')
       .order('created_at', { ascending: false })
-      .limit(1000),
+      .limit(3000),
   ])
   if (a.error) console.error('[data/activities] Supabase error:', a.error)
   return NextResponse.json({
