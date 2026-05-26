@@ -32,7 +32,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
-  --white:#ffffff;--bg:#f5f4f2;--bg2:#eeede b;
+  --white:#ffffff;--bg:#f5f4f2;--bg2:#eeedeb;
   --border:#e4e2de;--border2:#d0cdc8;
   --text:#1a1a1a;--text2:#4a4a4a;--text3:#888;--text4:#c0bdb8;
   --red:#d12b2b;--red2:#b32222;--red-bg:#fef2f2;--red-border:#fad4d4;
@@ -45,6 +45,29 @@
   --s2:0 4px 12px rgba(0,0,0,.08);
   --s3:0 8px 24px rgba(0,0,0,.12);
 }
+body.dark{
+  --white:#1e1e1e;--bg:#141414;--bg2:#252525;
+  --border:#2e2e2e;--border2:#3d3d3d;
+  --text:#e8e6e3;--text2:#9a9794;--text3:#5a5752;--text4:#2e2c29;
+  --blk:#e8e6e3;
+  --red-bg:#2d1010;--red-border:#5a2020;
+  --gold-bg:#231a08;--gold-border:#4a3510;
+  --green-bg:#0b2016;--green-border:#1a4028;
+  --blue-bg:#0d1a35;
+  --s1:0 1px 3px rgba(0,0,0,.25);
+  --s2:0 4px 12px rgba(0,0,0,.35);
+  --s3:0 8px 24px rgba(0,0,0,.45);
+}
+body.dark .hdr-lesson-item{background:#2d1010;border-color:#5a2020;color:#fca5a5;}
+body.dark .hdr-lesson-item .hdr-lesson-date{color:#f87171;}
+body.dark .hdr-lesson-item .hdr-lesson-text{color:#fca5a5;}
+body.dark .lsn-item{background:#2d1010;border-color:#5a2020;}
+body.dark .lsn-txt{color:#fca5a5;}
+body.dark .lsn-date{color:#f87171;}
+body.dark .dlesn-card,.dark .dlesn-txt{background:#2d1010;border-color:#5a2020;color:#fca5a5;}
+body.dark .dgoal-card{background:#2a1028;border-color:#6b21a8;}
+body.dark .target-quote{border-top-color:var(--border);}
+body.dark header{border-bottom-color:var(--border);}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;-webkit-font-smoothing:antialiased;padding-left:200px;}
 button,input,textarea,select{font-family:'Poppins',sans-serif;}
@@ -66,6 +89,8 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .hdr-data{display:flex;gap:6px;}
 .btn-data{font-family:'Poppins',sans-serif;font-size:10px;font-weight:600;letter-spacing:.04em;padding:6px 10px;background:var(--white);border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;transition:all .15s;}
 .btn-data:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+.btn-dark{background:none;border:1px solid var(--border);width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .15s;flex-shrink:0;}
+.btn-dark:hover{border-color:var(--red);background:var(--red-bg);}
 .hdr-lessons{position:absolute;left:310px;right:290px;top:0;bottom:0;display:flex;align-items:center;overflow:hidden;pointer-events:none;}
 @keyframes ticker-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .hdr-lessons-track{display:inline-flex;align-items:center;white-space:nowrap;animation:ticker-scroll var(--ticker-dur,40s) linear infinite;pointer-events:auto;}
@@ -506,7 +531,7 @@ body.sb-collapsed{padding-left:60px;}
 }
 </style>
 </head>
-<body>
+<body><script>if(localStorage.getItem('gst_theme')==='dark')document.body.classList.add('dark');</script>
 
 <aside id="sidebar">
   <div class="sb-brand"><span class="sb-brand-name">GST<em>.</em></span></div>
@@ -536,6 +561,7 @@ body.sb-collapsed{padding-left:60px;}
     <div class="hdr-lessons-track" id="hdr-lessons-track"></div>
   </div>
   <div class="hdr-r">
+    <button class="btn-dark" id="btn-dark" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
     <button class="btn-log" onclick="openLog()">+ Log Hari Ini</button>
   </div>
 </header>
@@ -1010,6 +1036,8 @@ async function init(){
   calY=now.getFullYear(); calM=now.getMonth();
   wkStart=mondayOf(now);
   startClock(); render(); startQuoteRotation();
+  const btn=document.getElementById('btn-dark');
+  if(btn)btn.textContent=document.body.classList.contains('dark')?'☀️':'🌙';
   // Refresh token every 45 min so it doesn't expire mid-session (Supabase tokens last 1h)
   setInterval(()=>{fetch('/api/auth',{method:'PUT'}).catch(()=>{});}, 45*60*1000);
 }
@@ -1186,6 +1214,12 @@ function importJSON(ev){
 }
 
 // ── CLOCK ──
+function toggleDark(){
+  const dark=document.body.classList.toggle('dark');
+  localStorage.setItem('gst_theme',dark?'dark':'light');
+  const btn=document.getElementById('btn-dark');
+  if(btn)btn.textContent=dark?'☀️':'🌙';
+}
 function startClock(){
   const mn=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
   const dn=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
@@ -1475,7 +1509,7 @@ function renderHdrLessons(){
   const itemHTML=past.map(l=>`<div class="hdr-lesson-item"><span class="hdr-lesson-date">🔒 ${fmt(l.date)}</span><span class="hdr-lesson-text">${esc(l.text)}</span></div>`).join('');
   track.innerHTML=itemHTML+itemHTML;
   const totalChars=past.reduce((s,l)=>s+l.text.length,0);
-  const dur=Math.max(12,Math.min(80,past.length*6+(totalChars*0.05)));
+  const dur=Math.max(30,Math.min(200,past.length*10+(totalChars*0.3)));
   track.style.setProperty('--ticker-dur',dur+'s');
   track.style.animation='';
 }
