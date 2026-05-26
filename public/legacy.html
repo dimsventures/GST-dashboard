@@ -100,10 +100,12 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .btn-data:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
 .btn-dark{background:none;border:1px solid var(--border);width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .15s;flex-shrink:0;}
 .btn-dark:hover{border-color:var(--red);background:var(--red-bg);}
-.hdr-lessons{position:absolute;left:310px;right:290px;top:0;bottom:0;display:flex;align-items:center;overflow:hidden;pointer-events:none;}
-@keyframes ticker-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.hdr-lessons-track{display:inline-flex;align-items:center;white-space:nowrap;animation:ticker-scroll var(--ticker-dur,40s) linear infinite;pointer-events:auto;}
-.hdr-lessons-track:hover{animation-play-state:paused;}
+.hdr-lessons{position:absolute;left:310px;right:290px;top:0;bottom:0;display:flex;align-items:center;overflow:hidden;pointer-events:none;-webkit-mask-image:linear-gradient(to right,transparent,#000 72px,#000 calc(100% - 72px),transparent);mask-image:linear-gradient(to right,transparent,#000 72px,#000 calc(100% - 72px),transparent);}
+@keyframes lsn-slide-in{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes lsn-slide-out{from{transform:translateX(0);opacity:1}to{transform:translateX(-110%);opacity:0}}
+.hdr-lessons-track{display:flex;align-items:center;justify-content:center;white-space:nowrap;pointer-events:auto;width:100%;}
+.hdr-lesson-item.lsn-entering{animation:lsn-slide-in .8s cubic-bezier(.4,0,.2,1) forwards;}
+.hdr-lesson-item.lsn-leaving{animation:lsn-slide-out .8s cubic-bezier(.4,0,.2,1) forwards;}
 .hdr-lesson-item{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;background:#fff5f5;border:1px solid #fecaca;border-radius:6px;font-family:'Poppins',sans-serif;font-size:11px;color:#7f1d1d;white-space:nowrap;margin-right:24px;flex-shrink:0;}
 .hdr-lesson-item .hdr-lesson-date{font-weight:700;color:var(--red);font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
 .hdr-lesson-item .hdr-lesson-text{color:#991b1b;}
@@ -1536,18 +1538,26 @@ function renderHdrLessons(){
   const track=document.getElementById('hdr-lessons-track');
   if(!track)return;
   if(window._lsnTimer){clearInterval(window._lsnTimer);window._lsnTimer=null;}
+  if(window._lsnLeaveTimer){clearTimeout(window._lsnLeaveTimer);window._lsnLeaveTimer=null;}
   const today=todayStr();
   const fmt=(d)=>{const dt=new Date(d+'T00:00:00');const m=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];return dt.getDate()+' '+m[dt.getMonth()];};
   const esc=(s)=>(s||'').replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"})[c]);
   const past=[];
   [...lessons].filter(l=>l.date<today).sort((a,b)=>b.date.localeCompare(a.date)).forEach(l=>(l.items||[{text:l.text||'',date:l.date}]).forEach(item=>past.push({date:l.date,text:item.text,category:item.category||null})));
-  if(!past.length){track.innerHTML='<div class="hdr-lesson-empty">Belum ada pelajaran terkunci.</div>';track.style.animation='none';return;}
-  const itemHTML=past.map(l=>`<div class="hdr-lesson-item">${l.category?`<span class="lsn-cat-tag">${esc(l.category)}</span>`:'<span class="hdr-lesson-date">🔒 '+fmt(l.date)+'</span>'}<span class="hdr-lesson-text">${esc(l.text)}</span></div>`).join('');
-  track.innerHTML=itemHTML+itemHTML;
-  const totalChars=past.reduce((s,l)=>s+l.text.length,0);
-  const dur=Math.max(30,Math.min(200,past.length*10+(totalChars*0.3)));
-  track.style.setProperty('--ticker-dur',dur+'s');
-  track.style.animation='';
+  if(!past.length){track.innerHTML='<div class="hdr-lesson-empty">Belum ada pelajaran terkunci.</div>';return;}
+  let lsnIdx=0;
+  const SHOW=7000,ANIM=800;
+  function showLsn(){
+    const l=past[lsnIdx];
+    const el=document.createElement('div');
+    el.className='hdr-lesson-item lsn-entering';
+    el.innerHTML=(l.category?`<span class="lsn-cat-tag">${esc(l.category)}</span>`:`<span class="hdr-lesson-date">🔒 ${fmt(l.date)}</span>`)+`<span class="hdr-lesson-text">${esc(l.text)}</span>`;
+    track.innerHTML='';
+    track.appendChild(el);
+    window._lsnLeaveTimer=setTimeout(()=>{el.classList.remove('lsn-entering');el.classList.add('lsn-leaving');},SHOW);
+  }
+  showLsn();
+  window._lsnTimer=setInterval(()=>{lsnIdx=(lsnIdx+1)%past.length;showLsn();},SHOW+ANIM);
 }
 
 function renderLessons(){
