@@ -25,6 +25,28 @@
   --r:8px;--r2:5px;
   --s1:0 1px 3px rgba(0,0,0,.06);--s2:0 4px 12px rgba(0,0,0,.08);
 }
+body.dark{
+  --white:#1e1e1e;--bg:#141414;--bg2:#252525;
+  --border:#2e2e2e;--border2:#3d3d3d;
+  --text:#e8e6e3;--text2:#9a9794;--text3:#5a5752;--text4:#2e2c29;
+  --blk:#e8e6e3;
+  --red-bg:#2d1010;--red-border:#5a2020;
+  --gold-bg:#231a08;--gold-border:#4a3510;
+  --green-bg:#0b2016;--green-border:#1a4028;
+  --blue-bg:#0d1a35;
+  --s1:0 1px 3px rgba(0,0,0,.25);--s2:0 4px 12px rgba(0,0,0,.35);
+}
+body.dark #sidebar{background:#1e1e1e;border-right-color:#2e2e2e;}
+body.dark .sb-brand{border-bottom-color:#2e2e2e;}
+body.dark .sb-brand:hover{background:#252525;}
+body.dark .sb-brand-name{color:#e8e6e3;}
+body.dark .sb-item{color:#9a9794;}
+body.dark .sb-item:hover{color:#e8e6e3;background:#252525;}
+body.dark .sb-item.active{color:#d12b2b;background:#2d1010;border-left-color:#d12b2b;}
+body.dark .sb-sep{background:#2e2e2e;}
+body.dark .sb-bottom{border-top-color:#2e2e2e !important;}
+.btn-dark{background:none;border:1px solid var(--border);width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .15s;flex-shrink:0;}
+.btn-dark:hover{border-color:var(--red);}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;-webkit-font-smoothing:antialiased;padding-left:200px;}
 button,input,select,textarea{font-family:'Poppins',sans-serif;}
@@ -231,7 +253,7 @@ body.sb-collapsed{padding-left:60px;}
 }
 </style>
 </head>
-<body>
+<body><script>if(localStorage.getItem('gst_theme')==='dark')document.body.classList.add('dark');</script>
 
 <aside id="sidebar">
   <div class="sb-brand"><span class="sb-brand-name">GST<em>.</em></span></div>
@@ -253,6 +275,7 @@ body.sb-collapsed{padding-left:60px;}
   <button class="sb-hamburger">☰</button>
   <div class="logo">GST <span>Finance</span></div>
   <div class="hdr-r">
+    <button class="btn-dark" id="btn-dark" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
   </div>
 </header>
 
@@ -497,7 +520,12 @@ async function api(path,method='GET',body=null){
 }
 
 async function logout(){await fetch('/api/auth',{method:'DELETE'});location.href='/login';}
-
+function toggleDark(){
+  const dark=document.body.classList.toggle('dark');
+  localStorage.setItem('gst_theme',dark?'dark':'light');
+  const btn=document.getElementById('btn-dark');
+  if(btn)btn.textContent=dark?'☀️':'🌙';
+}
 async function init(){
   fetch('/api/auth/me').then(r=>r.ok?r.json():null).then(u=>{if(u){const el=document.getElementById('sb-user');if(el)el.textContent=u.name;}}).catch(()=>{});
   const now=new Date();
@@ -1049,6 +1077,8 @@ function renderReconHistory(){
 
 document.getElementById('buf-modal').addEventListener('click',function(e){if(e.target===this)closeBufModal();});
 init();
+const _darkBtn=document.getElementById('btn-dark');
+if(_darkBtn)_darkBtn.textContent=document.body.classList.contains('dark')?'☀️':'🌙';
 </script>
 <div id="sb-overlay"></div>
 <script>
