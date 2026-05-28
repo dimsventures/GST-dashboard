@@ -553,6 +553,48 @@ body.sb-collapsed{padding-left:60px;}
   body{font-size:13px;}
   .card{border-radius:8px;}
 }
+
+/* ── JARVIS CHAT ── */
+#jarvis-btn{position:fixed;bottom:24px;right:24px;z-index:999;width:48px;height:48px;border-radius:50%;background:var(--blk);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:var(--s3);transition:all .2s cubic-bezier(.4,0,.2,1);}
+#jarvis-btn:hover{background:var(--red);transform:scale(1.1);}
+#jarvis-btn.active{background:var(--red);}
+#jarvis-panel{position:fixed;bottom:84px;right:24px;z-index:998;width:360px;max-height:540px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);display:flex;flex-direction:column;overflow:hidden;transform:translateY(20px) scale(.97);opacity:0;pointer-events:none;transition:all .22s cubic-bezier(.4,0,.2,1);}
+#jarvis-panel.open{transform:translateY(0) scale(1);opacity:1;pointer-events:auto;}
+#jarvis-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--blk);color:#fff;border-radius:12px 12px 0 0;}
+#jarvis-hdr-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;letter-spacing:.04em;}
+#jarvis-hdr-title span{font-size:16px;}
+#jarvis-hdr-sub{font-size:10px;color:rgba(255,255,255,.5);font-weight:400;}
+#jarvis-close{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;line-height:1;padding:2px;transition:color .15s;}
+#jarvis-close:hover{color:#fff;}
+#jarvis-msgs{flex:1;overflow-y:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:10px;min-height:200px;}
+.jmsg{display:flex;flex-direction:column;gap:2px;max-width:88%;}
+.jmsg.user{align-self:flex-end;align-items:flex-end;}
+.jmsg.bot{align-self:flex-start;align-items:flex-start;}
+.jmsg-bubble{padding:8px 12px;border-radius:10px;font-size:12px;line-height:1.55;word-break:break-word;white-space:pre-wrap;}
+.jmsg.user .jmsg-bubble{background:var(--blk);color:#fff;border-radius:10px 10px 2px 10px;}
+.jmsg.bot .jmsg-bubble{background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:10px 10px 10px 2px;}
+.jmsg-name{font-size:9px;font-weight:600;letter-spacing:.06em;color:var(--text3);text-transform:uppercase;padding:0 2px;}
+.jtyping{display:flex;align-items:center;gap:4px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px 10px 10px 2px;}
+.jtyping span{width:5px;height:5px;border-radius:50%;background:var(--text3);animation:jdot .9s ease infinite;}
+.jtyping span:nth-child(2){animation-delay:.18s;}
+.jtyping span:nth-child(3){animation-delay:.36s;}
+@keyframes jdot{0%,80%,100%{transform:scale(.7);opacity:.4}40%{transform:scale(1);opacity:1}}
+#jarvis-form{display:flex;align-items:flex-end;gap:8px;padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;background:var(--white);}
+#jarvis-input{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--text);background:var(--bg);resize:none;max-height:90px;outline:none;transition:border-color .15s;line-height:1.45;}
+#jarvis-input:focus{border-color:var(--border2);}
+#jarvis-send{background:var(--blk);color:#fff;border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:14px;transition:background .15s;}
+#jarvis-send:hover{background:var(--red);}
+#jarvis-send:disabled{opacity:.4;cursor:default;}
+#jarvis-clear{background:none;border:none;color:var(--text3);cursor:pointer;font-size:10px;font-family:'Poppins',sans-serif;padding:2px 4px;transition:color .15s;flex-shrink:0;}
+#jarvis-clear:hover{color:var(--red);}
+body.dark #jarvis-panel{background:#1e1e1e;border-color:#2e2e2e;}
+body.dark #jarvis-form{background:#1e1e1e;border-top-color:#2e2e2e;}
+body.dark #jarvis-input{background:#252525;border-color:#3d3d3d;color:#e8e6e3;}
+body.dark #jarvis-hdr{background:#111;}
+body.dark .jmsg.user .jmsg-bubble{background:#e8e6e3;color:#111;}
+body.dark .jmsg.bot .jmsg-bubble{background:#252525;border-color:#3d3d3d;color:#e8e6e3;}
+body.dark .jtyping{background:#252525;border-color:#3d3d3d;}
+@media(max-width:480px){#jarvis-panel{right:12px;left:12px;width:auto;bottom:80px;}#jarvis-btn{right:16px;bottom:16px;}}
 </style>
 </head>
 <body><script>if(localStorage.getItem('gst_theme')==='dark')document.body.classList.add('dark');</script>
@@ -2111,6 +2153,121 @@ function renderGoals(){
 
 init();
 </script>
+<!-- JARVIS CHAT -->
+<button id="jarvis-btn" title="Jarvis AI" onclick="jarvisToggle()">🤖</button>
+<div id="jarvis-panel">
+  <div id="jarvis-hdr">
+    <div id="jarvis-hdr-title"><span>🤖</span> JARVIS <span id="jarvis-hdr-sub">AI Assistant</span></div>
+    <button id="jarvis-close" onclick="jarvisToggle()">✕</button>
+  </div>
+  <div id="jarvis-msgs"></div>
+  <div id="jarvis-form">
+    <textarea id="jarvis-input" placeholder="Tanya Jarvis..." rows="1" onkeydown="jarvisKey(event)" oninput="jarvisAutoResize(this)"></textarea>
+    <button id="jarvis-clear" onclick="jarvisClear()" title="Clear chat">↺</button>
+    <button id="jarvis-send" onclick="jarvisSend()">➤</button>
+  </div>
+</div>
+<script>
+(function(){
+  var jarvisHistory=[];
+  var jarvisOpen=false;
+  var jarvisLoading=false;
+
+  window.jarvisToggle=function(){
+    jarvisOpen=!jarvisOpen;
+    var panel=document.getElementById('jarvis-panel');
+    var btn=document.getElementById('jarvis-btn');
+    panel.classList.toggle('open',jarvisOpen);
+    btn.classList.toggle('active',jarvisOpen);
+    if(jarvisOpen){
+      setTimeout(function(){document.getElementById('jarvis-input').focus();},200);
+      if(!jarvisHistory.length) jarvisWelcome();
+    }
+  };
+
+  function jarvisWelcome(){
+    jarvisAppendMsg('bot','Siap, Boss. Mau bahas apa hari ini?');
+  }
+
+  window.jarvisKey=function(e){
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();jarvisSend();}
+  };
+
+  window.jarvisAutoResize=function(el){
+    el.style.height='auto';
+    el.style.height=Math.min(el.scrollHeight,90)+'px';
+  };
+
+  window.jarvisSend=async function(){
+    if(jarvisLoading)return;
+    var input=document.getElementById('jarvis-input');
+    var msg=input.value.trim();
+    if(!msg)return;
+    input.value='';
+    input.style.height='auto';
+    jarvisAppendMsg('user',msg);
+    jarvisHistory.push({role:'user',content:msg});
+    jarvisSetLoading(true);
+    try{
+      var res=await fetch('/api/chat',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message:msg,history:jarvisHistory.slice(0,-1)})
+      });
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      var data=await res.json();
+      var reply=data.reply||'(no response)';
+      jarvisAppendMsg('bot',reply);
+      jarvisHistory.push({role:'assistant',content:reply});
+    }catch(err){
+      jarvisAppendMsg('bot','Error: '+err.message);
+    }finally{
+      jarvisSetLoading(false);
+    }
+  };
+
+  window.jarvisClear=function(){
+    jarvisHistory=[];
+    document.getElementById('jarvis-msgs').innerHTML='';
+    jarvisWelcome();
+  };
+
+  function jarvisAppendMsg(role,text){
+    var msgs=document.getElementById('jarvis-msgs');
+    var wrap=document.createElement('div');
+    wrap.className='jmsg '+role;
+    var name=document.createElement('div');
+    name.className='jmsg-name';
+    name.textContent=role==='user'?'Lu':'Jarvis';
+    var bubble=document.createElement('div');
+    bubble.className='jmsg-bubble';
+    bubble.textContent=text;
+    wrap.appendChild(name);
+    wrap.appendChild(bubble);
+    msgs.appendChild(wrap);
+    msgs.scrollTop=msgs.scrollHeight;
+  }
+
+  function jarvisSetLoading(on){
+    jarvisLoading=on;
+    var send=document.getElementById('jarvis-send');
+    send.disabled=on;
+    var msgs=document.getElementById('jarvis-msgs');
+    var existing=document.getElementById('jarvis-typing');
+    if(on&&!existing){
+      var typing=document.createElement('div');
+      typing.id='jarvis-typing';
+      typing.className='jmsg bot';
+      typing.innerHTML='<div class="jmsg-name">Jarvis</div><div class="jtyping"><span></span><span></span><span></span></div>';
+      msgs.appendChild(typing);
+      msgs.scrollTop=msgs.scrollHeight;
+    } else if(!on&&existing){
+      existing.remove();
+    }
+  }
+})();
+</script>
+
 <div id="sb-overlay"></div>
 <script>
 (function(){
