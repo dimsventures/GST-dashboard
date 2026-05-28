@@ -2,13 +2,16 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getAuthContext } from '@/lib/auth'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
 const SYSTEM_PROMPT = `Kamu adalah Jarvis — AI personal assistant dari pemilik dashboard ini. Kamu tahu SEMUA data mereka: entries harian, lessons, todos, goals, wishes. Kamu berbicara jujur, direct, kadang push back kalau ada inkonsistensi antara goals dan behavior. Bahasa Indonesia informal (gua/lu). Jangan basa-basi. Panggil pemiliknya 'Boss'.`
 
 export async function POST(req: Request) {
   const ctx = getAuthContext(req)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 503 })
+  }
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   const { message, history = [] } = await req.json()
   if (!message?.trim()) return NextResponse.json({ error: 'Message required' }, { status: 400 })
