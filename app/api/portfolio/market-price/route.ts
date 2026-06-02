@@ -48,7 +48,7 @@ async function fetchOneChart(symbol: string): Promise<MarketPriceResult | null> 
 
   return {
     symbol: meta.symbol,
-    ticker: meta.symbol.replace('.JK', ''),
+    ticker: meta.symbol.replace('.JK', '').replace(/-USD$/, ''),
     price: meta.regularMarketPrice,
     change: Math.round(change * 100) / 100,
     changePercent: Math.round(changePercent * 100) / 100,
