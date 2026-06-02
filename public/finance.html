@@ -106,9 +106,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .btn-add:disabled{background:var(--border2);cursor:not-allowed;}
 
 /* TRX LIST */
-.trx-list{max-height:340px;overflow-y:auto;padding:6px 0;}
-.trx-list::-webkit-scrollbar{width:3px;}
-.trx-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.trx-list{padding:6px 0;}
 .trx-item{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);transition:background .12s;}
 .trx-item:last-child{border-bottom:none;}
 .trx-item:hover{background:var(--bg);}
@@ -149,7 +147,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .btn-buf-in:hover{background:var(--green);color:#fff;}
 .btn-buf-out{flex:1;background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);border-radius:var(--r2);padding:7px;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;}
 .btn-buf-out:hover{background:var(--red);color:#fff;}
-.buf-log-list{max-height:120px;overflow-y:auto;padding:4px 0;}
+.buf-log-list{padding:4px 0;}
 .buf-log-item{display:flex;justify-content:space-between;align-items:center;padding:5px 14px;font-size:10px;border-bottom:1px solid var(--border);}
 .buf-log-item:last-child{border-bottom:none;}
 
@@ -167,7 +165,7 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .recon-diff-val.warn{color:var(--red);}
 .btn-recon{width:100%;background:var(--gold-bg);border:1px solid var(--gold-border);color:var(--gold);border-radius:var(--r2);padding:8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.04em;}
 .btn-recon:hover{background:var(--gold);color:#fff;}
-.recon-history{max-height:130px;overflow-y:auto;padding:4px 0;border-top:1px solid var(--border);}
+.recon-history{padding:4px 0;border-top:1px solid var(--border);}
 .recon-hist-item{display:flex;justify-content:space-between;align-items:center;padding:5px 14px;font-size:9px;border-bottom:1px solid var(--border);}
 .recon-hist-item:last-child{border-bottom:none;}
 
@@ -1019,7 +1017,7 @@ function renderSummary(){
 function renderBuffer(){
   const bal=bufferLogs.reduce((s,l)=>s+l.amount,0);
   document.getElementById('buf-bal').textContent=fmtRp(bal);
-  const recent=[...bufferLogs].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,6);
+  const recent=[...bufferLogs].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,4);
   document.getElementById('buf-log-list').innerHTML=recent.length
     ?recent.map(l=>`<div class="buf-log-item"><span style="color:var(--text3)">${l.date}${l.note?' — '+l.note:''}</span><span style="font-weight:700;color:${l.amount>0?'var(--green)':'var(--red)'}">${l.amount>0?'+':''}${fmtRp(l.amount)}</span></div>`).join('')
     :'<div style="padding:10px 14px;font-size:10px;color:var(--text4);text-align:center;">Belum ada log buffer.</div>';
@@ -1138,7 +1136,7 @@ async function saveRecon(){
 function renderReconHistory(){
   const h=document.getElementById('recon-history');
   if(!reconciliations.length){h.innerHTML='';return;}
-  h.innerHTML=reconciliations.slice(0,10).map(r=>`
+  h.innerHTML=reconciliations.slice(0,4).map(r=>`
     <div class="recon-hist-item">
       <span style="color:var(--text3)">${r.date}</span>
       <span style="font-weight:700;color:${r.difference===0?'var(--green)':'var(--red)'}">
