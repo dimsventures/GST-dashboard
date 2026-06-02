@@ -251,6 +251,17 @@ body.sb-collapsed{padding-left:60px;}
   body{font-size:13px;}
   .card{border-radius:8px;}
 }
+
+/* TOAST */
+#toast-container{position:fixed;top:20px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;font-size:12px;font-weight:600;color:#fff;min-width:200px;max-width:300px;box-shadow:0 4px 20px rgba(0,0,0,.18);pointer-events:auto;transform:translateX(120%);opacity:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;}
+.toast.show{transform:translateX(0);opacity:1;}
+.toast.hide{transform:translateX(120%);opacity:0;transition:transform .25s ease-in,opacity .25s ease-in;}
+.toast.success{background:linear-gradient(135deg,#15a34a,#0d7a38);}
+.toast.error{background:linear-gradient(135deg,#d12b2b,#a81e1e);}
+.toast.warning{background:linear-gradient(135deg,#c9841a,#a86a0f);}
+.toast-icon{font-size:16px;flex-shrink:0;}
+.toast-msg{line-height:1.4;}
 </style>
 </head>
 <body><script>if(localStorage.getItem('gst_theme')==='dark')document.body.classList.add('dark');</script>
@@ -470,6 +481,8 @@ body.sb-collapsed{padding-left:60px;}
 </div>
 </div>
 
+<div id="toast-container"></div>
+
 <!-- BUFFER MODAL -->
 <div class="moverlay" id="buf-modal">
   <div class="modal">
@@ -510,6 +523,19 @@ let currentType='expense',currentCat='',currentMonth='',bufDir='in',currentAsset
 
 function todayStr(){const n=new Date();return`${n.getFullYear()}-${p2(n.getMonth()+1)}-${p2(n.getDate())}`;}
 function p2(n){return String(n).padStart(2,'0');}
+
+function showToast(msg,type='success'){
+  const icons={success:'✓',error:'✕',warning:'!'};
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<span class="toast-icon">${icons[type]||'✓'}</span><span class="toast-msg">${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));
+  setTimeout(()=>{
+    el.classList.add('hide');
+    el.addEventListener('transitionend',()=>el.remove(),{once:true});
+  },2500);
+}
 function fmtRp(n){return'Rp '+Number(n).toLocaleString('id-ID');}
 function monthStr(y,m){return`${y}-${p2(m+1)}`;}
 
@@ -815,7 +841,7 @@ async function addTransaction(){
     document.getElementById('note-inp').value='';
     document.getElementById('amount-inp').focus();
     render();
-  }catch(e){alert('Gagal: '+e.message);}
+  }catch(e){showToast('Gagal: '+e.message,'error');}
   finally{btn.disabled=false;btn.textContent='+ Tambah';}
 }
 
@@ -994,7 +1020,7 @@ function closeBufModal(){document.getElementById('buf-modal').classList.remove('
 async function confirmBuffer(){
   const amt=parseInt(document.getElementById('buf-amount').value);
   if(!amt||amt<=0)return;
-  if(bufDir==='out'&&!bufExpCat){alert('Pilih kategori expense dulu!');return;}
+  if(bufDir==='out'&&!bufExpCat){showToast('Pilih kategori expense dulu!','warning');return;}
   const note=document.getElementById('buf-note').value.trim();
   const amount=bufDir==='in'?amt:-amt;
   const selDate=document.getElementById('buf-date').value||todayStr();
@@ -1012,7 +1038,7 @@ async function confirmBuffer(){
     }
     transactions.sort((a,b)=>b.date.localeCompare(a.date));
     closeBufModal();render();
-  }catch(e){alert('Gagal: '+e.message);}
+  }catch(e){showToast('Gagal: '+e.message,'error');}
 }
 
 // RECONCILIATION HELPERS
@@ -1071,8 +1097,8 @@ async function saveRecon(){
     reconciliations.unshift(rc);
     renderReconHistory();
     fillReconFromLast();
-    alert('Audit tersimpan!');
-  }catch(e){alert('Gagal: '+e.message);}
+    showToast('Audit tersimpan!','success');
+  }catch(e){showToast('Gagal: '+e.message,'error');}
 }
 function renderReconHistory(){
   const h=document.getElementById('recon-history');
