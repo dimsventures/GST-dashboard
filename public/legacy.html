@@ -470,6 +470,17 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .mfooter{padding:12px 22px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
 .btn-cancel{background:none;border:1px solid var(--border);color:var(--text2);padding:8px 18px;border-radius:var(--r2);font-family:'Poppins',sans-serif;font-size:12px;cursor:pointer;transition:all .15s;font-weight:500;}
 .btn-cancel:hover{border-color:var(--text2);}
+.btn-primary{background:var(--red);color:#fff;border:none;padding:8px 18px;border-radius:var(--r2);font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s;}
+.btn-primary:hover{background:var(--red2);}
+.mini-inp{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-family:'Poppins',sans-serif;font-size:11px;color:var(--text);outline:none;box-sizing:border-box;transition:border-color .15s;}
+.mini-inp:focus{border-color:var(--red);}
+.mini-sel{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-family:'Poppins',sans-serif;font-size:11px;color:var(--text);outline:none;box-sizing:border-box;cursor:pointer;}
+.mlbl-f{font-size:10px;font-weight:600;color:var(--text2);display:block;margin-bottom:3px;}
+.mhdr{padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.mtitle{font-size:13px;font-weight:700;}
+.mclose{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0;}
+.mbody{padding:14px 18px;display:flex;flex-direction:column;gap:10px;}
+.mfooter{padding:12px 18px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);}
 .btn-save{background:var(--red);border:none;color:#fff;padding:8px 22px;border-radius:var(--r2);font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s;}
 .btn-save:hover{background:var(--red2);}
 
@@ -896,6 +907,18 @@ body.dark .jtyping{background:#252525;border-color:#3d3d3d;}
   </div>
 </div>
 
+<!-- GENERIC MODAL -->
+<div class="moverlay" id="generic-modal" onclick="if(event.target===this)closeGenericModal()">
+  <div class="modal" style="max-width:400px;">
+    <div class="mhdr">
+      <div class="mtitle" id="gm-title"></div>
+      <button class="mclose" onclick="closeGenericModal()">✕</button>
+    </div>
+    <div class="mbody" id="gm-body" style="padding:14px 18px;display:flex;flex-direction:column;gap:10px;"></div>
+    <div class="mfooter" id="gm-footer" style="padding:12px 18px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);"></div>
+  </div>
+</div>
+
 <!-- LEARNING RESULT MODAL -->
 <div class="moverlay" id="learning-modal">
   <div class="modal" style="max-width:460px;">
@@ -1222,7 +1245,7 @@ function openAddCatModal(){
      <input class="mini-inp" id="mc-keywords" placeholder="e.g. bikin, buat, develop, build">
      <label class="mlbl-f">Warna</label>
      <input type="color" id="mc-color" value="#6d28d9" style="width:100%;height:32px;border-radius:6px;border:1px solid var(--border);cursor:pointer;">`,
-    `<button class="btn-cancel" onclick="closeModal()">Batal</button>
+    `<button class="btn-cancel" onclick="closeGenericModal()">Batal</button>
      <button class="btn-primary" onclick="submitAddCat()">Tambah</button>`
   );
   setTimeout(()=>document.getElementById('mc-name')?.focus(),100);
@@ -1238,7 +1261,7 @@ async function submitAddCat(){
   try{
     const c=await api('/api/todo-categories','POST',{mode:todoMode,name,color,keywords,points_to:pointsTo});
     todoCategories.push(c);
-    closeModal();
+    closeGenericModal();
     renderCatBar();
   }catch(e){
     if(e.message&&e.message.includes('max_categories'))showToast("Don't too much stuff brads, keep focus 🎯");
@@ -1968,6 +1991,13 @@ function openLogDate(dstr){
   setTimeout(()=>{const f=document.getElementById('act-inp-religion');if(f)f.focus();},100);
 }
 function closeModal(){document.getElementById('mo').classList.remove('open');render();}
+function openModal(title,bodyHtml,footerHtml){
+  document.getElementById('gm-title').textContent=title;
+  document.getElementById('gm-body').innerHTML=bodyHtml;
+  document.getElementById('gm-footer').innerHTML=footerHtml;
+  document.getElementById('generic-modal').classList.add('open');
+}
+function closeGenericModal(){document.getElementById('generic-modal').classList.remove('open');}
 function openLessonsModal(){
   const yr=new Date().getFullYear();
   const yrLessons=[...lessons].filter(l=>l.date.startsWith(yr+'-')).sort((a,b)=>b.date.localeCompare(a.date));
