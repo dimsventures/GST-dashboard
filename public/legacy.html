@@ -1384,10 +1384,13 @@ function addWish(){
   inp.value='';renderStats();
 }
 function delLesson(id){
+  if(!id||id==='undefined'){alert('ID lesson tidak valid, coba refresh halaman.');return;}
   showConfirm('Pelajaran ini akan dihapus permanen.',async()=>{
-    await api('/api/lesson-items?id='+id,'DELETE').catch(console.error);
-    lessons.forEach(l=>{if(l.items)l.items=l.items.filter(i=>i.id!==id);});
-    render();
+    try{
+      await api('/api/lesson-items?id='+id,'DELETE');
+      lessons.forEach(l=>{if(l.items)l.items=l.items.filter(i=>i.id!==id);});
+      render();
+    }catch(e){alert('Gagal hapus: '+e.message);}
   },{title:'Hapus Pelajaran?',icon:'🗑️',okLabel:'Hapus'});
 }
 function delWish(id){
