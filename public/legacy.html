@@ -342,10 +342,24 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 
 /* TODO */
 .todo-sec{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 16px rgba(0,0,0,.05);}
-.cat-bar{padding:8px 16px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0;}
+.mode-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.mbtn{flex:1;padding:8px 10px;border:none;background:none;font-family:'Poppins',sans-serif;font-size:10px;font-weight:600;color:var(--text3);cursor:pointer;transition:all .15s;border-bottom:2px solid transparent;display:flex;align-items:center;justify-content:center;gap:5px;}
+.mbtn:hover{color:var(--text);background:var(--bg);}
+.mbtn.active{color:var(--red);border-bottom-color:var(--red);background:#fff;}
+.mbtn-doing.active{color:#ef4444;border-bottom-color:#ef4444;}
+.mbtn-learning.active{color:#8b5cf6;border-bottom-color:#8b5cf6;}
+.mbtn .mct{font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;background:var(--bg);color:var(--text3);}
+.mbtn.active .mct{background:rgba(0,0,0,.06);}
+.cat-bar{padding:6px 16px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0;align-items:center;}
 .cchip{font-size:9px;font-weight:600;padding:3px 9px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--bg);color:var(--text2);transition:all .15s;letter-spacing:.02em;}
 .cchip.active{background:var(--red);color:#fff;border-color:var(--red);}
 .cchip:not(.active):hover{border-color:var(--red-border);color:var(--red);}
+.cchip-add{font-size:13px;font-weight:400;padding:1px 7px;border-radius:20px;border:1px dashed var(--border2);cursor:pointer;background:none;color:var(--text3);transition:all .15s;line-height:1.5;font-family:'Poppins',sans-serif;}
+.cchip-add:hover{border-color:var(--text2);color:var(--text);}
+.cchip-del{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.3);color:#fff;font-size:8px;margin-left:3px;vertical-align:middle;cursor:pointer;font-weight:700;line-height:1;}
+.cchip-del:hover{background:rgba(255,255,255,.5);}
+.cat-hint{padding:3px 16px 5px;font-family:'Poppins',sans-serif;font-size:10px;color:var(--text3);display:none;align-items:center;gap:4px;flex-wrap:wrap;}
+.cat-hint.show{display:flex;}
 
 /* Status bar (To Do / Done) */
 .status-bar{display:flex;gap:6px;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:#fafaf8;}
@@ -812,6 +826,10 @@ body.dark .jtyping{background:#252525;border-color:#3d3d3d;}
     <div class="ph">
       <div class="ph-title">Get Shit Things</div>
     </div>
+    <div class="mode-bar">
+      <button class="mbtn mbtn-doing active" id="mbtn-doing" onclick="filterMode('doing')">🔨 Doing <span class="mct" id="mct-doing">0</span></button>
+      <button class="mbtn mbtn-learning" id="mbtn-learning" onclick="filterMode('learning')">📖 Learning <span class="mct" id="mct-learning">0</span></button>
+    </div>
     <div class="status-bar">
       <button class="sbtn sbtn-todo active" data-status="todo" onclick="filterStatus(this)">
         <span class="sdot-st sdot-red"></span>
@@ -824,19 +842,12 @@ body.dark .jtyping{background:#252525;border-color:#3d3d3d;}
         <span class="sct" id="sct-done">0</span>
       </button>
     </div>
-    <div class="cat-bar">
-      <div class="cchip active" data-cat="Semua" onclick="filterCat(this)">Semua</div>
-      <div class="cchip" data-cat="Learning" onclick="filterCat(this)">Learning</div>
-      <div class="cchip" data-cat="Market" onclick="filterCat(this)">Market</div>
-      <div class="cchip" data-cat="AI/Tech" onclick="filterCat(this)">AI/Tech</div>
-      <div class="cchip" data-cat="Psychology" onclick="filterCat(this)">Psychology</div>
-      <div class="cchip" data-cat="Content" onclick="filterCat(this)">Content</div>
-    </div>
+    <div class="cat-bar" id="cat-bar"></div>
     <div class="todo-add">
       <input type="text" class="todo-inp" id="ti" placeholder="Tambah task baru..." onkeydown="if(event.key==='Enter')addTodo()" oninput="updateCatHint(this.value)">
       <button class="todo-addbtn" onclick="addTodo()">+</button>
     </div>
-    <div class="cat-hint" id="cat-hint">→ Diprediksi: <span class="cat-hint-badge" id="cat-hint-badge"></span></div>
+    <div class="cat-hint" id="cat-hint"></div>
     <div class="todo-list" id="todo-list"></div>
   </div>
 
@@ -1044,11 +1055,12 @@ const PRE=[];
 
 // ── STATE ──
 const SK={e:'d26e',l:'d26l',t:'d26t',g:'d26g'};
-let entries=[],lessons=[],todos=[],goals=[],wishes=[];
+let entries=[],lessons=[],todos=[],goals=[],wishes=[],todoCategories=[];
 let goalTab='year';
 let goalNavY=null,goalNavM=null,goalNavYr=null;
 let calY=2025,calM=0; // will be set to today
 let wkStart=null; // Monday of viewed week
+let todoMode='doing';
 let todoCat='Semua';
 let todoStatus='todo';
 let activities=[];
@@ -1090,7 +1102,7 @@ async function refreshTokenIfNeeded(){
 async function init(){
   await refreshTokenIfNeeded();
   fetch('/api/auth/me').then(r=>r.ok?r.json():null).then(u=>{if(u){const el=document.getElementById('hello-name');if(el)el.textContent='Hello '+u.name;const sb=document.getElementById('sb-user');if(sb)sb.textContent=u.name;}}).catch(()=>{});
-  const {entries:en,lessons:ls,todos:td,goals:gl,wishes:ws,activities:ac}=await api('/api/data');
+  const {entries:en,lessons:ls,todos:td,goals:gl,wishes:ws,activities:ac,todoCategories:tc}=await api('/api/data');
   console.log('[init] activities from DB:', ac?.length, ac?.slice(0,3));
   activities=Array.isArray(ac)?ac:[];
 
@@ -1102,10 +1114,15 @@ async function init(){
   });
   lessons=Object.values(lsMap).sort((a,b)=>a.date.localeCompare(b.date));
   if(Array.isArray(td)&&td.length){
-    todos=td.map(t=>({...t,doneDate:t.done_date||null}));
+    todos=td.map(t=>({...t,doneDate:t.done_date||null,mode:t.mode||'doing'}));
   }else{
     todos=defTodos();
-    todos.forEach(t=>api('/api/todos','POST',{id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:null}).catch(console.error));
+    todos.forEach(t=>api('/api/todos','POST',{id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:null,mode:'doing',points_to:'personal'}).catch(console.error));
+  }
+  if(Array.isArray(tc)&&tc.length){
+    todoCategories=tc;
+  }else{
+    await seedDefaultCategories();
   }
   if(Array.isArray(gl)&&gl.length){
     goals=gl.map(g=>({...g,doneDate:g.done_date||null}));
@@ -1136,7 +1153,104 @@ function save(){
   if(e){const {id,...rest}=e;api('/api/entries','POST',rest).catch(console.error);}
 }
 function saveTodoDB(t){
-  api('/api/todos','POST',{id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:t.doneDate||null}).catch(console.error);
+  api('/api/todos','POST',{id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:t.doneDate||null,mode:t.mode||'doing',points_to:t.points_to||'personal'}).catch(console.error);
+}
+
+async function seedDefaultCategories(){
+  const defaults=[
+    {mode:'doing',name:'Market',color:'#15803d',keywords:['saham','market','trading','btc','crypto','porto','investasi','ihsg'],points_to:'personal'},
+    {mode:'doing',name:'AI/Tech',color:'#6d28d9',keywords:['ai','claude','n8n','automation','coding','script','build','deploy','api','bot'],points_to:'work'},
+    {mode:'doing',name:'Content',color:'#c2410c',keywords:['konten','content','reels','artikel','video','caption','post','nulis'],points_to:'work'},
+  ];
+  for(const d of defaults){
+    try{const c=await api('/api/todo-categories','POST',d);todoCategories.push(c);}catch(e){console.warn('seed cat failed',e);}
+  }
+}
+
+function filterMode(mode){
+  todoMode=mode;
+  todoCat='Semua';
+  document.getElementById('mbtn-doing').classList.toggle('active',mode==='doing');
+  document.getElementById('mbtn-learning').classList.toggle('active',mode==='learning');
+  renderCatBar();
+  renderTodos();
+}
+
+function renderCatBar(){
+  const bar=document.getElementById('cat-bar');
+  const cats=todoCategories.filter(c=>c.mode===todoMode);
+  let html=`<div class="cchip active" data-cat="Semua" onclick="filterCat(this)">Semua</div>`;
+  cats.forEach(c=>{
+    const isActive=todoCat===c.name;
+    html+=`<div class="cchip${isActive?' active':''}" data-cat="${c.name}" onclick="filterCat(this)" style="${isActive?`background:${c.color};border-color:${c.color};`:`color:${c.color};border-color:${c.color}40;`}">${c.name}<span class="cchip-del" onclick="event.stopPropagation();deleteCat('${c.id}')">×</span></div>`;
+  });
+  html+=`<button class="cchip-add" onclick="openAddCatModal()" title="Tambah kategori">+</button>`;
+  bar.innerHTML=html;
+  // update active state
+  bar.querySelectorAll('.cchip').forEach(el=>{
+    el.classList.toggle('active',el.dataset.cat===todoCat);
+    if(el.dataset.cat===todoCat){
+      const c=cats.find(x=>x.name===todoCat);
+      if(c){el.style.background=c.color;el.style.borderColor=c.color;el.style.color='#fff';}
+      else{el.style.background='';el.style.borderColor='';el.style.color='';}
+    }
+  });
+}
+
+async function deleteCat(id){
+  if(!confirm('Hapus kategori ini?'))return;
+  await api('/api/todo-categories?id='+id,'DELETE');
+  todoCategories=todoCategories.filter(c=>c.id!==id);
+  if(todoCat!=='Semua'&&!todoCategories.find(c=>c.name===todoCat))todoCat='Semua';
+  renderCatBar();renderTodos();
+}
+
+function openAddCatModal(){
+  const cats=todoCategories.filter(c=>c.mode===todoMode);
+  if(cats.length>=5){
+    showToast("Don't too much stuff brads, keep focus 🎯");
+    return;
+  }
+  const actLabel=todoMode==='doing'?'Doing':'Learning';
+  const actCatOptions=ACT_CATS.map(a=>`<option value="${a.key}">${a.label}</option>`).join('');
+  openModal('Tambah Kategori '+actLabel,
+    `<label class="mlbl-f">Nama Kategori</label>
+     <input class="mini-inp" id="mc-name" placeholder="e.g. Working Stage, Market...">
+     <label class="mlbl-f">Poin masuk ke</label>
+     <select class="mini-sel" id="mc-points">${actCatOptions}</select>
+     <label class="mlbl-f">Keywords (pisah koma, untuk auto-detect)</label>
+     <input class="mini-inp" id="mc-keywords" placeholder="e.g. bikin, buat, develop, build">
+     <label class="mlbl-f">Warna</label>
+     <input type="color" id="mc-color" value="#6d28d9" style="width:100%;height:32px;border-radius:6px;border:1px solid var(--border);cursor:pointer;">`,
+    `<button class="btn-cancel" onclick="closeModal()">Batal</button>
+     <button class="btn-primary" onclick="submitAddCat()">Tambah</button>`
+  );
+  setTimeout(()=>document.getElementById('mc-name')?.focus(),100);
+}
+
+async function submitAddCat(){
+  const name=document.getElementById('mc-name').value.trim();
+  const pointsTo=document.getElementById('mc-points').value;
+  const kwRaw=document.getElementById('mc-keywords').value;
+  const color=document.getElementById('mc-color').value;
+  if(!name){alert('Nama kategori wajib diisi.');return;}
+  const keywords=kwRaw.split(',').map(k=>k.trim().toLowerCase()).filter(Boolean);
+  try{
+    const c=await api('/api/todo-categories','POST',{mode:todoMode,name,color,keywords,points_to:pointsTo});
+    todoCategories.push(c);
+    closeModal();
+    renderCatBar();
+  }catch(e){
+    if(e.message&&e.message.includes('max_categories'))showToast("Don't too much stuff brads, keep focus 🎯");
+    else alert('Gagal: '+e.message);
+  }
+}
+
+function showToast(msg){
+  let t=document.getElementById('gst-toast');
+  if(!t){t=document.createElement('div');t.id='gst-toast';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:20px;font-size:12px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._timer);t._timer=setTimeout(()=>{t.style.opacity='0';},3000);
 }
 function delTodoDB(id){
   api('/api/todos?id='+id,'DELETE').catch(console.error);
@@ -1395,7 +1509,7 @@ function wkNum(date){
 }
 
 // ── RENDER ALL ──
-function render(){renderCal();renderStats();renderChain();renderLessons();renderHdrLessons();renderTodos();renderGoals();}
+function render(){renderCal();renderStats();renderChain();renderLessons();renderHdrLessons();renderCatBar();renderTodos();renderGoals();}
 
 // ── CALENDAR ──
 function renderCal(){
@@ -1645,9 +1759,8 @@ function renderLessons(){
 
 // ── TODOS ──
 function filterCat(el){
-  document.querySelectorAll('.cchip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
   todoCat=el.dataset.cat;
+  renderCatBar();
   renderTodos();
 }
 function filterStatus(el){
@@ -1656,44 +1769,57 @@ function filterStatus(el){
   todoStatus=el.dataset.status;
   renderTodos();
 }
-function guessCat(text){
+const LEARNING_KEYWORDS=['belajar','pelajari','learning','learn','to know','pahami','memahami','riset','research','deep dive','studi','study','eksplorasi','explore','cari tau','cari tahu','ngerti','mengerti','kenali','baca buku','baca ','read ','kursus','course','modul','module','dokumentasi','documentation','tutorial'];
+
+function guessMode(text){
   const t=text.toLowerCase();
-  const rules=[
-    {cat:'Learning',words:['belajar','pelajari','learning','learn','to know','pahami','memahami','riset','research','deep in','deep dive','studi','study','eksplorasi','explore','cari tau','cari tahu','ngerti','mengerti','kenali','review','baca buku','baca ','read ','curso','kursus','course','modul','module','dokumentasi','documentation','tutorial']},
-    {cat:'AI/Tech',words:['n8n','mcp','claude','gpt','llm','openai','anthropic','ai ','bot','api','automation','pipeline','webhook','workflow','figma','trae','cursor','copilot','agent','langchain','python','javascript','coding','github','vercel','integrasi','integration','build ','deploy','script','tools','tech','replit','supabase','database','server','model','prompt','tool use','rag','embedding']},
-    {cat:'Market',words:['saham','stock','bbca','ihsg','crypto','bitcoin','btc','eth','on chain','onchain','financial model','dcf','screener','analisis market','analisis fundamental','analisis saham','analisis crypto','portofolio','portfolio','aset crypto','token','defi','wallet','fear greed','coinmarketcap','trading','market','fundamental','valuation','sector','indeks','entry','cut loss','profit taking','tbk','idx','swing','scalp','option']},
-    {cat:'Content',words:['reels','carousel','artikel','cognithink','konten','content','video','youtube','instagram','twitter','thread','caption','post','postingan','brand','design','poster','visual','thumbnail','script video','nulis','tulisan','copywriting','hook','storytelling','tiktok','linkedin','personal branding','narasi','positioning']},
-    {cat:'Psychology',words:['psikologi','psychology','perilaku','behaviour','behavior','manusia','human','mental','mindset','emosi','emotion','kognitif','cognitive','bias','motivasi','motivation','habit','kebiasaan','self','diri','karakter','kepribadian','personality','sosial','social','komunikasi','communication','empati','empathy','relasi','relationship','belajar human','pemahaman','understanding','sikap','attitude','keputusan','influence','persuasi','trust','kepercayaan','leadership','ikigai','stoic','filosofi','philosophy','deep in','perilaku manusia','psych']},
-  ];
-  for(const r of rules){if(r.words.some(w=>t.includes(w)))return r.cat;}
-  return 'AI/Tech';
+  if(LEARNING_KEYWORDS.some(w=>t.includes(w)))return 'learning';
+  return 'doing';
 }
-const CAT_HINT_CLASS={Learning:'c-aitech',Market:'c-market','AI/Tech':'c-aitech',Psychology:'c-work',Content:'c-content'};
-const CAT_HINT_LABEL={Learning:'Learning',Market:'Market','AI/Tech':'AI/Tech',Psychology:'Psychology',Content:'Content'};
+
+function guessCatForMode(text,mode){
+  const t=text.toLowerCase();
+  const cats=todoCategories.filter(c=>c.mode===mode);
+  for(const c of cats){
+    const kws=Array.isArray(c.keywords)?c.keywords:[];
+    if(kws.some(w=>t.includes(w)))return c;
+  }
+  return cats[0]||null;
+}
+
 function updateCatHint(val){
   const hint=document.getElementById('cat-hint');
-  const badge=document.getElementById('cat-hint-badge');
-  if(!val.trim()){hint.classList.remove('show');return;}
-  const cat=guessCat(val);
-  badge.textContent=CAT_HINT_LABEL[cat];
-  badge.className='cat-hint-badge '+CAT_HINT_CLASS[cat];
+  if(!val.trim()){hint.classList.remove('show');hint.innerHTML='';return;}
+  const detMode=guessMode(val);
+  const detCat=guessCatForMode(val,detMode);
+  const actCat=ACT_CATS.find(a=>a.key===(detCat?.points_to||'personal'));
+  const modeLabel=detMode==='learning'?'📖 Learning':'🔨 Doing';
+  const catLabel=detCat?detCat.name:'—';
+  const catColor=detCat?detCat.color:'#9ca3af';
+  const ptLabel=actCat?actCat.label:'Personal Wish';
+  hint.innerHTML=`→ <span style="font-weight:700;color:${detMode==='learning'?'#8b5cf6':'#ef4444'}">${modeLabel}</span> · <span style="background:${catColor}22;color:${catColor};font-weight:700;padding:1px 6px;border-radius:8px;font-size:9px;">${catLabel}</span> → <span style="font-size:9px;color:var(--text4)">poin ke ${ptLabel}</span>`;
   hint.classList.add('show');
 }
+
 function addTodo(){
   const inp=document.getElementById('ti');
   const text=inp.value.trim();if(!text)return;
-  const cat=todoCat==='Semua'?guessCat(text):todoCat;
-  const t={id:crypto.randomUUID(),text,cat,done:false,doneDate:null};
+  const detMode=guessMode(text);
+  const detCat=todoCat!=='Semua'?todoCategories.find(c=>c.name===todoCat&&c.mode===todoMode):guessCatForMode(text,detMode);
+  const mode=todoCat!=='Semua'?todoMode:detMode;
+  const cat=detCat?detCat.name:(todoCategories.filter(c=>c.mode===mode)[0]?.name||'');
+  const points_to=detCat?detCat.points_to:'personal';
+  const t={id:crypto.randomUUID(),text,cat,mode,done:false,doneDate:null,points_to};
   todos.unshift(t);saveTodoDB(t);
   inp.value='';
-  document.getElementById('cat-hint').classList.remove('show');
-  renderTodos();renderStats();
+  const hint=document.getElementById('cat-hint');hint.classList.remove('show');hint.innerHTML='';
+  if(mode!==todoMode){filterMode(mode);}else{renderTodos();renderStats();}
 }
 let learningTodoId=null;
 
 async function toggleTodo(id){
   const t=todos.find(x=>x.id===id);if(!t)return;
-  if(!t.done&&t.cat==='Learning'){
+  if(!t.done&&t.mode==='learning'){
     learningTodoId=id;
     document.getElementById('learning-todo-text').textContent=t.text;
     document.getElementById('learning-result-text').value='';
@@ -1707,15 +1833,16 @@ async function toggleTodo(id){
 async function completeTodo(id){
   const t=todos.find(x=>x.id===id);if(!t)return;
   const prevDoneDate=t.doneDate;
+  const pointsCat=t.points_to||'personal';
   t.done=!t.done;t.doneDate=t.done?todayStr():null;
   saveTodoDB(t);
   if(t.done){
     try{
-      const act=await api('/api/activities','POST',{date:todayStr(),category:'personal',text:t.text});
+      const act=await api('/api/activities','POST',{date:todayStr(),category:pointsCat,text:t.text});
       activities.push(act);
     }catch(e){console.error(e);}
   }else if(prevDoneDate){
-    const match=activities.find(a=>a.date===prevDoneDate&&a.category==='personal'&&a.text===t.text);
+    const match=activities.find(a=>a.date===prevDoneDate&&a.category===pointsCat&&a.text===t.text);
     if(match){
       await api('/api/activities?id='+match.id,'DELETE').catch(console.error);
       activities=activities.filter(a=>a.id!==match.id);
@@ -1748,14 +1875,22 @@ function closeLearningModal(){
 function delTodo(id){
   const t=todos.find(x=>x.id===id);
   if(t&&t.done&&t.doneDate){
-    const match=activities.find(a=>a.date===t.doneDate&&a.category==='personal'&&a.text===t.text);
+    const pointsCat=t.points_to||'personal';
+    const match=activities.find(a=>a.date===t.doneDate&&a.category===pointsCat&&a.text===t.text);
     if(match){api('/api/activities?id='+match.id,'DELETE').catch(console.error);activities=activities.filter(a=>a.id!==match.id);}
   }
   todos=todos.filter(x=>x.id!==id);delTodoDB(id);renderTodos();renderStats();
 }
 function renderTodos(){
   const list=document.getElementById('todo-list');
-  let fil=todoCat==='Semua'?todos:todos.filter(t=>t.cat===todoCat);
+  // update mode counters
+  const doingTodo=todos.filter(t=>t.mode==='doing'&&!t.done).length;
+  const learningTodo=todos.filter(t=>t.mode==='learning'&&!t.done).length;
+  const mctD=document.getElementById('mct-doing');const mctL=document.getElementById('mct-learning');
+  if(mctD)mctD.textContent=doingTodo;if(mctL)mctL.textContent=learningTodo;
+  // filter by mode first
+  let fil=todos.filter(t=>(t.mode||'doing')===todoMode);
+  if(todoCat!=='Semua')fil=fil.filter(t=>t.cat===todoCat);
   const pendCnt=fil.filter(t=>!t.done).length;
   const doneCnt=fil.filter(t=>t.done).length;
   document.getElementById('sct-todo').textContent=pendCnt;
@@ -1765,14 +1900,17 @@ function renderTodos(){
   else if(todoStatus==='done')all=fil.filter(t=>t.done);
   else{const pend=fil.filter(t=>!t.done);const done=fil.filter(t=>t.done);all=[...pend,...done];}
   if(!all.length){list.innerHTML='<div class="empty-note">'+(todoStatus==='done'?'Belum ada task selesai.':todoStatus==='todo'?'Semua task selesai. 🎉':'Kosong. Tambah task baru.')+'</div>';return;}
-  list.innerHTML=all.map(t=>`
-    <div class="titem${t.done?' done':''}" onclick="toggleTodo('${t.id}')">
+  const catColors=Object.fromEntries(todoCategories.map(c=>[c.name,c.color]));
+  list.innerHTML=all.map(t=>{
+    const col=catColors[t.cat]||'var(--red)';
+    return`<div class="titem${t.done?' done':''}" onclick="toggleTodo('${t.id}')">
       <div class="tcb"></div>
       <div class="ttxt">${t.text}</div>
-      <div class="tcat">${t.cat}</div>
+      ${t.cat?`<div class="tcat" style="background:${col}18;color:${col};border-color:${col}44;">${t.cat}</div>`:''}
       ${t.done?`<div class="tdone-badge">✓ ${t.doneDate?fmtShort(t.doneDate):''}</div>`:''}
       <button class="tdel" onclick="event.stopPropagation();delTodo('${t.id}')">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 async function logout(){
