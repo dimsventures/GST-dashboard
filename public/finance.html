@@ -597,7 +597,7 @@ function renderCalendar(){
   const prevDim=new Date(calY,calM,0).getDate();
   const p2n=n=>String(n).padStart(2,'0');
   const fmt=(y,m,d)=>`${y}-${p2n(m+1)}-${p2n(d)}`;
-  function dayExpense(dstr){return transactions.filter(t=>t.date===dstr&&t.type==='expense').reduce((s,t)=>s+t.amount,0);}
+  function dayExpense(dstr){return transactions.filter(t=>t.date===dstr&&t.type==='expense'&&!(t.note&&t.note.startsWith('[Buffer]'))).reduce((s,t)=>s+t.amount,0);}
   function fmtK(n){return n>=1000?(n/1000).toFixed(0)+'k':n>0?String(n):'';}
   for(let i=off-1;i>=0;i--){
     const d=prevDim-i;const dstr=fmt(calY,calM-1,d);
@@ -653,8 +653,8 @@ const CAT_COLORS={'Housing':'rgba(239,68,68,.85)','Consumption':'rgba(245,158,11
 function renderFinChart(){
   const MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
   const expTrx=ytdYear
-    ?transactions.filter(t=>t.date.startsWith(ytdYear)&&t.type==='expense')
-    :transactions.filter(t=>t.type==='expense');
+    ?transactions.filter(t=>t.date.startsWith(ytdYear)&&t.type==='expense'&&!(t.note&&t.note.startsWith('[Buffer]')))
+    :transactions.filter(t=>t.type==='expense'&&!(t.note&&t.note.startsWith('[Buffer]')));
   const months=[...new Set(expTrx.map(t=>t.date.slice(0,7)))].sort();
   if(!months.length)return;
   const labels=ytdYear
@@ -902,7 +902,7 @@ function renderSummary(){
   const mo=currentMonth;
   const moTrx=transactions.filter(t=>t.date.startsWith(mo));
   const income=moTrx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const expense=moTrx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const expense=moTrx.filter(t=>t.type==='expense'&&!(t.note&&t.note.startsWith('[Buffer]'))).reduce((s,t)=>s+t.amount,0);
   const invest=moTrx.filter(t=>t.type==='investment').reduce((s,t)=>s+t.amount,0);
   const deposit=moTrx.filter(t=>t.type==='investment'&&t.category==='Deposit').reduce((s,t)=>s+t.amount,0);
   const sisa=income-expense-invest;
@@ -924,7 +924,7 @@ function renderSummary(){
 
   // Expense breakdown (hidden by default)
   const cats={};
-  moTrx.filter(t=>t.type==='expense').forEach(t=>{cats[t.category]=(cats[t.category]||0)+t.amount;});
+  moTrx.filter(t=>t.type==='expense'&&!(t.note&&t.note.startsWith('[Buffer]'))).forEach(t=>{cats[t.category]=(cats[t.category]||0)+t.amount;});
   const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
   document.getElementById('breakdown').innerHTML=sorted.length
     ?sorted.map(([k,v])=>`<div class="bk-row"><span class="bk-label">${k}</span><span class="bk-val">${fmtRp(v)}</span></div>`).join('')
@@ -941,7 +941,7 @@ function renderSummary(){
   // YTD — ikut ytdYear filter
   const yrTrx=ytdYear?transactions.filter(t=>t.date.startsWith(ytdYear)):transactions;
   const ytdIncome=yrTrx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const ytdExpense=yrTrx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const ytdExpense=yrTrx.filter(t=>t.type==='expense'&&!(t.note&&t.note.startsWith('[Buffer]'))).reduce((s,t)=>s+t.amount,0);
   const ytdDeposit=yrTrx.filter(t=>t.type==='investment'&&t.category==='Deposit').reduce((s,t)=>s+t.amount,0);
   const ytdTng=yrTrx.filter(t=>t.type==='investment'&&t.category!=='Deposit').reduce((s,t)=>s+t.amount,0);
   const pct=v=>ytdIncome>0?Math.round(Math.abs(v)/ytdIncome*100):0;
@@ -1031,6 +1031,7 @@ function calcRecon(){
   const cash=rcRaw(document.getElementById('rc-cash'));
   const actual=jatim+sea+blu+ewallet+cash;
   const sysbal=transactions.reduce((s,t)=>{
+    if(t.note&&t.note.startsWith('[Buffer]'))return s;
     if(t.type==='income')return s+t.amount;
     if(t.type==='expense')return s-t.amount;
     if(t.type==='investment')return s-t.amount;
