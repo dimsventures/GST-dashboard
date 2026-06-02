@@ -478,6 +478,8 @@ body.sb-collapsed{padding-left:60px;}
       <button class="mclose" onclick="closeBufModal()">✕</button>
     </div>
     <div class="mbody">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">Tanggal</div>
+      <input type="date" id="buf-date" style="width:100%;border:1.5px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:13px;outline:none;background:var(--bg);color:var(--text1);margin-bottom:10px;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">Nominal (Rp)</div>
       <input type="number" id="buf-amount" placeholder="0" style="width:100%;border:1.5px solid var(--border);border-radius:var(--r2);padding:9px 12px;font-size:16px;font-weight:700;outline:none;background:var(--bg);margin-bottom:10px;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
       <div id="buf-expense-section" style="display:none;">
@@ -821,8 +823,13 @@ async function delTransaction(id){
   const t=transactions.find(x=>x.id===id);
   await api('/api/transactions?id='+id,'DELETE');
   transactions=transactions.filter(x=>x.id!==id);
-  if(t&&t.type==='buffer'){
-    const match=bufferLogs.find(l=>l.date===t.date&&l.amount===t.amount);
+  if(t){
+    let match=null;
+    if(t.type==='buffer'){
+      match=bufferLogs.find(l=>l.date===t.date&&l.amount===t.amount);
+    } else if(t.note&&t.note.startsWith('[Buffer]')){
+      match=bufferLogs.find(l=>l.date===t.date&&l.amount===-t.amount);
+    }
     if(match){
       await api('/api/buffer-logs?id='+match.id,'DELETE').catch(console.error);
       bufferLogs=bufferLogs.filter(l=>l.id!==match.id);
@@ -965,6 +972,7 @@ let bufExpCat='';
 function openBufModal(dir){
   bufDir=dir;bufExpCat='';
   document.getElementById('buf-modal-title').textContent=dir==='in'?'+ Isi Buffer (→ BLU)':'− Ambil dari Buffer';
+  document.getElementById('buf-date').value=todayStr();
   document.getElementById('buf-amount').value='';
   document.getElementById('buf-note').value='';
   const expSec=document.getElementById('buf-expense-section');
@@ -989,18 +997,20 @@ async function confirmBuffer(){
   if(bufDir==='out'&&!bufExpCat){alert('Pilih kategori expense dulu!');return;}
   const note=document.getElementById('buf-note').value.trim();
   const amount=bufDir==='in'?amt:-amt;
-  const today=todayStr();
+  const selDate=document.getElementById('buf-date').value||todayStr();
   try{
-    const log=await api('/api/buffer-logs','POST',{date:today,amount,note:note||null});
+    const log=await api('/api/buffer-logs','POST',{date:selDate,amount,note:note||null});
     bufferLogs.push(log);
+    bufferLogs.sort((a,b)=>b.date.localeCompare(a.date));
     if(bufDir==='in'){
-      const trx=await api('/api/transactions','POST',{date:today,type:'buffer',category:'Isi Buffer (BLU)',amount:amt,note:note||'Alokasi ke BLU'});
+      const trx=await api('/api/transactions','POST',{date:selDate,type:'buffer',category:'Isi Buffer (BLU)',amount:amt,note:note||'Alokasi ke BLU'});
       transactions.push(trx);
     }
     if(bufDir==='out'){
-      const trx=await api('/api/transactions','POST',{date:today,type:'expense',category:bufExpCat,amount:amt,note:'[Buffer] '+(note||bufExpCat)});
+      const trx=await api('/api/transactions','POST',{date:selDate,type:'expense',category:bufExpCat,amount:amt,note:'[Buffer] '+(note||bufExpCat)});
       transactions.push(trx);
     }
+    transactions.sort((a,b)=>b.date.localeCompare(a.date));
     closeBufModal();render();
   }catch(e){alert('Gagal: '+e.message);}
 }
