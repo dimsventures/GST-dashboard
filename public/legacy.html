@@ -949,14 +949,7 @@ body.dark .jtyping{background:#252525;border-color:#3d3d3d;}
     <div class="mbody" style="padding:22px 24px;">
       <div id="achieve-wish-text" style="font-size:13px;font-style:italic;color:var(--red);font-weight:600;margin-bottom:16px;line-height:1.5;"></div>
       <div style="font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">+10 Poin — Masukkan ke kategori:</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
-        <button class="wish-cat-btn" data-cat="religion"  onclick="selectWishCat('religion')"  style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Religion</button>
-        <button class="wish-cat-btn" data-cat="work"      onclick="selectWishCat('work')"      style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Working Stage</button>
-        <button class="wish-cat-btn" data-cat="personal"  onclick="selectWishCat('personal')"  style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Personal Wish</button>
-        <button class="wish-cat-btn" data-cat="exercise"  onclick="selectWishCat('exercise')"  style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Exercise</button>
-        <button class="wish-cat-btn" data-cat="habit"     onclick="selectWishCat('habit')"     style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Habit</button>
-        <button class="wish-cat-btn" data-cat="humanity"  onclick="selectWishCat('humanity')"  style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Humanity</button>
-      </div>
+      <div id="wish-cat-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;"></div>
       <div style="font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;letter-spacing:.04em;">DENGAN CARA APA LU MENCAPAI INI SEMUA?</div>
       <textarea id="achieve-wish-story" placeholder="Ceritakan perjalanan lo disini..." style="width:100%;min-height:100px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:10px 12px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--text);resize:vertical;outline:none;line-height:1.6;box-sizing:border-box;" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border)'"></textarea>
       <div style="display:flex;gap:8px;margin-top:14px;">
@@ -978,14 +971,7 @@ body.dark .jtyping{background:#252525;border-color:#3d3d3d;}
       <div id="goal-achieve-text" style="font-size:12px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:4px;"></div>
       <div id="goal-achieve-pts" style="font-size:11px;color:var(--red);font-weight:700;letter-spacing:.04em;margin-bottom:18px;"></div>
       <div style="font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">Masukkan poin ke kategori:</div>
-      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px;">
-        <button class="goal-cat-btn" data-cat="religion"  onclick="selectGoalCat('religion')"  style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Religion</button>
-        <button class="goal-cat-btn" data-cat="work"      onclick="selectGoalCat('work')"      style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Working Stage</button>
-        <button class="goal-cat-btn" data-cat="personal"  onclick="selectGoalCat('personal')"  style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Personal Wish</button>
-        <button class="goal-cat-btn" data-cat="exercise"  onclick="selectGoalCat('exercise')"  style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Exercise</button>
-        <button class="goal-cat-btn" data-cat="habit"     onclick="selectGoalCat('habit')"     style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Habit</button>
-        <button class="goal-cat-btn" data-cat="humanity"  onclick="selectGoalCat('humanity')"  style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text2);">Humanity</button>
-      </div>
+      <div id="goal-cat-btns" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px;"></div>
     </div>
     <div class="mfooter">
       <button class="btn-cancel" onclick="closeGoalAchieveModal()">Batal</button>
@@ -1004,55 +990,7 @@ body.dark .jtyping{background:#252525;border-color:#3d3d3d;}
         <button class="mclose" onclick="closeModal()">✕</button>
       </div>
     </div>
-    <div class="mbody" id="mo-body">
-      <div class="fsec" style="margin-top:0;padding-top:0;border-top:none;">Religion</div>
-      <div class="act-input-row">
-        <input type="text" id="act-inp-religion" class="finp" placeholder="Aktivitas religion hari ini..." onkeydown="if(event.key==='Enter')addActivity('religion')">
-        <button class="act-add-btn" onclick="addActivity('religion')">+ Add</button>
-      </div>
-      <div class="act-list" id="act-list-religion"></div>
-      <div class="act-count" id="act-count-religion"></div>
-
-      <div class="fsec">Working Stage</div>
-      <div class="act-input-row">
-        <input type="text" id="act-inp-work" class="finp" placeholder="Apa yang dikerjakan?" onkeydown="if(event.key==='Enter')addActivity('work')">
-        <button class="act-add-btn" onclick="addActivity('work')">+ Add</button>
-      </div>
-      <div class="act-list" id="act-list-work"></div>
-      <div class="act-count" id="act-count-work"></div>
-
-      <div class="fsec">Personal Wish</div>
-      <div class="act-input-row">
-        <input type="text" id="act-inp-personal" class="finp" placeholder="Progress personal wish?" onkeydown="if(event.key==='Enter')addActivity('personal')">
-        <button class="act-add-btn" onclick="addActivity('personal')">+ Add</button>
-      </div>
-      <div class="act-list" id="act-list-personal"></div>
-      <div class="act-count" id="act-count-personal"></div>
-
-      <div class="fsec">Exercise</div>
-      <div class="act-input-row">
-        <input type="text" id="act-inp-exercise" class="finp" placeholder="Gerakan hari ini?" onkeydown="if(event.key==='Enter')addActivity('exercise')">
-        <button class="act-add-btn" onclick="addActivity('exercise')">+ Add</button>
-      </div>
-      <div class="act-list" id="act-list-exercise"></div>
-      <div class="act-count" id="act-count-exercise"></div>
-
-      <div class="fsec">Habit</div>
-      <div class="act-input-row">
-        <input type="text" id="act-inp-habit" class="finp" placeholder="Baca buku, dll..." onkeydown="if(event.key==='Enter')addActivity('habit')">
-        <button class="act-add-btn" onclick="addActivity('habit')">+ Add</button>
-      </div>
-      <div class="act-list" id="act-list-habit"></div>
-      <div class="act-count" id="act-count-habit"></div>
-
-      <div class="fsec">Humanity</div>
-      <div class="act-input-row">
-        <input type="text" id="act-inp-humanity" class="finp" placeholder="Kebaikan, interaksi sosial..." onkeydown="if(event.key==='Enter')addActivity('humanity')">
-        <button class="act-add-btn" onclick="addActivity('humanity')">+ Add</button>
-      </div>
-      <div class="act-list" id="act-list-humanity"></div>
-      <div class="act-count" id="act-count-humanity"></div>
-    </div>
+    <div class="mbody" id="mo-body"></div>
     <div class="mfooter">
       <button class="btn-save" onclick="closeModal()" style="background:var(--blk);">Selesai</button>
     </div>
@@ -1078,7 +1016,7 @@ const PRE=[];
 
 // ── STATE ──
 const SK={e:'d26e',l:'d26l',t:'d26t',g:'d26g'};
-let entries=[],lessons=[],todos=[],goals=[],wishes=[],todoCategories=[];
+let entries=[],lessons=[],todos=[],goals=[],wishes=[],todoCategories=[],activityCategories=[];
 let goalTab='year';
 let goalNavY=null,goalNavM=null,goalNavYr=null;
 let calY=2025,calM=0; // will be set to today
@@ -1089,14 +1027,18 @@ let todoStatus='todo';
 let activities=[];
 let logDate=null;
 
-const ACT_CATS=[
-  {key:'religion',  label:'Religion',      color:'#3b82f6'},
-  {key:'work',      label:'Working Stage', color:'#ef4444'},
-  {key:'personal',  label:'Personal Wish', color:'#f59e0b'},
-  {key:'exercise',  label:'Exercise',      color:'#22c55e'},
-  {key:'habit',     label:'Habit',         color:'#8b5cf6'},
-  {key:'humanity',  label:'Humanity',      color:'#14b8a6'},
+// ACT_CATS sekarang dynamic — ini fallback sementara sebelum DB load
+const ACT_CATS_DEFAULT=[
+  {key:'religion', label:'Religion',      color:'#3b82f6', placeholder:'Aktivitas religion hari ini...'},
+  {key:'work',     label:'Working Stage', color:'#ef4444', placeholder:'Apa yang dikerjakan?'},
+  {key:'personal', label:'Personal Wish', color:'#f59e0b', placeholder:'Progress personal wish?'},
+  {key:'exercise', label:'Exercise',      color:'#22c55e', placeholder:'Gerakan hari ini?'},
+  {key:'habit',    label:'Habit',         color:'#8b5cf6', placeholder:'Baca buku, dll...'},
+  {key:'humanity', label:'Humanity',      color:'#14b8a6', placeholder:'Kebaikan, interaksi sosial...'},
 ];
+function getActCats(){return activityCategories.length?activityCategories:ACT_CATS_DEFAULT;}
+// tetap expose ACT_CATS sebagai getter untuk backwards compat
+Object.defineProperty(window,'ACT_CATS',{get:()=>getActCats()});
 
 function actScore(date,cat){return activities.filter(a=>a.date===date&&a.category===cat).length;}
 function actScoreTotal(date){return activities.filter(a=>a.date===date).length;}
@@ -1125,7 +1067,7 @@ async function refreshTokenIfNeeded(){
 async function init(){
   await refreshTokenIfNeeded();
   fetch('/api/auth/me').then(r=>r.ok?r.json():null).then(u=>{if(u){const el=document.getElementById('hello-name');if(el)el.textContent='Hello '+u.name;const sb=document.getElementById('sb-user');if(sb)sb.textContent=u.name;}}).catch(()=>{});
-  const {entries:en,lessons:ls,todos:td,goals:gl,wishes:ws,activities:ac,todoCategories:tc}=await api('/api/data');
+  const {entries:en,lessons:ls,todos:td,goals:gl,wishes:ws,activities:ac,todoCategories:tc,activityCategories:atc}=await api('/api/data');
   console.log('[init] activities from DB:', ac?.length, ac?.slice(0,3));
   activities=Array.isArray(ac)?ac:[];
 
@@ -1147,6 +1089,12 @@ async function init(){
   }else{
     await seedDefaultCategories();
   }
+  if(Array.isArray(atc)&&atc.length){
+    activityCategories=atc;
+  }else{
+    await seedDefaultActCategories();
+  }
+  renderLogModal();
   if(Array.isArray(gl)&&gl.length){
     goals=gl.map(g=>({...g,doneDate:g.done_date||null}));
   }else{
@@ -1177,6 +1125,114 @@ function save(){
 }
 function saveTodoDB(t){
   api('/api/todos','POST',{id:t.id,text:t.text,cat:t.cat,done:t.done,done_date:t.doneDate||null,mode:t.mode||'doing',points_to:t.points_to||'personal'}).catch(console.error);
+}
+
+async function seedDefaultActCategories(){
+  for(let i=0;i<ACT_CATS_DEFAULT.length;i++){
+    const d=ACT_CATS_DEFAULT[i];
+    try{const c=await api('/api/activity-categories','POST',{...d,sort_order:i});activityCategories.push(c);}
+    catch(e){console.warn('seed act cat failed',e);}
+  }
+}
+
+function renderLogModal(){
+  const body=document.getElementById('mo-body');
+  if(!body)return;
+  const cats=getActCats();
+  body.innerHTML=cats.map((c,i)=>`
+    <div class="fsec" style="${i===0?'margin-top:0;padding-top:0;border-top:none;':''}">
+      <span style="color:${c.color}">${c.label}</span>
+      <button class="act-edit-btn" onclick="openEditActCatModal('${c.id||c.key}')" title="Edit kategori" style="float:right;background:none;border:none;color:var(--text4);cursor:pointer;font-size:10px;padding:0 4px;">✎</button>
+    </div>
+    <div class="act-input-row">
+      <input type="text" id="act-inp-${c.key}" class="finp" placeholder="${c.placeholder||c.label+' hari ini...'}" onkeydown="if(event.key==='Enter')addActivity('${c.key}')">
+      <button class="act-add-btn" onclick="addActivity('${c.key}')">+ Add</button>
+    </div>
+    <div class="act-list" id="act-list-${c.key}"></div>
+    <div class="act-count" id="act-count-${c.key}"></div>
+  `).join('');
+  // re-render lists for current date
+  cats.forEach(c=>renderActList(c.key));
+  // tambah tombol kelola di bawah
+  if(!body.querySelector('.act-manage-row')){
+    const mgr=document.createElement('div');
+    mgr.className='act-manage-row';
+    mgr.style.cssText='padding:10px 0 0;text-align:center;';
+    mgr.innerHTML=`<button onclick="openAddActCatModal()" style="background:none;border:1px dashed var(--border2);border-radius:20px;padding:5px 16px;font-family:Poppins,sans-serif;font-size:10px;color:var(--text3);cursor:pointer;" ${getActCats().length>=7?'disabled':''}>+ Tambah Kategori (${getActCats().length}/7)</button>`;
+    body.appendChild(mgr);
+  }
+}
+
+// render dynamic category buttons di wish & goal modals
+function renderActCatButtons(containerSelector,onClickFn,activeCat){
+  const container=document.querySelector(containerSelector);
+  if(!container)return;
+  container.innerHTML=getActCats().map(c=>`
+    <button class="dyn-cat-btn" data-cat="${c.key}" onclick="${onClickFn}('${c.key}')"
+      style="padding:6px 12px;border-radius:20px;border:1.5px solid ${activeCat===c.key?c.color:'var(--border)'};background:${activeCat===c.key?c.color:'var(--bg)'};font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:${activeCat===c.key?'#fff':'var(--text2)'};">
+      ${c.label}
+    </button>`).join('');
+}
+
+function openAddActCatModal(){
+  if(getActCats().length>=7){showToast('7 kategori udah cukup brads, keep it focused! 🎯');return;}
+  openModal('Tambah Kategori Aktivitas',
+    `<label class="mlbl-f">Nama Kategori</label>
+     <input class="mini-inp" id="aac-label" placeholder="e.g. Learning, Finance, Social...">
+     <label class="mlbl-f">Placeholder teks input</label>
+     <input class="mini-inp" id="aac-placeholder" placeholder="e.g. Apa yang dipelajari hari ini?">
+     <label class="mlbl-f">Warna</label>
+     <input type="color" id="aac-color" value="#6d28d9" style="width:100%;height:32px;border-radius:6px;border:1px solid var(--border);cursor:pointer;">`,
+    `<button class="btn-cancel" onclick="closeGenericModal()">Batal</button>
+     <button class="btn-primary" onclick="submitAddActCat()">Tambah</button>`
+  );
+  setTimeout(()=>document.getElementById('aac-label')?.focus(),100);
+}
+
+async function submitAddActCat(){
+  const label=document.getElementById('aac-label').value.trim();
+  const placeholder=document.getElementById('aac-placeholder').value.trim();
+  const color=document.getElementById('aac-color').value;
+  if(!label){alert('Nama wajib diisi.');return;}
+  const key=label.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/__+/g,'_');
+  try{
+    const c=await api('/api/activity-categories','POST',{key,label,color,placeholder,sort_order:activityCategories.length});
+    activityCategories.push(c);
+    closeGenericModal();renderLogModal();
+  }catch(e){
+    if(e.message?.includes('max_categories'))showToast('7 kategori udah cukup brads! 🎯');
+    else alert('Gagal: '+e.message);
+  }
+}
+
+function openEditActCatModal(idOrKey){
+  const c=activityCategories.find(x=>x.id===idOrKey||x.key===idOrKey)||ACT_CATS_DEFAULT.find(x=>x.key===idOrKey);
+  if(!c)return;
+  openModal('Edit Kategori Aktivitas',
+    `<label class="mlbl-f">Nama</label>
+     <input class="mini-inp" id="eac-label" value="${c.label}">
+     <label class="mlbl-f">Placeholder</label>
+     <input class="mini-inp" id="eac-placeholder" value="${c.placeholder||''}">
+     <label class="mlbl-f">Warna</label>
+     <input type="color" id="eac-color" value="${c.color}" style="width:100%;height:32px;border-radius:6px;border:1px solid var(--border);cursor:pointer;">`,
+    `<button class="btn-cancel" onclick="closeGenericModal()">Batal</button>
+     <button class="btn-primary" onclick="submitEditActCat('${c.id||''}','${c.key}')">Simpan</button>`
+  );
+}
+
+async function submitEditActCat(id,key){
+  const label=document.getElementById('eac-label').value.trim();
+  const placeholder=document.getElementById('eac-placeholder').value.trim();
+  const color=document.getElementById('eac-color').value;
+  if(!label){alert('Nama wajib diisi.');return;}
+  try{
+    if(id){
+      const updated=await api('/api/activity-categories','PATCH',{id,label,color,placeholder});
+      const idx=activityCategories.findIndex(c=>c.id===id);
+      if(idx>=0)activityCategories[idx]=updated;
+    }
+    closeGenericModal();renderLogModal();
+  }catch(e){alert('Gagal: '+e.message);}
 }
 
 async function seedDefaultCategories(){
@@ -1222,7 +1278,7 @@ function renderCatBar(){
 
 function openEditCatModal(id){
   const c=todoCategories.find(x=>x.id===id);if(!c)return;
-  const actCatOptions=ACT_CATS.map(a=>`<option value="${a.key}"${a.key===c.points_to?' selected':''}>${a.label}</option>`).join('');
+  const actCatOptions=getActCats().map(a=>`<option value="${a.key}"${a.key===c.points_to?' selected':''}>${a.label}</option>`).join('');
   const kwStr=Array.isArray(c.keywords)?c.keywords.join(', '):c.keywords||'';
   openModal('Edit Kategori',
     `<label class="mlbl-f">Nama Kategori</label>
@@ -1263,7 +1319,7 @@ function openAddCatModal(){
     return;
   }
   const actLabel=todoMode==='doing'?'Doing':'Learning';
-  const actCatOptions=ACT_CATS.map(a=>`<option value="${a.key}">${a.label}</option>`).join('');
+  const actCatOptions=getActCats().map(a=>`<option value="${a.key}">${a.label}</option>`).join('');
   openModal('Tambah Kategori '+actLabel,
     `<label class="mlbl-f">Nama Kategori</label>
      <input class="mini-inp" id="mc-name" placeholder="e.g. Working Stage, Market...">
@@ -1344,7 +1400,8 @@ function showConfirm(desc,onOk,opts={}){
 function closeConfirm(){document.getElementById('confirm-modal').classList.remove('open');}
 function selectWishCat(cat){
   wishAchieveCat=cat;
-  document.querySelectorAll('.wish-cat-btn').forEach(b=>{
+  renderActCatButtons('#wish-cat-btns','selectWishCat',cat);
+  document.querySelectorAll('#wish-cat-btns .dyn-cat-btn').forEach(b=>{
     const active=b.dataset.cat===cat;
     b.style.background=active?'var(--red)':'var(--bg)';
     b.style.color=active?'#fff':'var(--text2)';
@@ -1354,6 +1411,7 @@ function selectWishCat(cat){
 function openAchieveWish(id){
   const w=wishes.find(x=>x.id===id);if(!w)return;
   wishAchieveCat=null;
+  renderActCatButtons('#wish-cat-btns','selectWishCat',null);
   document.getElementById('achieve-wish-text').textContent='"'+w.text+'"';
   document.getElementById('achieve-wish-story').value='';
   document.querySelectorAll('.wish-cat-btn').forEach(b=>{b.style.background='var(--bg)';b.style.color='var(--text2)';b.style.borderColor='var(--border)';});
@@ -1656,12 +1714,9 @@ function renderChain(){
     const dayActs=activities.filter(a=>a.date===dstr);
     let tags='';
     if(dayActs.length){
-      dayActs.filter(a=>a.category==='religion').slice(0,1).forEach(a=>tags+=`<span class="tag tr">${a.text.slice(0,20)}</span>`);
-      dayActs.filter(a=>a.category==='work').slice(0,2).forEach(a=>tags+=`<span class="tag tw">${a.text.slice(0,20)}</span>`);
-      dayActs.filter(a=>a.category==='personal').slice(0,1).forEach(a=>tags+=`<span class="tag tm">${a.text.slice(0,20)}</span>`);
-      dayActs.filter(a=>a.category==='exercise').slice(0,1).forEach(a=>tags+=`<span class="tag tp">${a.text.slice(0,20)}</span>`);
-      dayActs.filter(a=>a.category==='habit').slice(0,1).forEach(a=>tags+=`<span class="tag" style="background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;">${a.text.slice(0,20)}</span>`);
-      dayActs.filter(a=>a.category==='humanity').slice(0,1).forEach(a=>tags+=`<span class="tag ts">${a.text.slice(0,20)}</span>`);
+      getActCats().slice(0,6).forEach(c=>{
+        dayActs.filter(a=>a.category===c.key).slice(0,1).forEach(a=>tags+=`<span class="tag" style="background:${c.color}18;color:${c.color};border:1px solid ${c.color}44;">${a.text.slice(0,20)}</span>`);
+      });
     }else if(e){
       if(e.rel)tags+=`<span class="tag tr">${e.rel.split(',')[0].trim()}</span>`;
       if(e.work)e.work.split(',').slice(0,2).forEach(p=>{if(p.trim())tags+=`<span class="tag tw">${p.trim()}</span>`;});
@@ -2266,7 +2321,7 @@ async function toggleGoal(id){
     goalAchieveId=id;goalAchieveCat=null;
     document.getElementById('goal-achieve-text').textContent=g.text;
     document.getElementById('goal-achieve-pts').textContent=g.scope==='year'?'+7 poin aktivitas':'+3 poin aktivitas';
-    document.querySelectorAll('.goal-cat-btn').forEach(b=>{b.style.background='var(--bg)';b.style.color='var(--text2)';b.style.borderColor='var(--border)';});
+    renderActCatButtons('#goal-cat-btns','selectGoalCat',null);
     const btn=document.getElementById('goal-achieve-confirm');btn.disabled=true;btn.style.opacity='.4';btn.style.cursor='not-allowed';
     document.getElementById('goal-achieve-modal').classList.add('open');
   }else{
@@ -2287,7 +2342,8 @@ async function toggleGoal(id){
 
 function selectGoalCat(cat){
   goalAchieveCat=cat;
-  document.querySelectorAll('.goal-cat-btn').forEach(b=>{
+  renderActCatButtons('#goal-cat-btns','selectGoalCat',cat);
+  document.querySelectorAll('#goal-cat-btns .dyn-cat-btn').forEach(b=>{
     const active=b.dataset.cat===cat;
     b.style.background=active?'var(--blk)':'var(--bg)';
     b.style.color=active?'#fff':'var(--text2)';
