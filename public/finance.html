@@ -941,8 +941,9 @@ function renderSummary(){
   const income=moTrx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const expense=moTrx.filter(t=>t.type==='expense'&&!(t.note&&t.note.startsWith('[Buffer]'))).reduce((s,t)=>s+t.amount,0);
   const invest=moTrx.filter(t=>t.type==='investment').reduce((s,t)=>s+t.amount,0);
+  const bufferOut=moTrx.filter(t=>t.type==='buffer').reduce((s,t)=>s+t.amount,0);
   const deposit=moTrx.filter(t=>t.type==='investment'&&t.category==='Deposit').reduce((s,t)=>s+t.amount,0);
-  const sisa=income-expense-invest;
+  const sisa=income-expense-invest-bufferOut;
   const rate=income>0?Math.round((deposit/income)*100):0;
   if(numbersHidden){
     hiddenVals['s-income']=fmtRp(income);hiddenVals['s-expense']=fmtRp(expense);
@@ -968,7 +969,7 @@ function renderSummary(){
     if(t.type==='buffer')return s-t.amount;
     return s;
   },0);
-  const closing=opening+income-expense-invest;
+  const closing=opening+income-expense-invest-bufferOut;
   const closingEl=document.getElementById('s-closing');
   if(numbersHidden){
     hiddenVals['s-opening']=fmtRp(opening);
