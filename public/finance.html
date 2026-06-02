@@ -1119,6 +1119,7 @@ async function saveRecon(){
   const cash=rcRaw(document.getElementById('rc-cash'));
   const total_actual=jatim+sea+blu+ewallet+cash;
   const total_system=transactions.reduce((s,t)=>{
+    if(t.note&&t.note.startsWith('[Buffer]'))return s;
     if(t.type==='income')return s+t.amount;
     if(t.type==='expense')return s-t.amount;
     if(t.type==='investment')return s-t.amount;
@@ -1137,13 +1138,19 @@ async function saveRecon(){
 function renderReconHistory(){
   const h=document.getElementById('recon-history');
   if(!reconciliations.length){h.innerHTML='';return;}
-  h.innerHTML=reconciliations.slice(0,5).map(r=>`
+  h.innerHTML=reconciliations.slice(0,10).map(r=>`
     <div class="recon-hist-item">
       <span style="color:var(--text3)">${r.date}</span>
       <span style="font-weight:700;color:${r.difference===0?'var(--green)':'var(--red)'}">
         ${r.difference===0?'Balance':'Selisih '+fmtRp(Math.abs(r.difference))}
       </span>
+      <button onclick="delRecon('${r.id}')" style="background:none;border:none;cursor:pointer;color:var(--text4);font-size:11px;padding:0 2px;line-height:1;" title="Hapus">×</button>
     </div>`).join('');
+}
+async function delRecon(id){
+  await api('/api/reconciliations?id='+id,'DELETE');
+  reconciliations=reconciliations.filter(r=>r.id!==id);
+  renderReconHistory();
 }
 
 document.getElementById('buf-modal').addEventListener('click',function(e){if(e.target===this)closeBufModal();});
