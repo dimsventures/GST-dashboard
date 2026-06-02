@@ -356,8 +356,8 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .cchip:not(.active):hover{border-color:var(--red-border);color:var(--red);}
 .cchip-add{font-size:13px;font-weight:400;padding:1px 7px;border-radius:20px;border:1px dashed var(--border2);cursor:pointer;background:none;color:var(--text3);transition:all .15s;line-height:1.5;font-family:'Poppins',sans-serif;}
 .cchip-add:hover{border-color:var(--text2);color:var(--text);}
-.cchip-del{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.3);color:#fff;font-size:8px;margin-left:3px;vertical-align:middle;cursor:pointer;font-weight:700;line-height:1;}
-.cchip-del:hover{background:rgba(255,255,255,.5);}
+.cchip-edit{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.3);color:#fff;font-size:8px;margin-left:3px;vertical-align:middle;cursor:pointer;font-weight:700;line-height:1;}
+.cchip-edit:hover{background:rgba(255,255,255,.5);}
 .cat-hint{padding:3px 16px 5px;font-family:'Poppins',sans-serif;font-size:10px;color:var(--text3);display:none;align-items:center;gap:4px;flex-wrap:wrap;}
 .cat-hint.show{display:flex;}
 
@@ -1205,7 +1205,7 @@ function renderCatBar(){
   let html=`<div class="cchip active" data-cat="Semua" onclick="filterCat(this)">Semua</div>`;
   cats.forEach(c=>{
     const isActive=todoCat===c.name;
-    html+=`<div class="cchip${isActive?' active':''}" data-cat="${c.name}" onclick="filterCat(this)" style="${isActive?`background:${c.color};border-color:${c.color};`:`color:${c.color};border-color:${c.color}40;`}">${c.name}<span class="cchip-del" onclick="event.stopPropagation();deleteCat('${c.id}')">×</span></div>`;
+    html+=`<div class="cchip${isActive?' active':''}" data-cat="${c.name}" onclick="filterCat(this)" style="${isActive?`background:${c.color};border-color:${c.color};`:`color:${c.color};border-color:${c.color}40;`}">${c.name}<span class="cchip-edit" onclick="event.stopPropagation();openEditCatModal('${c.id}')">✎</span></div>`;
   });
   html+=`<button class="cchip-add" onclick="openAddCatModal()" title="Tambah kategori">+</button>`;
   bar.innerHTML=html;
@@ -1220,12 +1220,40 @@ function renderCatBar(){
   });
 }
 
-async function deleteCat(id){
-  if(!confirm('Hapus kategori ini?'))return;
-  await api('/api/todo-categories?id='+id,'DELETE');
-  todoCategories=todoCategories.filter(c=>c.id!==id);
-  if(todoCat!=='Semua'&&!todoCategories.find(c=>c.name===todoCat))todoCat='Semua';
-  renderCatBar();renderTodos();
+function openEditCatModal(id){
+  const c=todoCategories.find(x=>x.id===id);if(!c)return;
+  const actCatOptions=ACT_CATS.map(a=>`<option value="${a.key}"${a.key===c.points_to?' selected':''}>${a.label}</option>`).join('');
+  const kwStr=Array.isArray(c.keywords)?c.keywords.join(', '):c.keywords||'';
+  openModal('Edit Kategori',
+    `<label class="mlbl-f">Nama Kategori</label>
+     <input class="mini-inp" id="ec-name" value="${c.name}">
+     <label class="mlbl-f">Poin masuk ke</label>
+     <select class="mini-sel" id="ec-points">${actCatOptions}</select>
+     <label class="mlbl-f">Keywords (pisah koma)</label>
+     <input class="mini-inp" id="ec-keywords" value="${kwStr}" placeholder="e.g. bikin, buat, develop">
+     <label class="mlbl-f">Warna</label>
+     <input type="color" id="ec-color" value="${c.color}" style="width:100%;height:32px;border-radius:6px;border:1px solid var(--border);cursor:pointer;">`,
+    `<button class="btn-cancel" onclick="closeGenericModal()">Batal</button>
+     <button class="btn-primary" onclick="submitEditCat('${id}')">Simpan</button>`
+  );
+  setTimeout(()=>document.getElementById('ec-name')?.focus(),100);
+}
+
+async function submitEditCat(id){
+  const name=document.getElementById('ec-name').value.trim();
+  const pointsTo=document.getElementById('ec-points').value;
+  const kwRaw=document.getElementById('ec-keywords').value;
+  const color=document.getElementById('ec-color').value;
+  if(!name){alert('Nama wajib diisi.');return;}
+  const keywords=kwRaw.split(',').map(k=>k.trim().toLowerCase()).filter(Boolean);
+  try{
+    const updated=await api('/api/todo-categories','PATCH',{id,name,color,keywords,points_to:pointsTo});
+    const idx=todoCategories.findIndex(c=>c.id===id);
+    if(idx>=0)todoCategories[idx]=updated;
+    if(todoCat===todoCategories[idx]?.name||todoCat===name)todoCat=name;
+    closeGenericModal();
+    renderCatBar();renderTodos();
+  }catch(e){alert('Gagal: '+e.message);}
 }
 
 function openAddCatModal(){
