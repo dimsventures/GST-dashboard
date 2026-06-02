@@ -1403,7 +1403,7 @@ function showConfirm(desc,onOk,opts={}){
   const okBtn=document.getElementById('confirm-ok-btn');
   okBtn.textContent=opts.okLabel||'Ya, lanjut';
   okBtn.style.background=opts.danger===false?'var(--blk)':'var(--red)';
-  okBtn.onclick=()=>{closeConfirm();onOk();};
+  okBtn.onclick=async()=>{closeConfirm();await onOk();};
   document.getElementById('confirm-modal').classList.add('open');
 }
 function closeConfirm(){document.getElementById('confirm-modal').classList.remove('open');}
