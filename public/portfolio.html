@@ -242,6 +242,7 @@ body.sb-collapsed{padding-left:60px;}
       <input class="mini-inp" id="new-asset-name" placeholder="Nama broker (e.g. Stockbit)">
       <select class="mini-sel" id="new-asset-type" onchange="onBrokerTypeChange()">
         <option value="stocks_idr">Saham (IDR)</option>
+        <option value="stocks_usd">Saham US (USD)</option>
         <option value="crypto_usd">Crypto (USD)</option>
       </select>
       <div id="new-asset-currency-preview" style="font-size:10px;color:var(--text3);margin-bottom:6px;font-weight:600;">Currency: IDR</div>
@@ -395,6 +396,7 @@ async function api(path,method='GET',body=null){
 function brokerTickerType(asset){
   if(!asset)return 'stock_idr';
   if(asset.type==='stocks_idr')return 'stock_idr';
+  if(asset.type==='stocks_usd')return 'stock_usd';
   if(['crypto_usd','crypto_idr','wallet_usd'].includes(asset.type))return 'crypto';
   return 'stock_idr';
 }
@@ -432,6 +434,7 @@ async function fetchMarketPrices(){
   active.forEach(p=>{
     if(p.ticker_type==='stock_idr')symbols.push(p.ticker+'.JK');
     else if(p.ticker_type==='crypto')symbols.push(p.ticker+'-USD');
+    else if(p.ticker_type==='stock_usd')symbols.push(p.ticker);
   });
   const hasUsdBroker=assets.some(a=>a.is_active&&a.currency==='USD');
   const hasCryptoPos=active.some(p=>p.ticker_type==='crypto');
@@ -470,14 +473,14 @@ function calcMarketValue(pos){
   if(!price)return 0;
   const qty=Number(pos.qty);
   if(pos.ticker_type==='stock_idr')return qty*100*price;
-  if(pos.ticker_type==='crypto')return qty*price*(usdIdrRate||0);
+  if(pos.ticker_type==='crypto'||pos.ticker_type==='stock_usd')return qty*price*(usdIdrRate||0);
   return 0;
 }
 
 function calcCostBasis(pos){
   const qty=Number(pos.qty),avg=Number(pos.avg_buy_price);
   if(pos.ticker_type==='stock_idr')return qty*100*avg;
-  if(pos.ticker_type==='crypto')return qty*avg*(usdIdrRate||0);
+  if(pos.ticker_type==='crypto'||pos.ticker_type==='stock_usd')return qty*avg*(usdIdrRate||0);
   return 0;
 }
 
@@ -580,10 +583,10 @@ function renderPositions(){
         const cb=calcCostBasis(pos);
         const gl=mv-cb;
         const glPct=cb>0?((gl/cb)*100):0;
-        const isCrypto=pos.ticker_type==='crypto';
-        const qtyDisplay=isCrypto?Number(pos.qty):Number(pos.qty);
-        const avgDisplay=isCrypto?fmtUsd(Number(pos.avg_buy_price)):fmtRp(Number(pos.avg_buy_price));
-        const mktDisplay=mktPrice?(isCrypto?fmtUsd(mktPrice):fmtRp(mktPrice)):'<span class="mkt-loading">...</span>';
+        const isUsd=pos.ticker_type==='crypto'||pos.ticker_type==='stock_usd';
+        const qtyDisplay=Number(pos.qty);
+        const avgDisplay=isUsd?fmtUsd(Number(pos.avg_buy_price)):fmtRp(Number(pos.avg_buy_price));
+        const mktDisplay=mktPrice?(isUsd?fmtUsd(mktPrice):fmtRp(mktPrice)):'<span class="mkt-loading">...</span>';
         const mktClass=mktChg>=0?'mkt-up':'mkt-down';
         const glClass=gl>=0?'pos':'neg';
 
@@ -1015,13 +1018,16 @@ function openAddPosition(assetId){
   const asset=assets.find(a=>a.id===assetId);
   const defType=brokerTickerType(asset);
   const isCrypto=defType==='crypto';
+  const isStockUsd=defType==='stock_usd';
+  const isUsd=isCrypto||isStockUsd;
+  const placeholder=isCrypto?'BTC, ETH, SOL...':isStockUsd?'MSTR, NVDA, PLTR...':'MDKA, BBCA, BBRI...';
   openModal('Tambah Posisi — '+asset.name,
     `<label class="mlbl-f">Kode Ticker</label>
-     <input class="mini-inp" id="m-ticker" placeholder="${isCrypto?'BTC, ETH, SOL...':'MDKA, BBCA, BBRI...'}">
-     <label class="mlbl-f">Jumlah ${isCrypto?'(unit)':'(lot)'}</label>
-     <input type="number" class="mini-inp" id="m-qty" placeholder="0" step="${isCrypto?'0.0001':'1'}">
-     <label class="mlbl-f">Harga Beli Rata-rata ${isCrypto?'(USD)':'(per lembar IDR)'}</label>
-     <input type="number" class="mini-inp" id="m-avg" placeholder="0" step="${isCrypto?'0.01':'1'}">`,
+     <input class="mini-inp" id="m-ticker" placeholder="${placeholder}">
+     <label class="mlbl-f">Jumlah ${isUsd?'(unit/share)':'(lot)'}</label>
+     <input type="number" class="mini-inp" id="m-qty" placeholder="0" step="${isUsd?'0.0001':'1'}">
+     <label class="mlbl-f">Harga Beli Rata-rata ${isUsd?'(USD)':'(per lembar IDR)'}</label>
+     <input type="number" class="mini-inp" id="m-avg" placeholder="0" step="${isUsd?'0.01':'1'}">`,
     `<button class="btn-cancel" onclick="closeModal()">Batal</button>
      <button class="btn-primary" onclick="submitAddPosition('${assetId}')">Tambah</button>`
   );
@@ -1047,17 +1053,17 @@ async function submitAddPosition(assetId){
 function openAddBuy(posId){
   const pos=positions.find(p=>p.id===posId);
   if(!pos)return;
-  const isCrypto=pos.ticker_type==='crypto';
-  const qtyLabel=isCrypto?'unit':'lot';
-  const priceLabel=isCrypto?'USD':'IDR';
+  const isUsd=pos.ticker_type==='crypto'||pos.ticker_type==='stock_usd';
+  const qtyLabel=isUsd?'unit':'lot';
+  const priceLabel=isUsd?'USD':'IDR';
   openModal('Beli Lagi — '+pos.ticker,
     `<div style="background:var(--bg);padding:8px 10px;border-radius:var(--r2);margin-bottom:12px;font-size:11px;">
-       <strong>${pos.ticker}</strong> · ${Number(pos.qty)} ${qtyLabel} @ ${isCrypto?fmtUsd(Number(pos.avg_buy_price)):fmtRp(Number(pos.avg_buy_price))}
+       <strong>${pos.ticker}</strong> · ${Number(pos.qty)} ${qtyLabel} @ ${isUsd?fmtUsd(Number(pos.avg_buy_price)):fmtRp(Number(pos.avg_buy_price))}
      </div>
      <label class="mlbl-f">Tambah (${qtyLabel})</label>
-     <input type="number" class="mini-inp" id="m-add-qty" placeholder="0" step="${isCrypto?'0.0001':'1'}" oninput="previewAddBuy('${posId}')">
+     <input type="number" class="mini-inp" id="m-add-qty" placeholder="0" step="${isUsd?'0.0001':'1'}" oninput="previewAddBuy('${posId}')">
      <label class="mlbl-f">Harga Beli (${priceLabel})</label>
-     <input type="number" class="mini-inp" id="m-buy-price" placeholder="0" step="${isCrypto?'0.01':'1'}" oninput="previewAddBuy('${posId}')">
+     <input type="number" class="mini-inp" id="m-buy-price" placeholder="0" step="${isUsd?'0.01':'1'}" oninput="previewAddBuy('${posId}')">
      <div class="m-preview" id="m-preview" style="display:none;"></div>`,
     `<button class="btn-cancel" onclick="closeModal()">Batal</button>
      <button class="btn-primary" onclick="submitAddBuy('${posId}')">Konfirmasi</button>`
@@ -1073,12 +1079,13 @@ function previewAddBuy(posId){
   const el=document.getElementById('m-preview');
   if(!addQty||!buyPrice){el.style.display='none';return;}
   const isStock=pos.ticker_type==='stock_idr';
+  const isUsd=pos.ticker_type==='crypto'||pos.ticker_type==='stock_usd';
   const oldQty=Number(pos.qty),oldAvg=Number(pos.avg_buy_price);
   const oldUnits=isStock?oldQty*100:oldQty;
   const addUnits=isStock?addQty*100:addQty;
   const newAvg=(oldUnits*oldAvg+addUnits*buyPrice)/(oldUnits+addUnits);
   const newQty=oldQty+addQty;
-  const fmt=pos.ticker_type==='crypto'?fmtUsd:fmtRp;
+  const fmt=isUsd?fmtUsd:fmtRp;
   el.style.display='block';
   el.textContent=`Total: ${newQty} ${isStock?'lot':'unit'} · Avg baru: ${fmt(Math.round(newAvg*100)/100)}`;
 }
