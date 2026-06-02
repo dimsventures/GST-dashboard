@@ -1383,6 +1383,13 @@ function addWish(){
   wishes.push(w);saveWishDB(w);
   inp.value='';renderStats();
 }
+function delLesson(id){
+  showConfirm('Pelajaran ini akan dihapus permanen.',async()=>{
+    await api('/api/lesson-items?id='+id,'DELETE').catch(console.error);
+    lessons.forEach(l=>{if(l.items)l.items=l.items.filter(i=>i.id!==id);});
+    render();
+  },{title:'Hapus Pelajaran?',icon:'🗑️',okLabel:'Hapus'});
+}
 function delWish(id){
   showConfirm('Wish ini akan dihapus permanen.',()=>{
     wishes=wishes.filter(w=>w.id!==id);delWishDB(id);renderStats();renderWishList();
@@ -1759,7 +1766,7 @@ function renderChain(){
       det+=`</div></div>`;
     }
     det+='</div>';
-    if(lesItems.length){const fmtTs=(ts)=>{try{const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}catch(e){return '';}};lesItems.forEach((item,i)=>{det+=`<div class="dlesn-card"><div class="dlesn-lbl">🔒 Pelajaran ${i+1}${item.ts?' — '+fmtTs(item.ts):''}${item.category?` &nbsp;<span class="lsn-cat-tag">${item.category}</span>`:''}</div><div class="dlesn-txt">${item.text}</div></div>`;});}
+    if(lesItems.length){const fmtTs=(ts)=>{try{const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}catch(e){return '';}};lesItems.forEach((item,i)=>{det+=`<div class="dlesn-card" style="position:relative;"><div class="dlesn-lbl">🔒 Pelajaran ${i+1}${item.ts?' — '+fmtTs(item.ts):''}${item.category?` &nbsp;<span class="lsn-cat-tag">${item.category}</span>`:''}<button onclick="event.stopPropagation();delLesson('${item.id}')" style="position:absolute;top:8px;right:8px;background:none;border:none;color:#fca5a5;cursor:pointer;font-size:12px;padding:0 2px;line-height:1;" title="Hapus pelajaran">✕</button></div><div class="dlesn-txt">${item.text}</div></div>`;});}
     const doneGoalsDet=goals.filter(g=>g.done&&g.doneDate===dstr);
     if(doneGoalsDet.length){
       det+=`<div class="dgoal-card"><div class="dgoal-lbl">★ Goals Achieved</div>`;
