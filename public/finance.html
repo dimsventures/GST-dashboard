@@ -413,6 +413,17 @@ body.sb-collapsed{padding-left:60px;}
       <div class="sum-box" onclick="toggleBreakdown('invest')" style="cursor:pointer;" title="Klik untuk detail"><div class="sum-lbl">Investment ▾</div><div class="sum-val blue" id="s-invest">Rp 0</div></div>
       <div class="sum-box"><div class="sum-lbl">Sisa</div><div class="sum-val gold" id="s-sisa">Rp 0</div></div>
     </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-top:1px solid var(--border);gap:6px;">
+      <div>
+        <div class="sum-lbl" style="margin-bottom:2px;">Saldo Awal</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text2);" id="s-opening">Rp 0</div>
+      </div>
+      <div style="font-size:16px;color:var(--border2);">→</div>
+      <div style="text-align:right;">
+        <div class="sum-lbl" style="margin-bottom:2px;">Saldo Akhir</div>
+        <div style="font-size:13px;font-weight:700;" id="s-closing">Rp 0</div>
+      </div>
+    </div>
     <div class="saverate-bar"><div class="saverate-fill" id="saverate-fill" style="width:0%"></div></div>
     <div id="daily-budget" style="padding:8px 14px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <div>
@@ -750,7 +761,7 @@ function toggleFinCat(idx,el){
 
 // ── EYE HIDE TOGGLE ──
 let numbersHidden=false;
-const HIDDEN_IDS=['s-income','s-expense','s-invest','s-sisa','s-daily'];
+const HIDDEN_IDS=['s-income','s-expense','s-invest','s-sisa','s-daily','s-opening','s-closing'];
 let hiddenVals={};
 function toggleHide(){
   numbersHidden=!numbersHidden;
@@ -946,6 +957,28 @@ function renderSummary(){
   }
   document.getElementById('s-sisa').style.color=sisa>=0?'var(--gold)':'var(--red)';
   document.getElementById('saverate-fill').style.width=Math.min(rate,100)+'%';
+
+  const cutoff=mo+'-01';
+  const opening=transactions.reduce((s,t)=>{
+    if(t.date>=cutoff)return s;
+    if(t.note&&t.note.startsWith('[Buffer]'))return s;
+    if(t.type==='income')return s+t.amount;
+    if(t.type==='expense')return s-t.amount;
+    if(t.type==='investment')return s-t.amount;
+    if(t.type==='buffer')return s-t.amount;
+    return s;
+  },0);
+  const closing=opening+income-expense-invest;
+  const closingEl=document.getElementById('s-closing');
+  if(numbersHidden){
+    hiddenVals['s-opening']=fmtRp(opening);
+    hiddenVals['s-closing']=fmtRp(closing);
+  }else{
+    document.getElementById('s-opening').textContent=fmtRp(opening);
+    closingEl.textContent=fmtRp(closing);
+  }
+  closingEl.style.color=closing>=0?'var(--gold)':'var(--red)';
+
   renderDailyBudget(sisa);
 
   // Expense breakdown (hidden by default)
