@@ -919,6 +919,25 @@ body.dark .jtyping{background:#252525;border-color:#3d3d3d;}
   </div>
 </div>
 
+<!-- DOING DONE MODAL -->
+<div class="moverlay" id="doing-modal" onclick="if(event.target===this)closeDoingModal()">
+  <div class="modal" style="max-width:420px;">
+    <div class="mhdr">
+      <div class="mtitle">✅ Task Done!</div>
+      <button class="mclose" onclick="closeDoingModal()">✕</button>
+    </div>
+    <div class="mbody" style="padding:20px 22px;">
+      <div id="doing-todo-text" style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:16px;"></div>
+      <div style="font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Poin masuk ke aktivitas:</div>
+      <div id="doing-cat-btns" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn-cancel" onclick="closeDoingModal()">Lewati</button>
+      <button class="btn-save" onclick="confirmDoing()" style="background:var(--blk);border-color:var(--blk);">✓ Selesai</button>
+    </div>
+  </div>
+</div>
+
 <!-- LEARNING RESULT MODAL -->
 <div class="moverlay" id="learning-modal">
   <div class="modal" style="max-width:460px;">
@@ -1934,6 +1953,7 @@ function addTodo(){
   if(mode!==todoMode){filterMode(mode);}else{renderTodos();renderStats();}
 }
 let learningTodoId=null,learningSelectedCat=null;
+let doingTodoId=null,doingSelectedCat=null;
 function selectLearningCat(cat){
   learningSelectedCat=cat;
   renderActCatButtons('#learning-cat-btns','selectLearningCat',cat);
@@ -1953,7 +1973,29 @@ async function toggleTodo(id){
     setTimeout(()=>document.getElementById('learning-result-text').focus(),100);
     return;
   }
+  if(!t.done&&t.mode==='doing'){
+    doingTodoId=id;
+    doingSelectedCat=t.points_to||getActCats()[0]?.key||'personal';
+    document.getElementById('doing-todo-text').textContent=t.text;
+    renderActCatButtons('#doing-cat-btns','selectDoingCat',doingSelectedCat);
+    document.getElementById('doing-modal').classList.add('open');
+    return;
+  }
   await completeTodo(id);
+}
+function selectDoingCat(cat){
+  doingSelectedCat=cat;
+  renderActCatButtons('#doing-cat-btns','selectDoingCat',cat);
+}
+function closeDoingModal(){
+  document.getElementById('doing-modal').classList.remove('open');
+}
+async function confirmDoing(){
+  const t=doingTodoId?todos.find(x=>x.id===doingTodoId):null;
+  if(t)t.points_to=doingSelectedCat||getActCats()[0]?.key||'personal';
+  closeDoingModal();
+  if(doingTodoId)await completeTodo(doingTodoId);
+  doingTodoId=null;doingSelectedCat=null;
 }
 
 async function completeTodo(id){
