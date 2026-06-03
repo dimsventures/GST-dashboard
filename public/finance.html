@@ -327,8 +327,8 @@ body.sb-collapsed{padding-left:60px;}
   <!-- QUICK ADD -->
   <div class="card">
     <div class="type-tabs">
-      <button class="ttab" data-type="income" onclick="switchType('income',this)">Income</button>
-      <button class="ttab active" data-type="expense" onclick="switchType('expense',this)">Expense</button>
+      <button class="ttab active" data-type="income" onclick="switchType('income',this)">Income</button>
+      <button class="ttab" data-type="expense" onclick="switchType('expense',this)">Expense</button>
       <button class="ttab" data-type="investment" onclick="switchType('investment',this)">Invest</button>
       <button class="ttab" data-type="buffer" onclick="switchType('buffer',this)">Buffer</button>
     </div>
@@ -628,7 +628,6 @@ async function init(){
   renderMonthLabel();
   document.getElementById('date-inp').value=todayStr();
   document.getElementById('trx-date-filter').value=currentMonth;
-  switchType('expense',document.querySelector('.ttab'));
   showSkeleton();
   const [trx,bl,rc,pa,fc]=await Promise.all([
     api('/api/transactions'),
@@ -642,6 +641,9 @@ async function init(){
   document.getElementById('trx-date-filter').value=currentMonth;
   document.getElementById('date-inp').value=todayStr();
   hideSkeleton();
+  // render chips SETELAH data siap
+  const firstTab=document.querySelector('.ttab');
+  switchType(firstTab?.dataset?.type||'income',firstTab);
   render();
   fillReconFromLast();
 }
