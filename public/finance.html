@@ -467,7 +467,7 @@ body.sb-collapsed{padding-left:60px;}
     <div class="card-hdr">
       <div>
         <div class="card-title">🛡 Emergency Buffer</div>
-        <div style="font-size:9px;color:var(--text3);margin-top:2px;font-weight:500;">BLU by BCA</div>
+        <div id="buf-account-name" style="font-size:9px;color:var(--text3);margin-top:2px;font-weight:500;">—</div>
       </div>
     </div>
     <div class="buffer-bal">
@@ -925,7 +925,8 @@ async function addTransaction(){
     const t=await api('/api/transactions','POST',body);
     transactions.push(t);
     if(currentType==='buffer'){
-      const log=await api('/api/buffer-logs','POST',{date,amount:amt,note:note||'Alokasi BLU'});
+      const bufName=(finCats['buffer']||[])[0]?.name||'Alokasi Buffer';
+      const log=await api('/api/buffer-logs','POST',{date,amount:amt,note:note||bufName});
       bufferLogs.push(log);
     }
     document.getElementById('amount-inp').value='';
@@ -1104,6 +1105,9 @@ function toggleBufLog(){
   arrow.style.transform=open?'rotate(180deg)':'rotate(0deg)';
 }
 function renderBuffer(){
+  const bufCats=finCats['buffer']||[];
+  const nameEl=document.getElementById('buf-account-name');
+  if(nameEl)nameEl.textContent=bufCats.length?bufCats.map(c=>c.name).join(' · '):'—';
   const bal=bufferLogs.reduce((s,l)=>s+l.amount,0);
   document.getElementById('buf-bal').textContent=fmtRp(bal);
   const recent=[...bufferLogs].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
@@ -1118,7 +1122,8 @@ let bufExpCat='';
 
 function openBufModal(dir){
   bufDir=dir;bufExpCat='';
-  document.getElementById('buf-modal-title').textContent=dir==='in'?'+ Isi Buffer (→ BLU)':'− Ambil dari Buffer';
+  const bufName=(finCats['buffer']||[])[0]?.name||'Buffer';
+  document.getElementById('buf-modal-title').textContent=dir==='in'?`+ Isi Buffer (→ ${bufName})`:'− Ambil dari Buffer';
   document.getElementById('buf-date').value=todayStr();
   document.getElementById('buf-amount').value='';
   document.getElementById('buf-note').value='';
