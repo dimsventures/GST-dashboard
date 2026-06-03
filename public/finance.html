@@ -79,20 +79,10 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .ttab:hover{color:var(--text);}
 
 /* CATEGORY CHIPS */
-.cat-chips{display:flex;flex-wrap:wrap;gap:5px;padding:10px 14px;border-bottom:1px solid var(--border);}
-.cat-chip-wrap{display:flex;align-items:center;border-radius:20px;border:1px solid var(--border);background:var(--bg);overflow:hidden;transition:border-color .15s;}
-.cat-chip-wrap:has(.cat-chip.active){background:var(--blk);border-color:var(--blk);}
-.cat-chip{font-size:9px;font-weight:600;padding:4px 8px 4px 10px;cursor:pointer;background:transparent;color:var(--text2);transition:color .15s;letter-spacing:.02em;border:none;}
-.cat-chip.active{color:#fff;}
-.cat-chip-wrap:not(:has(.cat-chip.active)):hover{border-color:var(--red);}
-.cat-chip-wrap:not(:has(.cat-chip.active)):hover .cat-chip{color:var(--red);}
-.cat-chip-edit,.cat-chip-del{background:none;border:none;cursor:pointer;font-size:9px;padding:2px 4px;transition:color .15s;}
-.cat-chip-edit{color:var(--text3);}
-.cat-chip-edit:hover{color:var(--gold);}
-.cat-chip-del{color:var(--text3);padding-right:6px;}
-.cat-chip-del:hover{color:var(--red);}
-.cat-chip-add{font-size:13px;font-weight:400;padding:2px 8px;border-radius:20px;border:1px dashed var(--border);cursor:pointer;background:none;color:var(--text3);transition:all .15s;line-height:1.6;}
-.cat-chip-add:hover{border-color:var(--gold);color:var(--gold);}
+.cat-chips{display:flex;flex-wrap:wrap;gap:5px;padding:10px 40px 10px 14px;border-bottom:1px solid var(--border);}
+.cat-chip{font-size:9px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--bg);color:var(--text2);transition:all .15s;letter-spacing:.02em;}
+.cat-chip.active{background:var(--blk);color:#fff;border-color:var(--blk);}
+.cat-chip:hover:not(.active){border-color:var(--red);color:var(--red);}
 
 /* AMOUNT INPUT */
 .amount-wrap{padding:14px 16px 10px;}
@@ -337,12 +327,15 @@ body.sb-collapsed{padding-left:60px;}
   <!-- QUICK ADD -->
   <div class="card">
     <div class="type-tabs">
-      <button class="ttab active" data-type="expense" onclick="switchType('expense',this)">Expense</button>
       <button class="ttab" data-type="income" onclick="switchType('income',this)">Income</button>
+      <button class="ttab active" data-type="expense" onclick="switchType('expense',this)">Expense</button>
       <button class="ttab" data-type="investment" onclick="switchType('investment',this)">Invest</button>
       <button class="ttab" data-type="buffer" onclick="switchType('buffer',this)">Buffer</button>
     </div>
-    <div class="cat-chips" id="cat-chips"></div>
+    <div style="position:relative;">
+      <div class="cat-chips" id="cat-chips"></div>
+      <button id="cat-manage-btn" onclick="openCatManager()" title="Kelola kategori" style="position:absolute;top:8px;right:10px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);padding:2px;transition:color .15s;" onmouseenter="this.style.color='var(--gold)'" onmouseleave="this.style.color='var(--text3)'">✏</button>
+    </div>
     <div class="amount-wrap">
       <div class="amount-label">Nominal</div>
       <div class="amount-row">
@@ -524,20 +517,19 @@ body.sb-collapsed{padding-left:60px;}
 <div id="page-loader"></div>
 <div id="toast-container"></div>
 
-<!-- CAT EDIT/ADD MODAL -->
+<!-- CAT MANAGER MODAL -->
 <div class="moverlay" id="cat-modal" onclick="if(event.target===this)closeCatModal()">
-  <div class="modal" style="max-width:360px;">
+  <div class="modal" style="max-width:380px;">
     <div class="mhdr">
-      <div class="mtitle" id="cat-modal-title">Tambah Kategori</div>
+      <div class="mtitle" id="cat-modal-title">Kelola Kategori</div>
       <button class="mclose" onclick="closeCatModal()">✕</button>
     </div>
-    <div class="mbody">
-      <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">Nama Kategori</div>
-      <input type="text" id="cat-modal-inp" placeholder="Nama kategori..." style="width:100%;border:1.5px solid var(--border);border-radius:var(--r2);padding:8px 10px;font-size:13px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')confirmCatModal()">
-    </div>
-    <div class="mfooter">
-      <button class="btn-cancel" onclick="closeCatModal()">Batal</button>
-      <button class="btn-save" onclick="confirmCatModal()">Simpan</button>
+    <div class="mbody" id="cat-modal-body" style="padding:14px 16px;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;"></div>
+    <div class="mbody" style="padding:10px 16px;border-top:1px solid var(--border);">
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="cat-add-inp" placeholder="Nama kategori baru..." style="flex:1;border:1.5px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:12px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')addCatFromManager()">
+        <button onclick="addCatFromManager()" style="background:var(--blk);color:#fff;border:none;border-radius:var(--r2);padding:7px 14px;font-size:11px;font-weight:600;cursor:pointer;">+ Tambah</button>
+      </div>
     </div>
   </div>
 </div>
@@ -899,20 +891,11 @@ function switchType(type,el){
 function renderCatChips(type){
   const cats=finCats[type]||[];
   const chips=document.getElementById('cat-chips');
-  chips.innerHTML=cats.map(c=>`
-    <div class="cat-chip-wrap">
-      <div class="cat-chip" onclick="selectCat(this,'${c.name.replace(/'/g,"\\'")}',null)" data-id="${c.id}">${c.name}</div>
-      <button class="cat-chip-edit" onclick="openEditCat('${c.id}','${c.name.replace(/'/g,"\\'")}','${type}')" title="Edit">✏</button>
-      <button class="cat-chip-del" onclick="deleteCat('${c.id}','${type}')" title="Hapus">✕</button>
-    </div>`).join('')+
-    `<button class="cat-chip-add" onclick="openAddCat('${type}')" title="Tambah kategori">+</button>`;
-  if(cats.length>0){
-    const firstChip=chips.querySelector('.cat-chip');
-    if(firstChip)selectCat(firstChip,cats[0].name,null);
-  }
+  chips.innerHTML=cats.map(c=>`<div class="cat-chip" onclick="selectCat(this,'${c.name.replace(/'/g,"\\'")}')">${c.name}</div>`).join('');
+  if(cats.length>0){selectCat(chips.firstChild,cats[0].name);}
 }
 
-function selectCat(el,cat,_ignored){
+function selectCat(el,cat){
   currentCat=cat;
   document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
@@ -1148,49 +1131,71 @@ function openBufModal(dir){
   setTimeout(()=>document.getElementById('buf-amount').focus(),100);
 }
 // ── FINANCE CATEGORIES CRUD ──
-let _catModalMode=null,_catEditId=null,_catEditType=null;
-function openAddCat(type){
-  _catModalMode='add';_catEditType=type;_catEditId=null;
-  document.getElementById('cat-modal-title').textContent='Tambah Kategori';
-  document.getElementById('cat-modal-inp').value='';
+function openCatManager(){
+  const type=currentType;
+  const typeLabel={expense:'Expense',income:'Income',investment:'Invest',buffer:'Buffer'};
+  document.getElementById('cat-modal-title').textContent='Kelola Kategori — '+typeLabel[type];
+  document.getElementById('cat-add-inp').value='';
+  renderCatManagerList(type);
   document.getElementById('cat-modal').classList.add('open');
-  setTimeout(()=>document.getElementById('cat-modal-inp').focus(),100);
+  setTimeout(()=>document.getElementById('cat-add-inp').focus(),100);
 }
-function openEditCat(id,name,type){
-  _catModalMode='edit';_catEditId=id;_catEditType=type;
-  document.getElementById('cat-modal-title').textContent='Edit Kategori';
-  document.getElementById('cat-modal-inp').value=name;
-  document.getElementById('cat-modal').classList.add('open');
-  setTimeout(()=>document.getElementById('cat-modal-inp').focus(),100);
+function renderCatManagerList(type){
+  const cats=finCats[type]||[];
+  const body=document.getElementById('cat-modal-body');
+  if(!cats.length){
+    body.innerHTML='<div style="font-size:11px;color:var(--text3);text-align:center;padding:10px;">Belum ada kategori. Tambah di bawah.</div>';
+    return;
+  }
+  body.innerHTML=cats.map(c=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);">
+      <span style="flex:1;font-size:11px;font-weight:600;" id="cat-name-${c.id}">${c.name}</span>
+      <input type="text" id="cat-inp-${c.id}" value="${c.name}" style="flex:1;display:none;border:1px solid var(--gold);border-radius:var(--r2);padding:3px 7px;font-size:11px;outline:none;background:var(--bg);" onkeydown="if(event.key==='Enter')saveCatEdit('${c.id}','${type}')">
+      <button id="cat-edit-btn-${c.id}" onclick="toggleCatEdit('${c.id}','${type}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);padding:2px 4px;" title="Edit">✏</button>
+      <button id="cat-save-btn-${c.id}" onclick="saveCatEdit('${c.id}','${type}')" style="display:none;background:var(--gold);color:#fff;border:none;border-radius:var(--r2);cursor:pointer;font-size:10px;padding:3px 8px;font-weight:600;">OK</button>
+      <button onclick="deleteCat('${c.id}','${type}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);padding:2px 4px;" title="Hapus" onmouseenter="this.style.color='var(--red)'" onmouseleave="this.style.color='var(--text3)'">✕</button>
+    </div>`).join('');
 }
-function closeCatModal(){document.getElementById('cat-modal').classList.remove('open');}
-async function confirmCatModal(){
-  const name=document.getElementById('cat-modal-inp').value.trim();
+function toggleCatEdit(id,type){
+  document.getElementById('cat-name-'+id).style.display='none';
+  document.getElementById('cat-inp-'+id).style.display='block';
+  document.getElementById('cat-edit-btn-'+id).style.display='none';
+  document.getElementById('cat-save-btn-'+id).style.display='block';
+  document.getElementById('cat-inp-'+id).focus();
+}
+async function saveCatEdit(id,type){
+  const name=document.getElementById('cat-inp-'+id).value.trim();
   if(!name)return;
   try{
-    if(_catModalMode==='add'){
-      const order=finCats[_catEditType]?.length||0;
-      const c=await api('/api/finance-categories','POST',{type:_catEditType,name,sort_order:order});
-      finCats[_catEditType].push(c);
-    }else{
-      await api('/api/finance-categories?id='+_catEditId,'PATCH',{name});
-      const cat=finCats[_catEditType]?.find(c=>c.id===_catEditId);
-      if(cat)cat.name=name;
-    }
-    closeCatModal();
-    renderCatChips(_catEditType);
-    showToast(_catModalMode==='add'?'Kategori ditambahkan!':'Kategori diperbarui!','success');
+    await api('/api/finance-categories?id='+id,'PATCH',{name});
+    const cat=finCats[type]?.find(c=>c.id===id);
+    if(cat)cat.name=name;
+    renderCatManagerList(type);
+    renderCatChips(type);
+  }catch(e){showToast('Gagal: '+e.message,'error');}
+}
+async function addCatFromManager(){
+  const type=currentType;
+  const name=document.getElementById('cat-add-inp').value.trim();
+  if(!name)return;
+  try{
+    const order=finCats[type]?.length||0;
+    const c=await api('/api/finance-categories','POST',{type,name,sort_order:order});
+    finCats[type].push(c);
+    document.getElementById('cat-add-inp').value='';
+    renderCatManagerList(type);
+    renderCatChips(type);
   }catch(e){showToast('Gagal: '+e.message,'error');}
 }
 async function deleteCat(id,type){
-  if(!confirm('Hapus kategori ini?'))return;
   try{
     await api('/api/finance-categories?id='+id,'DELETE');
     finCats[type]=finCats[type].filter(c=>c.id!==id);
+    renderCatManagerList(type);
     renderCatChips(type);
-    showToast('Kategori dihapus','success');
   }catch(e){showToast('Gagal: '+e.message,'error');}
 }
+function closeCatModal(){document.getElementById('cat-modal').classList.remove('open');}
 
 function selectBufCat(el,cat){
   bufExpCat=cat;
