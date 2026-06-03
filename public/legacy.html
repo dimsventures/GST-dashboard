@@ -1769,7 +1769,7 @@ function renderChain(){
       det+=`</div></div>`;
     }
     det+='</div>';
-    if(lesItems.length){const fmtTs=(ts)=>{try{const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}catch(e){return '';}};lesItems.forEach((item,i)=>{det+=`<div class="dlesn-card" style="position:relative;"><div class="dlesn-lbl">🔒 Pelajaran ${i+1}${item.ts?' — '+fmtTs(item.ts):''}${item.category?` &nbsp;<span class="lsn-cat-tag">${item.category}</span>`:''}<button onclick="event.stopPropagation();delLesson('${item.id}')" style="position:absolute;top:8px;right:8px;background:none;border:none;color:#fca5a5;cursor:pointer;font-size:12px;padding:0 2px;line-height:1;" title="Hapus pelajaran">✕</button></div><div class="dlesn-txt">${item.text}</div></div>`;});}
+    if(lesItems.length){const fmtTs=(ts)=>{try{const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}catch(e){return '';}};lesItems.forEach((item,i)=>{det+=`<div class="dlesn-card"><div class="dlesn-lbl">🔒 Pelajaran ${i+1}${item.ts?' — '+fmtTs(item.ts):''}${item.category?` &nbsp;<span class="lsn-cat-tag">${item.category}</span>`:''}</div><div class="dlesn-txt">${item.text}</div></div>`;});}
     const doneGoalsDet=goals.filter(g=>g.done&&g.doneDate===dstr);
     if(doneGoalsDet.length){
       det+=`<div class="dgoal-card"><div class="dgoal-lbl">★ Goals Achieved</div>`;
@@ -1972,6 +1972,15 @@ async function completeTodo(id){
     if(match){
       await api('/api/activities?id='+match.id,'DELETE').catch(console.error);
       activities=activities.filter(a=>a.id!==match.id);
+    }
+    if(t.mode==='learning'){
+      const prefix='[Learning] '+t.text+' →';
+      const dayLesson=lessons.find(l=>l.date===prevDoneDate);
+      const matchItem=dayLesson?.items?.find(i=>i.text&&i.text.startsWith(prefix));
+      if(matchItem){
+        await api('/api/lesson-items?id='+matchItem.id,'DELETE').catch(console.error);
+        dayLesson.items=dayLesson.items.filter(i=>i.id!==matchItem.id);
+      }
     }
   }
   render();
