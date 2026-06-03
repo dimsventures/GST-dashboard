@@ -80,9 +80,20 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 
 /* CATEGORY CHIPS */
 .cat-chips{display:flex;flex-wrap:wrap;gap:5px;padding:10px 14px;border-bottom:1px solid var(--border);}
-.cat-chip{font-size:9px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--bg);color:var(--text2);transition:all .15s;letter-spacing:.02em;}
-.cat-chip.active{background:var(--blk);color:#fff;border-color:var(--blk);}
-.cat-chip:hover:not(.active){border-color:var(--red);color:var(--red);}
+.cat-chip-wrap{display:flex;align-items:center;border-radius:20px;border:1px solid var(--border);background:var(--bg);overflow:hidden;transition:border-color .15s;}
+.cat-chip-wrap:has(.cat-chip.active){background:var(--blk);border-color:var(--blk);}
+.cat-chip{font-size:9px;font-weight:600;padding:4px 8px 4px 10px;cursor:pointer;background:transparent;color:var(--text2);transition:color .15s;letter-spacing:.02em;border:none;}
+.cat-chip.active{color:#fff;}
+.cat-chip-wrap:not(:has(.cat-chip.active)):hover{border-color:var(--red);}
+.cat-chip-wrap:not(:has(.cat-chip.active)):hover .cat-chip{color:var(--red);}
+.cat-chip-edit,.cat-chip-del{background:none;border:none;cursor:pointer;font-size:9px;padding:2px 4px;opacity:0;transition:opacity .15s;}
+.cat-chip-wrap:hover .cat-chip-edit,.cat-chip-wrap:hover .cat-chip-del{opacity:1;}
+.cat-chip-edit{color:var(--text3);}
+.cat-chip-edit:hover{color:var(--gold);}
+.cat-chip-del{color:var(--text3);padding-right:6px;}
+.cat-chip-del:hover{color:var(--red);}
+.cat-chip-add{font-size:13px;font-weight:400;padding:2px 8px;border-radius:20px;border:1px dashed var(--border);cursor:pointer;background:none;color:var(--text3);transition:all .15s;line-height:1.6;}
+.cat-chip-add:hover{border-color:var(--gold);color:var(--gold);}
 
 /* AMOUNT INPUT */
 .amount-wrap{padding:14px 16px 10px;}
@@ -514,6 +525,24 @@ body.sb-collapsed{padding-left:60px;}
 <div id="page-loader"></div>
 <div id="toast-container"></div>
 
+<!-- CAT EDIT/ADD MODAL -->
+<div class="moverlay" id="cat-modal" onclick="if(event.target===this)closeCatModal()">
+  <div class="modal" style="max-width:360px;">
+    <div class="mhdr">
+      <div class="mtitle" id="cat-modal-title">Tambah Kategori</div>
+      <button class="mclose" onclick="closeCatModal()">✕</button>
+    </div>
+    <div class="mbody">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">Nama Kategori</div>
+      <input type="text" id="cat-modal-inp" placeholder="Nama kategori..." style="width:100%;border:1.5px solid var(--border);border-radius:var(--r2);padding:8px 10px;font-size:13px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')confirmCatModal()">
+    </div>
+    <div class="mfooter">
+      <button class="btn-cancel" onclick="closeCatModal()">Batal</button>
+      <button class="btn-save" onclick="confirmCatModal()">Simpan</button>
+    </div>
+  </div>
+</div>
+
 <!-- BUFFER MODAL -->
 <div class="moverlay" id="buf-modal">
   <div class="modal">
@@ -541,19 +570,35 @@ body.sb-collapsed{padding-left:60px;}
 </div>
 
 <script>
-const CATS={
-  expense:['Housing','Consumption','Needs','Joy','Transport','Utilities','Electronic','Charity','Unexpected'],
-  income:['Salary 1','Salary 2','Bonus'],
-  investment:['Deposit','Think & Grow'],
-  buffer:['Alokasi BLU'],
-};
 const TYPE_COLOR={income:'#15a34a',expense:'#d12b2b',investment:'#2563eb',buffer:'#c9841a'};
+const TYPES=['expense','income','investment','buffer'];
 
+let finCats={expense:[],income:[],investment:[],buffer:[]};
 let transactions=[],bufferLogs=[],reconciliations=[],portfolioAssets=[];
 let currentType='expense',currentCat='',currentMonth='',bufDir='in',currentAssetId=null;
 
 function todayStr(){const n=new Date();return`${n.getFullYear()}-${p2(n.getMonth()+1)}-${p2(n.getDate())}`;}
 function p2(n){return String(n).padStart(2,'0');}
+
+async function initFinCats(fc,trx){
+  if(fc&&fc.length){
+    TYPES.forEach(t=>{finCats[t]=fc.filter(c=>c.type===t);});
+  }else if(trx&&trx.length){
+    // auto-seed dari kategori yang sudah dipakai di transaksi lama
+    const seen={expense:new Set(),income:new Set(),investment:new Set(),buffer:new Set()};
+    trx.forEach(t=>{if(seen[t.type])seen[t.type].add(t.category);});
+    for(const [type,names] of Object.entries(seen)){
+      let order=0;
+      for(const name of names){
+        const c=await api('/api/finance-categories','POST',{type,name,sort_order:order++});
+        finCats[type].push(c);
+      }
+    }
+  }
+  // kalau kosong semua (user baru) → finCats tetap {}
+}
+
+function getCatNames(type){return finCats[type]?.map(c=>c.name)||[];}
 
 function showToast(msg,type='success'){
   const icons={success:'✓',error:'✕',warning:'!'};
@@ -594,13 +639,15 @@ async function init(){
   document.getElementById('trx-date-filter').value=currentMonth;
   switchType('expense',document.querySelector('.ttab'));
   showSkeleton();
-  const [trx,bl,rc,pa]=await Promise.all([
+  const [trx,bl,rc,pa,fc]=await Promise.all([
     api('/api/transactions'),
     api('/api/buffer-logs'),
     api('/api/reconciliations'),
     api('/api/portfolio/assets'),
+    api('/api/finance-categories'),
   ]);
   transactions=trx;bufferLogs=bl;reconciliations=rc;portfolioAssets=pa||[];
+  await initFinCats(fc,trx);
   document.getElementById('trx-date-filter').value=currentMonth;
   document.getElementById('date-inp').value=todayStr();
   hideSkeleton();
@@ -843,12 +890,25 @@ function switchType(type,el){
   currentType=type;currentCat='';
   document.querySelectorAll('.ttab').forEach(t=>t.classList.remove('active'));
   if(el)el.classList.add('active');
+  renderCatChips(type);
+}
+function renderCatChips(type){
+  const cats=finCats[type]||[];
   const chips=document.getElementById('cat-chips');
-  chips.innerHTML=CATS[type].map(c=>`<div class="cat-chip" onclick="selectCat(this,'${c}')">${c}</div>`).join('');
-  if(CATS[type].length>0){selectCat(chips.firstChild,CATS[type][0]);}
+  chips.innerHTML=cats.map(c=>`
+    <div class="cat-chip-wrap">
+      <div class="cat-chip" onclick="selectCat(this,'${c.name.replace(/'/g,"\\'")}',null)" data-id="${c.id}">${c.name}</div>
+      <button class="cat-chip-edit" onclick="openEditCat('${c.id}','${c.name.replace(/'/g,"\\'")}','${type}')" title="Edit">✏</button>
+      <button class="cat-chip-del" onclick="deleteCat('${c.id}','${type}')" title="Hapus">✕</button>
+    </div>`).join('')+
+    `<button class="cat-chip-add" onclick="openAddCat('${type}')" title="Tambah kategori">+</button>`;
+  if(cats.length>0){
+    const firstChip=chips.querySelector('.cat-chip');
+    if(firstChip)selectCat(firstChip,cats[0].name,null);
+  }
 }
 
-function selectCat(el,cat){
+function selectCat(el,cat,_ignored){
   currentCat=cat;
   document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
@@ -1083,6 +1143,51 @@ function openBufModal(dir){
   document.getElementById('buf-modal').classList.add('open');
   setTimeout(()=>document.getElementById('buf-amount').focus(),100);
 }
+// ── FINANCE CATEGORIES CRUD ──
+let _catModalMode=null,_catEditId=null,_catEditType=null;
+function openAddCat(type){
+  _catModalMode='add';_catEditType=type;_catEditId=null;
+  document.getElementById('cat-modal-title').textContent='Tambah Kategori';
+  document.getElementById('cat-modal-inp').value='';
+  document.getElementById('cat-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('cat-modal-inp').focus(),100);
+}
+function openEditCat(id,name,type){
+  _catModalMode='edit';_catEditId=id;_catEditType=type;
+  document.getElementById('cat-modal-title').textContent='Edit Kategori';
+  document.getElementById('cat-modal-inp').value=name;
+  document.getElementById('cat-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('cat-modal-inp').focus(),100);
+}
+function closeCatModal(){document.getElementById('cat-modal').classList.remove('open');}
+async function confirmCatModal(){
+  const name=document.getElementById('cat-modal-inp').value.trim();
+  if(!name)return;
+  try{
+    if(_catModalMode==='add'){
+      const order=finCats[_catEditType]?.length||0;
+      const c=await api('/api/finance-categories','POST',{type:_catEditType,name,sort_order:order});
+      finCats[_catEditType].push(c);
+    }else{
+      await api('/api/finance-categories?id='+_catEditId,'PATCH',{name});
+      const cat=finCats[_catEditType]?.find(c=>c.id===_catEditId);
+      if(cat)cat.name=name;
+    }
+    closeCatModal();
+    renderCatChips(_catEditType);
+    showToast(_catModalMode==='add'?'Kategori ditambahkan!':'Kategori diperbarui!','success');
+  }catch(e){showToast('Gagal: '+e.message,'error');}
+}
+async function deleteCat(id,type){
+  if(!confirm('Hapus kategori ini?'))return;
+  try{
+    await api('/api/finance-categories?id='+id,'DELETE');
+    finCats[type]=finCats[type].filter(c=>c.id!==id);
+    renderCatChips(type);
+    showToast('Kategori dihapus','success');
+  }catch(e){showToast('Gagal: '+e.message,'error');}
+}
+
 function selectBufCat(el,cat){
   bufExpCat=cat;
   document.querySelectorAll('#buf-cat-chips div').forEach(d=>{d.style.background='var(--bg)';d.style.color='var(--text2)';d.style.borderColor='var(--border)';});

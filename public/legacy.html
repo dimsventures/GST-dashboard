@@ -1129,9 +1129,8 @@ async function init(){
   }
   if(Array.isArray(atc)&&atc.length){
     activityCategories=atc;
-  }else{
-    await seedDefaultActCategories();
   }
+  // user baru → activityCategories tetap kosong, mereka build sendiri
   renderLogModal();
   if(Array.isArray(gl)&&gl.length){
     goals=gl.map(g=>({...g,doneDate:g.done_date||null}));
