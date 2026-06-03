@@ -469,10 +469,15 @@ body.sb-collapsed{padding-left:60px;}
       <div class="buffer-amt" id="buf-bal">Rp 0</div>
       <div class="buffer-lbl">Saldo Buffer</div>
     </div>
-    <div style="padding:0 14px 10px;">
+    <div style="padding:10px 14px 10px;">
       <button class="btn-buf-out" onclick="openBufModal('out')" style="width:100%;">− Ambil dari Buffer</button>
     </div>
-    <div class="buf-log-list" id="buf-log-list"></div>
+    <div style="padding:0 14px 6px;border-top:1px solid var(--border);">
+      <button onclick="toggleBufLog()" id="buf-log-toggle" style="background:none;border:none;cursor:pointer;font-size:9px;font-weight:600;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;padding:6px 0;display:flex;align-items:center;gap:4px;width:100%;">
+        <span>Riwayat</span><span id="buf-log-arrow" style="transition:transform .2s;display:inline-block;">▾</span>
+      </button>
+    </div>
+    <div class="buf-log-list" id="buf-log-list" style="display:none;"></div>
   </div>
 
   <!-- RECONCILIATION -->
@@ -1040,6 +1045,13 @@ function renderSummary(){
   document.getElementById('ytd-tng-pct').style.color=ytdTng>=0?'var(--gold)':'var(--red)';
 }
 
+function toggleBufLog(){
+  const list=document.getElementById('buf-log-list');
+  const arrow=document.getElementById('buf-log-arrow');
+  const open=list.style.display==='none';
+  list.style.display=open?'block':'none';
+  arrow.style.transform=open?'rotate(180deg)':'rotate(0deg)';
+}
 function renderBuffer(){
   const bal=bufferLogs.reduce((s,l)=>s+l.amount,0);
   document.getElementById('buf-bal').textContent=fmtRp(bal);
