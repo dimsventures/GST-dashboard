@@ -760,9 +760,14 @@ function selectYtdYear(y){
 }
 
 let finChartInstance=null;
-const CAT_COLORS={'Housing':'rgba(239,68,68,.85)','Consumption':'rgba(245,158,11,.85)','Needs':'rgba(34,197,94,.85)',
+const CAT_COLORS_BASE={'Housing':'rgba(239,68,68,.85)','Consumption':'rgba(245,158,11,.85)','Needs':'rgba(34,197,94,.85)',
   'Joy':'rgba(168,85,247,.85)','Transport':'rgba(59,130,246,.85)','Utilities':'rgba(20,184,166,.85)',
   'Electronic':'rgba(249,115,22,.85)','Charity':'rgba(236,72,153,.85)','Unexpected':'rgba(107,114,128,.85)'};
+const PALETTE=['rgba(239,68,68,.85)','rgba(245,158,11,.85)','rgba(34,197,94,.85)','rgba(168,85,247,.85)',
+  'rgba(59,130,246,.85)','rgba(20,184,166,.85)','rgba(249,115,22,.85)','rgba(236,72,153,.85)',
+  'rgba(107,114,128,.85)','rgba(234,179,8,.85)','rgba(16,185,129,.85)','rgba(99,102,241,.85)',
+  'rgba(244,63,94,.85)','rgba(14,165,233,.85)','rgba(132,204,22,.85)','rgba(251,191,36,.85)'];
+function getCatColor(name,idx){return CAT_COLORS_BASE[name]||PALETTE[idx%PALETTE.length];}
 
 function renderFinChart(){
   const MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
@@ -774,18 +779,18 @@ function renderFinChart(){
   const labels=ytdYear
     ?months.map(m=>{const mo=parseInt(m.slice(5))-1;return MN[mo];})
     :months.map(m=>{const mo=parseInt(m.slice(5))-1;const yr=m.slice(2,4);return `${MN[mo]} '${yr}`;});
-  const cats=Object.keys(CAT_COLORS);
-  const datasets=cats.map(cat=>({
+  const cats=[...new Set(expTrx.map(t=>t.category))].sort();
+  const datasets=cats.map((cat,idx)=>({
     label:cat,
-    data:months.map(m=>transactions.filter(t=>t.date.startsWith(m)&&t.type==='expense'&&t.category===cat).reduce((s,t)=>s+t.amount,0)),
-    backgroundColor:CAT_COLORS[cat],stack:'s'
+    data:months.map(m=>transactions.filter(t=>t.date.startsWith(m)&&t.type==='expense'&&t.category===cat&&!(t.note&&t.note.startsWith('[Buffer]'))).reduce((s,t)=>s+t.amount,0)),
+    backgroundColor:getCatColor(cat,idx),stack:'s'
   })).filter(ds=>ds.data.some(v=>v>0));
 
   // Legend
   const legendEl=document.getElementById('fin-chart-legend');
   legendEl.innerHTML=datasets.map((ds,i)=>`
     <div onclick="toggleFinCat(${i},this)" style="display:flex;align-items:center;gap:5px;font-size:9px;font-weight:600;padding:3px 8px;border-radius:12px;border:1px solid var(--border);cursor:pointer;background:var(--bg);color:var(--text2);transition:all .15s;" data-idx="${i}">
-      <span style="width:8px;height:8px;border-radius:2px;background:${ds.backgroundColor};flex-shrink:0;display:inline-block;"></span>${ds.label}
+      <span style="width:8px;height:8px;border-radius:2px;background:${getCatColor(ds.label,i)};flex-shrink:0;display:inline-block;"></span>${ds.label}
     </div>`).join('');
 
   const canvas=document.getElementById('fin-chart-bar');
