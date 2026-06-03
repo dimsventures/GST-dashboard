@@ -489,15 +489,12 @@ body.sb-collapsed{padding-left:60px;}
   <div class="card" style="flex:1;min-height:0;display:flex;flex-direction:column;">
     <div class="card-hdr">
       <div class="card-title">⚖ Audit Saldo</div>
-      <div id="recon-badge" style="font-size:9px;font-weight:700;"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="recon-badge" style="font-size:9px;font-weight:700;"></div>
+        <button onclick="openAcctManager()" title="Kelola rekening" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);padding:2px;transition:color .15s;" onmouseenter="this.style.color='var(--gold)'" onmouseleave="this.style.color='var(--text3)'">✏</button>
+      </div>
     </div>
-    <div class="recon-inputs">
-      <div class="recon-row"><span class="recon-lbl">Bank Jatim</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-jatim" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
-      <div class="recon-row"><span class="recon-lbl">Seabank</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-sea" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
-      <div class="recon-row"><span class="recon-lbl">Bank Jago</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-blu" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
-      <div class="recon-row"><span class="recon-lbl">E-Wallet</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-ewallet" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
-      <div class="recon-row"><span class="recon-lbl">Cash</span><input type="text" inputmode="numeric" class="recon-inp" id="rc-cash" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)"></div>
-    </div>
+    <div class="recon-inputs" id="recon-inputs-wrap"></div>
     <div class="recon-result">
       <div class="recon-diff-row"><span class="recon-diff-lbl">Total Aktual</span><span id="rc-actual" style="font-size:11px;font-weight:700;">Rp 0</span></div>
       <div class="recon-diff-row"><span class="recon-diff-lbl">Saldo Sistem</span><span id="rc-system" style="font-size:11px;font-weight:700;color:var(--text3);">Rp 0</span></div>
@@ -534,6 +531,23 @@ body.sb-collapsed{padding-left:60px;}
   </div>
 </div>
 
+<!-- ACCOUNT MANAGER MODAL -->
+<div class="moverlay" id="acct-modal" onclick="if(event.target===this)closeAcctModal()">
+  <div class="modal" style="max-width:380px;">
+    <div class="mhdr">
+      <div class="mtitle">Kelola Rekening</div>
+      <button class="mclose" onclick="closeAcctModal()">✕</button>
+    </div>
+    <div class="mbody" id="acct-modal-body" style="padding:14px 16px;display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;"></div>
+    <div class="mbody" style="padding:10px 16px;border-top:1px solid var(--border);">
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="acct-add-inp" placeholder="Nama rekening baru..." style="flex:1;border:1.5px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:12px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')addAcct()">
+        <button onclick="addAcct()" style="background:var(--blk);color:#fff;border:none;border-radius:var(--r2);padding:7px 14px;font-size:11px;font-weight:600;cursor:pointer;">+ Tambah</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- BUFFER MODAL -->
 <div class="moverlay" id="buf-modal">
   <div class="modal">
@@ -565,6 +579,14 @@ const TYPE_COLOR={income:'#15a34a',expense:'#d12b2b',investment:'#2563eb',buffer
 const TYPES=['expense','income','investment','buffer'];
 
 let finCats={expense:[],income:[],investment:[],buffer:[]};
+let finAccounts=[];
+const ACCTS_DEFAULT=[
+  {name:'Bank Jatim',legacy:'bank_jatim'},
+  {name:'Seabank',   legacy:'seabank'},
+  {name:'Bank Jago', legacy:'bank_jago'},
+  {name:'E-Wallet',  legacy:'ewallet'},
+  {name:'Cash',      legacy:'cash'},
+];
 let transactions=[],bufferLogs=[],reconciliations=[],portfolioAssets=[];
 let currentType='expense',currentCat='',currentMonth='',bufDir='in',currentAssetId=null;
 
@@ -590,6 +612,34 @@ async function initFinCats(fc,trx){
 }
 
 function getCatNames(type){return finCats[type]?.map(c=>c.name)||[];}
+
+async function initFinAccounts(fa,rc){
+  if(fa&&fa.length){
+    finAccounts=fa;
+  }else if(rc&&rc.length){
+    // existing user → seed dari default
+    for(let i=0;i<ACCTS_DEFAULT.length;i++){
+      const d=ACCTS_DEFAULT[i];
+      try{const a=await api('/api/finance-accounts','POST',{name:d.name,sort_order:i});finAccounts.push(a);}
+      catch(e){console.warn('seed acct failed',e);}
+    }
+  }
+  renderAuditInputs();
+}
+
+function renderAuditInputs(){
+  const wrap=document.getElementById('recon-inputs-wrap');
+  if(!wrap)return;
+  if(!finAccounts.length){
+    wrap.innerHTML='<div style="padding:12px 14px;font-size:10px;color:var(--text4);text-align:center;">Belum ada rekening. Tambah lewat ✏</div>';
+    return;
+  }
+  wrap.innerHTML=finAccounts.map(a=>`
+    <div class="recon-row">
+      <span class="recon-lbl">${a.name}</span>
+      <input type="text" inputmode="numeric" class="recon-inp" id="rc-${a.id}" placeholder="Rp 0" oninput="rcInput(this)" onfocus="rcFocus(this)" onblur="rcBlur(this)">
+    </div>`).join('');
+}
 
 function showToast(msg,type='success'){
   const icons={success:'✓',error:'✕',warning:'!'};
@@ -629,15 +679,17 @@ async function init(){
   document.getElementById('date-inp').value=todayStr();
   document.getElementById('trx-date-filter').value=currentMonth;
   showSkeleton();
-  const [trx,bl,rc,pa,fc]=await Promise.all([
+  const [trx,bl,rc,pa,fc,fa]=await Promise.all([
     api('/api/transactions'),
     api('/api/buffer-logs'),
     api('/api/reconciliations'),
     api('/api/portfolio/assets'),
     api('/api/finance-categories'),
+    api('/api/finance-accounts'),
   ]);
   transactions=trx;bufferLogs=bl;reconciliations=rc;portfolioAssets=pa||[];
   await initFinCats(fc,trx);
+  await initFinAccounts(fa,rc);
   document.getElementById('trx-date-filter').value=currentMonth;
   document.getElementById('date-inp').value=todayStr();
   hideSkeleton();
@@ -661,13 +713,15 @@ function hideSkeleton(){
 }
 
 function fillReconFromLast(){
-  if(!reconciliations.length)return;
+  if(!reconciliations.length||!finAccounts.length)return;
   const last=reconciliations[0];
-  rcSet('rc-jatim',last.bank_jatim);
-  rcSet('rc-sea',last.seabank);
-  rcSet('rc-blu',last.bank_jago);
-  rcSet('rc-ewallet',last.ewallet);
-  rcSet('rc-cash',last.cash);
+  if(last.account_balances&&Object.keys(last.account_balances).length){
+    finAccounts.forEach(a=>{rcSet('rc-'+a.id,last.account_balances[a.id]||0);});
+  }else{
+    // fallback legacy columns untuk reconciliation lama
+    const legMap={'Bank Jatim':'bank_jatim','Seabank':'seabank','Bank Jago':'bank_jago','E-Wallet':'ewallet','Cash':'cash'};
+    finAccounts.forEach(a=>{const k=legMap[a.name];if(k&&last[k]!==undefined)rcSet('rc-'+a.id,last[k]);});
+  }
   calcRecon();
 }
 
@@ -1204,6 +1258,64 @@ async function deleteCat(id,type){
 }
 function closeCatModal(){document.getElementById('cat-modal').classList.remove('open');}
 
+// ── FINANCE ACCOUNTS CRUD ──
+function openAcctManager(){
+  document.getElementById('acct-add-inp').value='';
+  renderAcctManagerList();
+  document.getElementById('acct-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('acct-add-inp').focus(),100);
+}
+function closeAcctModal(){document.getElementById('acct-modal').classList.remove('open');}
+function renderAcctManagerList(){
+  const body=document.getElementById('acct-modal-body');
+  if(!finAccounts.length){
+    body.innerHTML='<div style="font-size:11px;color:var(--text3);text-align:center;padding:10px;">Belum ada rekening. Tambah di bawah.</div>';
+    return;
+  }
+  body.innerHTML=finAccounts.map(a=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);">
+      <span style="flex:1;font-size:11px;font-weight:600;" id="acct-name-${a.id}">${a.name}</span>
+      <input type="text" id="acct-inp-${a.id}" value="${a.name}" style="flex:1;display:none;border:1px solid var(--gold);border-radius:var(--r2);padding:3px 7px;font-size:11px;outline:none;background:var(--bg);" onkeydown="if(event.key==='Enter')saveAcctEdit('${a.id}')">
+      <button id="acct-edit-btn-${a.id}" onclick="toggleAcctEdit('${a.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);padding:2px 4px;" title="Edit">✏</button>
+      <button id="acct-save-btn-${a.id}" onclick="saveAcctEdit('${a.id}')" style="display:none;background:var(--gold);color:#fff;border:none;border-radius:var(--r2);cursor:pointer;font-size:10px;padding:3px 8px;font-weight:600;">OK</button>
+      <button onclick="deleteAcct('${a.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);padding:2px 4px;" title="Hapus" onmouseenter="this.style.color='var(--red)'" onmouseleave="this.style.color='var(--text3)'">✕</button>
+    </div>`).join('');
+}
+function toggleAcctEdit(id){
+  document.getElementById('acct-name-'+id).style.display='none';
+  document.getElementById('acct-inp-'+id).style.display='block';
+  document.getElementById('acct-edit-btn-'+id).style.display='none';
+  document.getElementById('acct-save-btn-'+id).style.display='block';
+  document.getElementById('acct-inp-'+id).focus();
+}
+async function saveAcctEdit(id){
+  const name=document.getElementById('acct-inp-'+id).value.trim();
+  if(!name)return;
+  try{
+    await api('/api/finance-accounts?id='+id,'PATCH',{name});
+    const a=finAccounts.find(x=>x.id===id);if(a)a.name=name;
+    renderAcctManagerList();renderAuditInputs();calcRecon();
+  }catch(e){showToast('Gagal: '+e.message,'error');}
+}
+async function addAcct(){
+  const name=document.getElementById('acct-add-inp').value.trim();
+  if(!name)return;
+  try{
+    const a=await api('/api/finance-accounts','POST',{name,sort_order:finAccounts.length});
+    finAccounts.push(a);
+    document.getElementById('acct-add-inp').value='';
+    renderAcctManagerList();renderAuditInputs();
+  }catch(e){showToast('Gagal: '+e.message,'error');}
+}
+async function deleteAcct(id){
+  try{
+    await api('/api/finance-accounts?id='+id,'DELETE');
+    finAccounts=finAccounts.filter(a=>a.id!==id);
+    renderAcctManagerList();renderAuditInputs();calcRecon();
+  }catch(e){showToast('Gagal: '+e.message,'error');}
+}
+
+
 function selectBufCat(el,cat){
   bufExpCat=cat;
   document.querySelectorAll('#buf-cat-chips div').forEach(d=>{d.style.background='var(--bg)';d.style.color='var(--text2)';d.style.borderColor='var(--border)';});
@@ -1243,12 +1355,7 @@ function rcBlur(el){const v=rcRaw(el);el.value=v?rcFmt(v):'';calcRecon();}
 function rcSet(id,val){const el=document.getElementById(id);el.value=val?rcFmt(val):'';}
 
 function calcRecon(){
-  const jatim=rcRaw(document.getElementById('rc-jatim'));
-  const sea=rcRaw(document.getElementById('rc-sea'));
-  const blu=rcRaw(document.getElementById('rc-blu'));
-  const ewallet=rcRaw(document.getElementById('rc-ewallet'));
-  const cash=rcRaw(document.getElementById('rc-cash'));
-  const actual=jatim+sea+blu+ewallet+cash;
+  const actual=finAccounts.reduce((s,a)=>{const el=document.getElementById('rc-'+a.id);return s+(el?rcRaw(el):0);},0);
   const sysbal=transactions.reduce((s,t)=>{
     if(t.note&&t.note.startsWith('[Buffer]'))return s;
     if(t.type==='income')return s+t.amount;
@@ -1271,12 +1378,9 @@ function calcRecon(){
   document.getElementById('recon-badge').style.color=diff===0?'var(--green)':'var(--red)';
 }
 async function saveRecon(){
-  const jatim=rcRaw(document.getElementById('rc-jatim'));
-  const sea=rcRaw(document.getElementById('rc-sea'));
-  const blu=rcRaw(document.getElementById('rc-blu'));
-  const ewallet=rcRaw(document.getElementById('rc-ewallet'));
-  const cash=rcRaw(document.getElementById('rc-cash'));
-  const total_actual=jatim+sea+blu+ewallet+cash;
+  const account_balances={};
+  finAccounts.forEach(a=>{const el=document.getElementById('rc-'+a.id);account_balances[a.id]=el?rcRaw(el):0;});
+  const total_actual=Object.values(account_balances).reduce((s,v)=>s+v,0);
   const total_system=transactions.reduce((s,t)=>{
     if(t.note&&t.note.startsWith('[Buffer]'))return s;
     if(t.type==='income')return s+t.amount;
@@ -1285,7 +1389,7 @@ async function saveRecon(){
     if(t.type==='buffer')return s-t.amount;
     return s;
   },0);
-  const body={date:todayStr(),bank_jatim:jatim,seabank:sea,bank_jago:blu,ewallet,cash,total_actual,total_system,difference:total_actual-total_system};
+  const body={date:todayStr(),account_balances,total_actual,total_system,difference:total_actual-total_system};
   try{
     const rc=await api('/api/reconciliations','POST',body);
     reconciliations.unshift(rc);
