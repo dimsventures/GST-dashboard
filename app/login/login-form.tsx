@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, useEffect, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 
@@ -22,6 +22,18 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
   const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: { persistSession: false }
   })
+
+  useEffect(() => {
+    const hash = window.location.hash
+    if (!hash) return
+    const params = new URLSearchParams(hash.slice(1))
+    const accessToken = params.get('access_token')
+    const refreshToken = params.get('refresh_token')
+    if (accessToken && refreshToken) {
+      setLoading(true)
+      setCookiesAndRedirect(accessToken, refreshToken)
+    }
+  }, [])
 
   async function handleGoogleLogin() {
     setLoading(true)
