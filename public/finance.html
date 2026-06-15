@@ -216,7 +216,11 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 .chart-wrap-fin canvas{width:100%!important;height:100%!important;}
 
 @media(max-width:768px){
-  .main{grid-template-columns:1fr;padding:8px;gap:8px;}
+  body{overflow-x:hidden;}
+  .main{display:flex;flex-direction:column;grid-template-columns:1fr;height:auto;overflow:visible;padding:8px;gap:8px;}
+  .fin-col{min-width:0!important;min-height:auto!important;height:auto!important;overflow:visible!important;flex:none!important;}
+  .fin-col .card[style*="flex:1"]{flex:none!important;}
+  .trx-list{max-height:320px;}
   header{padding-left:14px;}
   .amount-inp{font-size:20px;}
   .card{border-radius:8px;}
@@ -308,7 +312,7 @@ body.sb-collapsed{padding-left:60px;}
 <div class="main">
 
 <!-- LEFT: CALENDAR + QUICK ADD + TRANSACTION LIST -->
-<div style="display:flex;flex-direction:column;gap:12px;min-height:0;overflow:hidden;">
+<div class="fin-col" style="display:flex;flex-direction:column;gap:12px;min-height:0;overflow:hidden;">
 
   <!-- CALENDAR -->
   <div class="card">
@@ -368,7 +372,7 @@ body.sb-collapsed{padding-left:60px;}
 </div>
 
 <!-- CENTER: MONTHLY SUMMARY -->
-<div style="display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;overflow-y:auto;">
+<div class="fin-col" style="display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;overflow-y:auto;">
 
   <!-- YTD SUMMARY -->
   <div class="card">
@@ -461,7 +465,7 @@ body.sb-collapsed{padding-left:60px;}
 </div>
 
 <!-- RIGHT: BUFFER + RECONCILIATION -->
-<div style="display:flex;flex-direction:column;gap:12px;min-height:0;overflow-y:auto;">
+<div class="fin-col" style="display:flex;flex-direction:column;gap:12px;min-height:0;overflow-y:auto;">
 
   <!-- BUFFER -->
   <div class="card">
