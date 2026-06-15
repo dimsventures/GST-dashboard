@@ -144,10 +144,12 @@ header{background:var(--white);border-bottom:2px solid var(--blk);height:52px;pa
 
 .wd-item{padding:8px 14px;border-bottom:1px solid var(--border);font-size:10px;}
 .wd-item:last-child{border-bottom:none;}
-.wd-item-hdr{display:flex;justify-content:space-between;margin-bottom:2px;}
+.wd-item-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
 .wd-asset{font-weight:600;}
 .wd-amount{font-weight:700;color:var(--red);}
 .wd-meta{color:var(--text3);}
+.wd-del{background:none;border:none;color:var(--text4);cursor:pointer;font-size:11px;padding:0 2px;transition:color .15s;flex-shrink:0;}
+.wd-del:hover{color:var(--red);}
 
 .moverlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
 .moverlay.open{display:flex;}
@@ -1202,10 +1204,38 @@ function renderWithdrawals(){
     const target=w.target_asset_id?assets.find(x=>x.id===w.target_asset_id):null;
     const alloc=w.finance_type==='reinvest'?`→ ${target?.name||'broker lain'}`:`→ ${w.finance_category||w.finance_type}`;
     return`<div class="wd-item">
-      <div class="wd-item-hdr"><span class="wd-asset">${a?.name||'-'}</span><span class="wd-amount">-${fmtRp(w.amount)}</span></div>
+      <div class="wd-item-hdr">
+        <span class="wd-asset">${a?.name||'-'}</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span class="wd-amount">-${fmtRp(w.amount)}</span>
+          <button class="wd-del" onclick="delWithdrawal('${w.id}')" title="Hapus penarikan + transaksi Finance terkait">✕</button>
+        </span>
+      </div>
       <div class="wd-meta">${w.date} · ${alloc}${w.note?' · '+w.note:''}</div>
     </div>`;
   }).join('');
+}
+
+async function delWithdrawal(id){
+  const w=withdrawals.find(x=>x.id===id);
+  if(!w)return;
+  if(!confirm('Hapus penarikan ini beserta transaksi Finance terkait (yang ditandai [Porto])?'))return;
+  const allTx=await api('/api/transactions');
+  const reversal=allTx.find(t=>t.note&&t.note.startsWith('[Porto] Tarik')&&t.date===w.date&&t.type==='investment'&&t.category==='Deposit'&&t.asset_id===w.asset_id&&t.amount===-w.amount);
+  let counterpart=null;
+  if(w.finance_type==='reinvest'){
+    counterpart=allTx.find(t=>t.note&&t.note.startsWith('[Porto] Reinvest')&&t.date===w.date&&t.type==='investment'&&t.category==='Deposit'&&t.asset_id===w.target_asset_id&&t.amount===w.amount);
+  }else{
+    counterpart=allTx.find(t=>t.note&&t.note.startsWith('[Porto]')&&t.date===w.date&&t.type===w.finance_type&&t.category===w.finance_category&&t.amount===w.amount);
+  }
+  for(const t of [reversal,counterpart]){
+    if(t)await api('/api/transactions?id='+t.id,'DELETE').catch(console.error);
+  }
+  await api('/api/portfolio/withdrawals?id='+id,'DELETE');
+  withdrawals=withdrawals.filter(x=>x.id!==id);
+  const ft=await api('/api/transactions');
+  financeTransactions=(ft||[]).filter(t=>t.type==='investment'&&t.category==='Deposit'&&t.asset_id);
+  render();
 }
 
 init();

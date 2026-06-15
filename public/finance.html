@@ -1034,7 +1034,7 @@ function renderTrxList(){
       <div class="trx-amount" style="color:${t.type==='income'?'var(--green)':t.type==='investment'?'var(--blue)':t.type==='buffer'?'var(--gold)':'var(--red)'}">
         ${t.type==='income'?'+':'−'}${fmtRp(t.amount)}
       </div>
-      <button class="trx-del" onclick="delTransaction('${t.id}')">✕</button>
+      ${t.note&&t.note.startsWith('[Porto]')?'':`<button class="trx-del" onclick="delTransaction('${t.id}')">✕</button>`}
     </div>`;
   }).join('');
 }
