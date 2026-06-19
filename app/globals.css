@@ -3,32 +3,69 @@
 @theme {
   --color-gst-red: #d12b2b;
   --color-gst-red-dark: #b32222;
-  --color-gst-red-bg: #fef2f2;
-  --color-bg-base: #f5f4f2;
-  --color-bg-surface: #eeedeb;
-  --color-border: #e4e2de;
-  --color-border-strong: #d0cdc8;
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #4a4a4a;
-  --color-text-muted: #888888;
-  --color-green: #15a34a;
-  --color-gold: #c9841a;
-  --color-blue: #2563eb;
+  --color-bg-base: #0a0a0a;
+  --color-surface: #111111;
+  --color-elevated: #1a1a1a;
+  --color-border: rgba(255,255,255,0.08);
+  --color-green: #22c55e;
+  --color-gold: #f59e0b;
+  --color-blue: #60a5fa;
 
   --radius-sm: 5px;
   --radius-md: 8px;
   --radius-lg: 10px;
   --radius-xl: 12px;
+}
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+/* Dark CSS variables for innerHTML-generated HTML across all React pages */
+:root {
+  --bg: #0f0f0f;
+  --bg2: #1a1a1a;
+  --white: #111;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --text: #f0eeec;
+  --text2: rgba(255,255,255,0.55);
+  --text3: rgba(255,255,255,0.3);
+  --text4: rgba(255,255,255,0.1);
+  --blk: #f0eeec;
+  --red: #d12b2b;
+  --red2: #b32222;
+  --red-bg: rgba(209,43,43,0.12);
+  --red-border: rgba(209,43,43,0.3);
+  --green: #22c55e;
+  --green-bg: rgba(34,197,94,0.1);
+  --green-border: rgba(34,197,94,0.2);
+  --gold: #f59e0b;
+  --gold-bg: rgba(245,158,11,0.1);
+  --gold-border: rgba(245,158,11,0.2);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,0.1);
+  --r: 8px;
+  --r2: 5px;
+  --s1: 0 1px 3px rgba(0,0,0,.35);
+  --s2: 0 4px 16px rgba(0,0,0,.5);
+  --s3: 0 8px 32px rgba(0,0,0,.6);
 }
 
 body {
   font-family: var(--font-inter), Inter, system-ui, sans-serif;
-  background: #f5f4f2;
-  color: #1a1a1a;
+  background: #0a0a0a;
+  color: #f0eeec;
   min-height: 100vh;
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Skeleton animation used in finance page */
+@keyframes skel-shine {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skel {
+  display: inline-block;
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: skel-shine 1.5s infinite;
+  border-radius: 3px;
 }

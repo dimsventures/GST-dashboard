@@ -55,7 +55,7 @@ export async function middleware(request: NextRequest) {
 
       let response: NextResponse
       if (pathname === '/') {
-        response = NextResponse.redirect(new URL('/dashboard.html', request.url))
+        response = NextResponse.redirect(new URL('/dashboard', request.url))
       } else {
         // Forward new token to the API route via modified request headers
         // so that API route handlers use the fresh token, not the expired one
@@ -83,7 +83,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboard.html', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return NextResponse.next()

@@ -14,7 +14,7 @@ export function DashboardShell({ children, title = 'Dashboard' }: DashboardShell
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div>
+    <div className="bg-[#0a0a0a] min-h-screen">
       <Sidebar
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
@@ -22,21 +22,19 @@ export function DashboardShell({ children, title = 'Dashboard' }: DashboardShell
         onToggleCollapse={() => setCollapsed(c => !c)}
       />
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-[390] md:hidden"
+          className="fixed inset-0 bg-black/60 z-[390] md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Main content area shifts with sidebar */}
       <div
         style={{
           paddingLeft: collapsed ? '60px' : '200px',
           transition: 'padding-left 0.25s ease',
         }}
-        className="max-md:!pl-0"
+        className="max-md:!pl-0 min-h-screen"
       >
         <TopBar
           title={title}
