@@ -107,7 +107,7 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
       body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
     })
     if (res.ok) {
-      router.push('/dashboard.html')
+      router.push('/dashboard')
     } else {
       setError('Gagal menyimpan session.')
       setLoading(false)

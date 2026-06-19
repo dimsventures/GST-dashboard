@@ -6,7 +6,7 @@ export async function GET(req: Request) {
   if (!ctx) return NextResponse.redirect(new URL('/login', req.url))
 
   const origin = new URL(req.url).origin
-  const redirectTo = `${origin}/dashboard.html`
+  const redirectTo = `${origin}/dashboard`
 
   const res = await fetch(
     `${process.env.SUPABASE_URL}/auth/v1/user/identities/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`,
@@ -22,5 +22,5 @@ export async function GET(req: Request) {
   const location = res.headers.get('location')
   if (location) return NextResponse.redirect(location)
 
-  return NextResponse.redirect(new URL('/dashboard.html', req.url))
+  return NextResponse.redirect(new URL('/dashboard', req.url))
 }

@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
   const { access_token, refresh_token } = await res.json()
 
-  const response = NextResponse.redirect(new URL('/dashboard.html', req.url))
+  const response = NextResponse.redirect(new URL('/dashboard', req.url))
   response.cookies.set('sb_access_token', access_token, {
     httpOnly: true, secure: true, sameSite: 'lax', maxAge: 3600, path: '/',
   })

@@ -2,7 +2,7 @@
   "name": "GST Dashboard",
   "short_name": "GST",
   "description": "Personal Growth, Finance & Portfolio Dashboard",
-  "start_url": "/dashboard.html",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#d12b2b",
   "theme_color": "#d12b2b",
@@ -19,19 +19,19 @@
     {
       "name": "GST",
       "short_name": "GST",
-      "url": "/legacy.html",
+      "url": "/gst",
       "description": "GST Tracking"
     },
     {
       "name": "Finance",
       "short_name": "Finance",
-      "url": "/finance.html",
+      "url": "/finance",
       "description": "Finance Tracker"
     },
     {
       "name": "Portfolio",
       "short_name": "Portfolio",
-      "url": "/portfolio.html",
+      "url": "/portfolio",
       "description": "Portfolio Tracker"
     }
   ]
