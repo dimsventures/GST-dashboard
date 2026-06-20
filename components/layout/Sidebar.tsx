@@ -3,14 +3,63 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
-type NavItem = { icon: string; label: string; href: string }
+type IconProps = { className?: string }
+
+function HomeIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M4 11.5L12 4l8 7.5" />
+      <path d="M6 10V20H18V10" />
+      <path d="M10 20v-5h4v5" />
+    </svg>
+  )
+}
+
+function DumbbellIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="2" y="8" width="5" height="8" rx="1.5" />
+      <rect x="17" y="8" width="5" height="8" rx="1.5" />
+      <line x1="7" y1="12" x2="17" y2="12" />
+    </svg>
+  )
+}
+
+function DollarIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <text x="12" y="16" textAnchor="middle" fontSize="11" fontWeight="700" stroke="none" fill="currentColor">$</text>
+    </svg>
+  )
+}
+
+function TrendUpIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <polyline points="3,17 9,11 13,15 21,6" />
+      <polyline points="15,6 21,6 21,12" />
+    </svg>
+  )
+}
+
+function UserIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20c0-3.5 3.1-6.5 7-6.5s7 3 7 6.5" />
+    </svg>
+  )
+}
+
+type NavItem = { Icon: (props: IconProps) => JSX.Element; label: string; href: string }
 
 const NAV: NavItem[] = [
-  { icon: '🏠', label: 'Dashboard', href: '/dashboard' },
-  { icon: '💪', label: 'GST', href: '/gst' },
-  { icon: '💵', label: 'Finance', href: '/finance' },
-  { icon: '📈', label: 'Portfolio', href: '/portfolio' },
-  { icon: '👤', label: 'Profil', href: '/profile' },
+  { Icon: HomeIcon, label: 'Dashboard', href: '/dashboard' },
+  { Icon: DumbbellIcon, label: 'GST', href: '/gst' },
+  { Icon: DollarIcon, label: 'Finance', href: '/finance' },
+  { Icon: TrendUpIcon, label: 'Portfolio', href: '/portfolio' },
+  { Icon: UserIcon, label: 'Profil', href: '/profile' },
 ]
 
 interface SidebarProps {
@@ -75,7 +124,9 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
                   : 'text-white/55 hover:text-white hover:bg-white/5',
               ].join(' ')}
             >
-              <span className="text-base w-5 text-center shrink-0">{item.icon}</span>
+              <span className="w-5 shrink-0 flex items-center justify-center">
+                <item.Icon className="w-[18px] h-[18px]" />
+              </span>
               {!collapsed && <span>{item.label}</span>}
             </a>
           )
