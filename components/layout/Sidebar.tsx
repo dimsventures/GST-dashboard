@@ -6,11 +6,11 @@ import { usePathname } from 'next/navigation'
 type NavItem = { icon: string; label: string; href: string }
 
 const NAV: NavItem[] = [
-  { icon: '⊞', label: 'Dashboard', href: '/dashboard' },
-  { icon: '◎', label: 'GST', href: '/gst' },
-  { icon: '◈', label: 'Finance', href: '/finance' },
-  { icon: '◉', label: 'Portfolio', href: '/portfolio' },
-  { icon: '◯', label: 'Profil', href: '/profile' },
+  { icon: '🏠', label: 'Dashboard', href: '/dashboard' },
+  { icon: '💪', label: 'GST', href: '/gst' },
+  { icon: '💵', label: 'Finance', href: '/finance' },
+  { icon: '📈', label: 'Portfolio', href: '/portfolio' },
+  { icon: '👤', label: 'Profil', href: '/profile' },
 ]
 
 interface SidebarProps {
@@ -40,7 +40,7 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
     <aside
       className={[
         'fixed top-0 bottom-0 left-0 z-[400]',
-        'flex flex-col bg-[#111111] border-r border-white/8',
+        'flex flex-col bg-[#0c1428] border-r border-white/8',
         'transition-[left,width] duration-[250ms] ease-in-out',
         collapsed ? 'md:w-[60px] md:overflow-hidden' : 'md:w-[200px]',
         'max-md:w-[200px]',
@@ -54,13 +54,13 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
         title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {collapsed
-          ? <span className="text-[#d12b2b] font-bold text-sm w-full text-center">G</span>
-          : <span className="text-sm font-bold text-white tracking-[.05em]">GST<em className="text-[#d12b2b] not-italic">.</em></span>
+          ? <span className="text-[#3e6df0] font-bold text-sm w-full text-center">G</span>
+          : <span className="text-sm font-bold text-white tracking-[.05em]">GST<em className="text-[#3e6df0] not-italic">.</em></span>
         }
       </div>
 
       {/* Nav */}
-      <nav className="py-2.5 flex-1">
+      <nav className="py-2.5 flex-1 px-2.5 space-y-1">
         {NAV.map((item) => {
           const isActive = pathname === item.href
           return (
@@ -68,11 +68,11 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
               key={item.href}
               href={item.href}
               className={[
-                'flex items-center gap-3 py-2.5 text-[13px] font-semibold tracking-[.03em] border-l-[3px] transition-all duration-150 no-underline',
-                collapsed ? 'justify-center px-0' : 'px-5',
+                'flex items-center gap-3 py-2.5 text-[13px] font-semibold tracking-[.03em] rounded-xl transition-all duration-150 no-underline',
+                collapsed ? 'justify-center px-0' : 'px-3.5',
                 isActive
-                  ? 'text-[#d12b2b] bg-[#d12b2b]/10 border-l-[#d12b2b]'
-                  : 'text-white/55 border-l-transparent hover:text-white hover:bg-white/5',
+                  ? 'text-white bg-[#3e6df0] shadow-[0_2px_10px_rgba(62,109,240,.35)]'
+                  : 'text-white/55 hover:text-white hover:bg-white/5',
               ].join(' ')}
             >
               <span className="text-base w-5 text-center shrink-0">{item.icon}</span>
