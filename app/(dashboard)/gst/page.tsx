@@ -386,16 +386,18 @@ function toggleRow(dstr: string) {
 // ── LESSONS ──
 function lockLesson() {
   const ta = gid<HTMLTextAreaElement>('lta'); const catInp = gid<HTMLInputElement>('lta-cat')
+  const dateInp = gid<HTMLInputElement>('lta-date')
   const text = (ta?.value || '').trim(); if (!text) return
   const cat = (catInp?.value || '').trim() || null
-  const today = todayStr()
+  const date = (dateInp?.value || '').trim() || todayStr()
   if (ta) ta.value = ''
   if (catInp) catInp.value = ''
-  api('/api/lesson-items', 'POST', { date: today, text, category: cat, ts: new Date().toISOString() }).then(item => {
+  api('/api/lesson-items', 'POST', { date, text, category: cat, ts: new Date().toISOString() }).then(item => {
     if (!item || item.error) return
-    const idx = lessons.findIndex(l => l.date === today)
+    const idx = lessons.findIndex(l => l.date === date)
     if (idx >= 0) lessons[idx].items.push(item)
-    else lessons.push({ date: today, items: [item] })
+    else lessons.push({ date, items: [item] })
+    lessons.sort((a, b) => a.date.localeCompare(b.date))
     updateLsnCatsList(); renderLessons(); renderChain(); renderStats()
   }).catch(console.error)
 }
@@ -613,13 +615,11 @@ function renderTodos() {
   else if (todoStatus === 'done') all = fil.filter(t => t.done)
   else { const pend = fil.filter(t => !t.done); const done = fil.filter(t => t.done); all = [...pend, ...done] }
   if (!all.length) { list.innerHTML = '<div class="empty-note">' + (todoStatus === 'done' ? 'Belum ada task selesai.' : todoStatus === 'todo' ? 'Semua task selesai. 🎉' : 'Kosong. Tambah task baru.') + '</div>'; return }
-  const catColors: Record<string, string> = Object.fromEntries(todoCategories.map(c => [c.name, c.color]))
   list.innerHTML = all.map(t => {
-    const col = catColors[t.cat] || 'var(--red)'
     return `<div class="titem${t.done ? ' done' : ''}" onclick="toggleTodo('${t.id}')">
       <div class="tcb"></div>
       <div class="ttxt">${t.text}</div>
-      ${t.cat ? `<div class="tcat" style="background:${col}18;color:${col};border-color:${col}44;">${t.cat}</div>` : ''}
+      ${t.cat ? `<div class="tcat">${t.cat}</div>` : ''}
       ${t.done ? `<div class="tdone-badge">✓ ${t.doneDate ? fmtShort(t.doneDate) : ''}</div>` : ''}
       <button class="tdel" onclick="event.stopPropagation();delTodo('${t.id}')">✕</button>
     </div>`
@@ -776,17 +776,12 @@ function renderCatBar() {
   let html = `<div class="cchip active" data-cat="Semua" onclick="filterCat(this)">Semua</div>`
   cats.forEach(c => {
     const isActive = todoCat === c.name
-    html += `<div class="cchip${isActive ? ' active' : ''}" data-cat="${c.name}" onclick="filterCat(this)" style="${isActive ? `background:${c.color};border-color:${c.color};` : `color:${c.color};border-color:${c.color}40;`}">${c.name}<span class="cchip-edit" onclick="event.stopPropagation();openEditCatModal('${c.id}')">✎</span></div>`
+    html += `<div class="cchip${isActive ? ' active' : ''}" data-cat="${c.name}" onclick="filterCat(this)">${c.name}<span class="cchip-edit" onclick="event.stopPropagation();openEditCatModal('${c.id}')">✎</span></div>`
   })
   html += `<button class="cchip-add" onclick="openAddCatModal()" title="Tambah kategori">+</button>`
   bar.innerHTML = html
   bar.querySelectorAll<HTMLElement>('.cchip').forEach(el => {
     el.classList.toggle('active', el.dataset.cat === todoCat)
-    if (el.dataset.cat === todoCat) {
-      const c = cats.find(x => x.name === todoCat)
-      if (c) { el.style.background = c.color; el.style.borderColor = c.color; el.style.color = '#fff' }
-      else { el.style.background = ''; el.style.borderColor = ''; el.style.color = '' }
-    }
   })
 }
 
@@ -1462,7 +1457,7 @@ export default function GstPage() {
           --gold:#f0b429;--gold-bg:rgba(240,180,41,.12);--gold-border:rgba(240,180,41,.3);
           --blue:#60a5fa;--blue-bg:rgba(96,165,250,.12);
           --r:10px;--r2:7px;
-          --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);
+          --s1:0 1px 3px rgba(0,0,0,.35),0 4px 16px rgba(62,109,240,.10);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);
         }
         .cnav-btn,.now-btn,.gnav-btn,.gnav-now,.todo-addbtn,.goal-addbtn,.cchip,.sbtn,.rchip,.lock-btn,.btn-cancel,.btn-save,.scopt,.vtab{transition:all .18s cubic-bezier(.4,0,.2,1);}
         .cnav-btn:active,.now-btn:active,.gnav-btn:active,.gnav-now:active,.todo-addbtn:active,.goal-addbtn:active{transform:scale(.92);}
@@ -1475,7 +1470,7 @@ export default function GstPage() {
         .tag:hover{transform:scale(1.05);}
 
 
-        .gst-app{display:grid;grid-template-columns:310px 1fr 290px;height:calc(100vh - 96px);overflow:hidden;}
+        .gst-app{display:grid;grid-template-columns:310px 1fr 290px;height:calc(100vh - 52px);overflow:hidden;}
         .lp{background:var(--bg);display:flex;flex-direction:column;overflow:hidden;min-height:0;padding:16px;gap:16px;}
 
         .cal-wrap{padding:14px 16px;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--s1);}
@@ -1547,18 +1542,12 @@ export default function GstPage() {
         .cday.haslesson::after{background:var(--gold)!important;}
         .cday.todaycal{background:var(--red);color:#fff;font-weight:700;}
         .cday.todaycal::after{background:#fff!important;}
-        .cday.selweek{background:var(--blk);color:#fff;}
+        .cday.selweek{background:rgba(62,109,240,.30);color:#fff;}
         .cday.selweek::after{background:#fff!important;}
 
-        .stats-wrap{padding:18px 20px;flex-shrink:0;background:var(--red);border:1px solid var(--red2);border-radius:var(--r);box-shadow:0 6px 20px rgba(62,109,240,.25);}
-        .stats-wrap .sec-lbl{color:#fff;font-size:11px;font-weight:700;letter-spacing:.12em;}
-        .stats-wrap .sbox{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);}
-        .stats-wrap .sbox:hover{border-color:rgba(255,255,255,.35);transform:translateY(-1px);}
-        .stats-wrap .sval{color:#fff;}
-        .stats-wrap .sval.red{color:#fff;}
-        .stats-wrap .sval.gold{color:#fde68a;}
-        .stats-wrap .sval.left-val{color:#fecaca;}
-        .stats-wrap .slbl{color:rgba(255,255,255,.7);}
+        .stats-wrap{padding:18px 20px;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--s1);}
+        .stats-wrap .sec-lbl{color:var(--text);font-size:11px;font-weight:700;letter-spacing:.12em;}
+        .sval.left-val{color:var(--text);}
         .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
         .sbox{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:9px 10px 7px;}
         .sval{font-size:19px;font-weight:700;color:var(--text);line-height:1;}
@@ -1657,12 +1646,14 @@ export default function GstPage() {
         .ph{padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px;}
         .ph-title{font-size:12px;font-weight:700;color:var(--text);}
         .lsn-input-area{padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
-        .lsn-ta{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 9px;font-size:11px;color:var(--text);resize:none;min-height:58px;outline:none;line-height:1.5;transition:border-color .15s;}
+        .lsn-ta{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 9px;font-size:11.5px;color:#fff;resize:none;min-height:58px;outline:none;line-height:1.5;transition:border-color .15s;}
         .lsn-ta:focus{border-color:var(--gold);}
-        .lsn-ta::placeholder{color:var(--text4);}
-        .lsn-cat-inp{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:6px 9px;font-size:10px;color:var(--text);outline:none;transition:border-color .15s;margin-top:5px;}
+        .lsn-ta::placeholder{color:var(--text3);}
+        .lsn-cat-inp{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:6px 9px;font-size:10.5px;color:#fff;outline:none;transition:border-color .15s;margin-top:5px;}
         .lsn-cat-inp:focus{border-color:var(--gold);}
-        .lsn-cat-inp::placeholder{color:var(--text4);}
+        .lsn-cat-inp::placeholder{color:var(--text3);}
+        .lsn-date-inp{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:6px 9px;font-size:10.5px;color:var(--text2);outline:none;transition:border-color .15s;margin-top:5px;cursor:pointer;font-family:inherit;color-scheme:dark;}
+        .lsn-date-inp:focus{border-color:var(--gold);}
         .lsn-cat-tag{display:inline-flex;align-items:center;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:10px;background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border);margin-right:4px;}
         .lock-btn{margin-top:6px;width:100%;background:var(--gold-bg);border:1px solid var(--gold-border);color:var(--gold);border-radius:var(--r2);padding:6px;font-size:10px;font-weight:600;letter-spacing:.02em;cursor:pointer;}
         .lock-btn:hover{filter:brightness(.9);}
@@ -1679,7 +1670,7 @@ export default function GstPage() {
         .mbtn .mct{font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;background:var(--bg);color:var(--text3);}
         .mbtn.active .mct{background:rgba(255,255,255,.08);}
         .cat-bar{padding:6px 16px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0;align-items:center;}
-        .cchip{font-size:9px;font-weight:600;padding:3px 9px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--bg);color:var(--text2);letter-spacing:.02em;}
+        .cchip{font-size:9px;font-weight:600;padding:3px 9px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--bg);color:var(--text);letter-spacing:.02em;}
         .cchip.active{background:var(--red);color:#fff;border-color:var(--red);}
         .cchip:not(.active):hover{border-color:var(--red-border);color:var(--red);}
         .cchip-add{font-size:13px;font-weight:400;padding:1px 7px;border-radius:20px;border:1px dashed var(--border2);cursor:pointer;background:none;color:var(--text3);line-height:1.5;}
@@ -1694,11 +1685,11 @@ export default function GstPage() {
         .sbtn .sct{font-size:9px;font-weight:700;background:var(--bg);color:var(--text2);padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;}
         .sdot-st{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
         .sdot-red{background:var(--red);box-shadow:0 0 0 2px rgba(209,43,43,.15);}
-        .sdot-green{background:var(--green);box-shadow:0 0 0 2px rgba(34,197,94,.15);}
+        .sdot-green{background:var(--red);box-shadow:0 0 0 2px rgba(62,109,240,.15);}
         .sbtn-todo.active{background:var(--red);border-color:var(--red);color:#fff;}
         .sbtn-todo.active .sct{background:rgba(255,255,255,.25);color:#fff;}
         .sbtn-todo.active .sdot-red{background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.3);}
-        .sbtn-done.active{background:var(--green);border-color:var(--green);color:#fff;}
+        .sbtn-done.active{background:var(--red);border-color:var(--red);color:#fff;}
         .sbtn-done.active .sct{background:rgba(255,255,255,.25);color:#fff;}
         .sbtn-done.active .sdot-green{background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.3);}
         .sbtn:not(.active):hover{border-color:var(--text2);}
@@ -1713,7 +1704,7 @@ export default function GstPage() {
         .wish-compact-inp{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:11px;color:var(--text);outline:none;transition:border-color .15s;}
         .wish-compact-inp:focus{border-color:var(--red);}
         .wish-compact-inp::placeholder{color:var(--text4);}
-        .wish-compact-btn{background:var(--blk);color:#fff;border:none;border-radius:var(--r2);padding:7px 14px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;}
+        .wish-compact-btn{background:var(--red);color:#fff;border:none;border-radius:var(--r2);padding:7px 14px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;}
         .wish-compact-btn:hover{filter:brightness(.9);}
         .wish-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--r2);border:1px solid var(--border);background:var(--white);margin-bottom:8px;}
         .wish-item.wish-done{background:#fff5f5;border-color:#fecaca;opacity:.8;}
@@ -1727,18 +1718,18 @@ export default function GstPage() {
         .wish-meta{font-size:10px;color:var(--red);margin-top:4px;line-height:1.5;font-style:italic;}
         .wish-del{background:none;border:none;color:var(--text4);cursor:pointer;font-size:12px;padding:2px 4px;flex-shrink:0;}
         .wish-del:hover{color:var(--red);}
-        .todo-list{overflow-y:auto;padding:8px 14px;flex:1;display:flex;flex-direction:column;gap:5px;}
-        .titem{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);cursor:pointer;}
+        .todo-list{overflow-y:auto;padding:10px 14px;flex:1;display:flex;flex-direction:column;gap:8px;}
+        .titem{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);cursor:pointer;}
         .titem:hover{border-color:var(--red-border);background:var(--red-bg);}
-        .titem.done{opacity:.5;background:var(--green-bg);border-color:var(--green-border);}
-        .titem.done:hover{background:var(--green-bg);border-color:var(--green-border);}
-        .tcb{width:15px;height:15px;border:2px solid var(--border2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;margin-top:1px;}
-        .titem.done .tcb{background:var(--green);border-color:var(--green);}
+        .titem.done{opacity:.55;background:var(--red-bg);border-color:var(--red-border);}
+        .titem.done:hover{background:var(--red-bg);border-color:var(--red-border);}
+        .tcb{width:15px;height:15px;border:2px solid var(--red);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--red-bg);margin-top:1px;}
+        .titem.done .tcb{background:var(--red);border-color:var(--red);}
         .titem.done .tcb::after{content:'✓';color:#fff;font-size:9px;font-weight:700;}
         .ttxt{font-size:11px;color:var(--text);line-height:1.5;flex:1;font-weight:400;}
         .titem.done .ttxt{text-decoration:line-through;color:var(--text3);}
-        .tcat{font-size:8px;padding:2px 6px;border-radius:10px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);white-space:nowrap;align-self:flex-start;font-weight:500;}
-        .tdone-badge{font-size:8px;padding:2px 6px;border-radius:10px;background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);white-space:nowrap;align-self:flex-start;}
+        .tcat{font-size:8px;padding:2px 6px;border-radius:10px;background:rgba(255,255,255,.05);color:var(--text2);border:1px solid var(--border);white-space:nowrap;align-self:flex-start;font-weight:500;}
+        .tdone-badge{font-size:8px;padding:2px 6px;border-radius:10px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);white-space:nowrap;align-self:flex-start;}
         .tdel{background:none;border:none;color:var(--text4);cursor:pointer;font-size:11px;padding:1px 3px;flex-shrink:0;}
         .tdel:hover{color:var(--red);}
 
@@ -1779,7 +1770,7 @@ export default function GstPage() {
         .btn-save:disabled{opacity:.4;cursor:not-allowed;}
 
         .act-input-row{display:flex;gap:6px;margin-bottom:6px;}
-        .act-add-btn{background:var(--blk);color:#fff;border:none;border-radius:var(--r2);padding:0 14px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+        .act-add-btn{background:var(--red);color:#fff;border:none;border-radius:var(--r2);padding:0 14px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;}
         .act-add-btn:hover{filter:brightness(.9);}
         .act-add-btn:disabled{background:var(--border2);cursor:not-allowed;}
         .act-list{margin-bottom:6px;display:flex;flex-direction:column;gap:3px;}
@@ -1975,7 +1966,8 @@ export default function GstPage() {
               <textarea className="lsn-ta" id="lta" placeholder="Tulis insight atau pelajaran hari ini..."></textarea>
               <input type="text" className="lsn-cat-inp" id="lta-cat" placeholder="# Kategori? (AI, Bisnis, Coding...)" list="lsn-cats-list" autoComplete="off" onKeyDown={e => { if (e.key === 'Enter') lockLesson() }} />
               <datalist id="lsn-cats-list"></datalist>
-              <button className="lock-btn" onClick={lockLesson} style={{ color: 'rgb(76,188,69)', background: 'rgb(240,253,244)', borderColor: 'rgb(68,182,61)' }}>Send to my mind</button>
+              <input type="date" className="lsn-date-inp" id="lta-date" defaultValue={todayStr()} title="Tanggal pelajaran (bisa backdate)" />
+              <button className="lock-btn" onClick={lockLesson} style={{ color: 'var(--red)', background: 'var(--red-bg)', borderColor: 'var(--red-border)' }}>Send to my mind</button>
             </div>
             <div className="lsn-list" id="lsn-list" style={{ display: 'none' }}></div>
           </div>
@@ -1985,8 +1977,8 @@ export default function GstPage() {
               <div className="ph-title">Get Shit Things</div>
             </div>
             <div className="mode-bar">
-              <button className="mbtn mbtn-doing active" id="mbtn-doing" onClick={() => filterMode('doing')}>🔨 Doing <span className="mct" id="mct-doing">0</span></button>
-              <button className="mbtn mbtn-learning" id="mbtn-learning" onClick={() => filterMode('learning')}>📖 Learning <span className="mct" id="mct-learning">0</span></button>
+              <button className="mbtn mbtn-doing active" id="mbtn-doing" onClick={() => filterMode('doing')}>Doing <span className="mct" id="mct-doing">0</span></button>
+              <button className="mbtn mbtn-learning" id="mbtn-learning" onClick={() => filterMode('learning')}>Learning <span className="mct" id="mct-learning">0</span></button>
             </div>
             <div className="status-bar">
               <button className="sbtn sbtn-todo active" data-status="todo" onClick={e => filterStatus(e.currentTarget)}>
@@ -2167,7 +2159,7 @@ export default function GstPage() {
           </div>
           <div className="mbody" id="mo-body"></div>
           <div className="mfooter">
-            <button className="btn-save" onClick={closeModal} style={{ background: 'var(--blk)' }}>Selesai</button>
+            <button className="btn-save" onClick={closeModal}>Selesai</button>
           </div>
         </div>
       </div>
