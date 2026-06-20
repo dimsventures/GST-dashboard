@@ -458,11 +458,11 @@ function updateCatHint(val: string) {
   const detMode = guessMode(val)
   const detCat = guessCatForMode(val, detMode)
   const actCat = getActCats().find((a: Any) => a.key === (detCat?.points_to || 'personal'))
-  const modeLabel = detMode === 'learning' ? '📖 Learning' : '🔨 Doing'
+  const modeLabel = detMode === 'learning' ? 'Learning' : 'Doing'
   const catLabel = detCat ? detCat.name : '—'
   const catColor = detCat ? detCat.color : '#9ca3af'
   const ptLabel = actCat ? actCat.label : 'Personal Wish'
-  hint.innerHTML = `→ <span style="font-weight:700;color:${detMode === 'learning' ? '#8b5cf6' : '#ef4444'}">${modeLabel}</span> · <span style="background:${catColor}22;color:${catColor};font-weight:700;padding:1px 6px;border-radius:8px;font-size:9px;">${catLabel}</span> → <span style="font-size:9px;color:var(--text4)">poin ke ${ptLabel}</span>`
+  hint.innerHTML = `→ <span style="font-weight:700;color:var(--red)">${modeLabel}</span> · <span style="background:${catColor}22;color:${catColor};font-weight:700;padding:1px 6px;border-radius:8px;font-size:9px;">${catLabel}</span> → <span style="font-size:9px;color:var(--text4)">poin ke ${ptLabel}</span>`
   hint.classList.add('show')
 }
 
@@ -1143,12 +1143,12 @@ async function renderBarChart() {
     type: 'bar',
     data: {
       labels, datasets: [
-        { label: 'Religion', data: data.map(e => e.religion), backgroundColor: 'rgba(96,165,250,0.85)', stack: 's' },
-        { label: 'Working Stage', data: data.map(e => e.work), backgroundColor: 'rgba(248,113,113,0.85)', stack: 's' },
-        { label: 'Personal Wish', data: data.map(e => e.personal), backgroundColor: 'rgba(251,191,36,0.85)', stack: 's' },
-        { label: 'Exercise', data: data.map(e => e.exercise), backgroundColor: 'rgba(74,222,128,0.85)', stack: 's' },
-        { label: 'Habit', data: data.map(e => e.habit), backgroundColor: 'rgba(167,139,250,0.85)', stack: 's' },
-        { label: 'Humanity', data: data.map(e => e.humanity), backgroundColor: 'rgba(45,212,191,0.85)', stack: 's' },
+        { label: 'Religion', data: data.map(e => e.religion), backgroundColor: 'rgba(79,124,240,0.85)', stack: 's' },
+        { label: 'Working Stage', data: data.map(e => e.work), backgroundColor: 'rgba(240,169,62,0.85)', stack: 's' },
+        { label: 'Personal Wish', data: data.map(e => e.personal), backgroundColor: 'rgba(232,121,168,0.85)', stack: 's' },
+        { label: 'Exercise', data: data.map(e => e.exercise), backgroundColor: 'rgba(63,201,138,0.85)', stack: 's' },
+        { label: 'Habit', data: data.map(e => e.habit), backgroundColor: 'rgba(155,110,240,0.85)', stack: 's' },
+        { label: 'Humanity', data: data.map(e => e.humanity), backgroundColor: 'rgba(52,194,212,0.85)', stack: 's' },
       ],
     },
     options: {
@@ -1178,12 +1178,12 @@ async function renderLineChart() {
     type: 'line',
     data: {
       labels, datasets: [
-        { label: 'Religion', data: rolling(data, 'religion'), borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.06)', ...lineOpts },
-        { label: 'Working Stage', data: rolling(data, 'work'), borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.06)', ...lineOpts },
-        { label: 'Personal Wish', data: rolling(data, 'personal'), borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.06)', ...lineOpts },
-        { label: 'Exercise', data: rolling(data, 'exercise'), borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.06)', ...lineOpts },
-        { label: 'Habit', data: rolling(data, 'habit'), borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.06)', ...lineOpts },
-        { label: 'Humanity', data: rolling(data, 'humanity'), borderColor: '#2dd4bf', backgroundColor: 'rgba(45,212,191,0.06)', ...lineOpts },
+        { label: 'Religion', data: rolling(data, 'religion'), borderColor: '#4f7cf0', backgroundColor: 'rgba(79,124,240,0.06)', ...lineOpts },
+        { label: 'Working Stage', data: rolling(data, 'work'), borderColor: '#f0a93e', backgroundColor: 'rgba(240,169,62,0.06)', ...lineOpts },
+        { label: 'Personal Wish', data: rolling(data, 'personal'), borderColor: '#e879a8', backgroundColor: 'rgba(232,121,168,0.06)', ...lineOpts },
+        { label: 'Exercise', data: rolling(data, 'exercise'), borderColor: '#3fc98a', backgroundColor: 'rgba(63,201,138,0.06)', ...lineOpts },
+        { label: 'Habit', data: rolling(data, 'habit'), borderColor: '#9b6ef0', backgroundColor: 'rgba(155,110,240,0.06)', ...lineOpts },
+        { label: 'Humanity', data: rolling(data, 'humanity'), borderColor: '#34c2d4', backgroundColor: 'rgba(52,194,212,0.06)', ...lineOpts },
       ],
     },
     options: {
@@ -1517,7 +1517,7 @@ export default function GstPage() {
           --gold:#f0b429;--gold-bg:rgba(240,180,41,.12);--gold-border:rgba(240,180,41,.3);
           --blue:#60a5fa;--blue-bg:rgba(96,165,250,.12);
           --r:10px;--r2:7px;
-          --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);--sb:0 1px 3px rgba(0,0,0,.35),0 6px 18px rgba(62,109,240,.13);
+          --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);--sb:0 2px 8px rgba(0,0,0,.30),0 3px 11px rgba(62,109,240,.22);
         }
         .cnav-btn,.now-btn,.gnav-btn,.gnav-now,.todo-addbtn,.goal-addbtn,.cchip,.sbtn,.rchip,.lock-btn,.btn-cancel,.btn-save,.scopt,.vtab{transition:all .18s cubic-bezier(.4,0,.2,1);}
         .cnav-btn:active,.now-btn:active,.gnav-btn:active,.gnav-now:active,.todo-addbtn:active,.goal-addbtn:active{transform:scale(.92);}
@@ -1530,10 +1530,10 @@ export default function GstPage() {
         .tag:hover{transform:scale(1.05);}
 
 
-        .gst-app{display:grid;grid-template-columns:310px 1fr 290px;height:calc(100vh - 52px);overflow:hidden;}
+        .gst-app{display:grid;grid-template-columns:342px 1fr 318px;height:calc(100vh - 52px);overflow:hidden;}
         .lp{background:var(--bg);display:flex;flex-direction:column;overflow:hidden;min-height:0;padding:16px;gap:16px;}
 
-        .cal-wrap{padding:14px 16px;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sb);}
+        .cal-wrap{padding:12px 14px;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sb);}
         .sec-lbl{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
         .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
         .cal-mnth{font-size:12px;font-weight:700;color:var(--text);}
@@ -1605,7 +1605,7 @@ export default function GstPage() {
         .cday.selweek{background:rgba(62,109,240,.30);color:#fff;}
         .cday.selweek::after{background:#fff!important;}
 
-        .stats-wrap{padding:18px 20px;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sb);}
+        .stats-wrap{padding:14px 16px;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sb);}
         .stats-wrap .sec-lbl{color:var(--text);font-size:11px;font-weight:700;letter-spacing:.12em;}
         .sval.left-val{color:var(--text);}
         .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
@@ -1622,7 +1622,7 @@ export default function GstPage() {
         .now-btn:hover{border-color:var(--red);color:var(--red);}
 
         #center-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--s1);margin:12px 0;}
-        .cp{overflow-y:auto;background:var(--white);padding:18px 22px;flex:1;}
+        .cp{overflow-y:auto;background:var(--white);padding:14px 18px;flex:1;}
         .cp::-webkit-scrollbar{width:4px;}
         .cp::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
@@ -1703,9 +1703,9 @@ export default function GstPage() {
         .rp{background:var(--bg);display:flex;flex-direction:column;overflow:hidden;padding:16px;gap:16px;}
 
         .lsn-sec{flex:0 0 auto;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);overflow:hidden;}
-        .ph{padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px;}
+        .ph{padding:11px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px;}
         .ph-title{font-size:12px;font-weight:700;color:var(--text);}
-        .lsn-input-area{padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+        .lsn-input-area{padding:11px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
         .lsn-ta{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 9px;font-size:11.5px;color:#fff;resize:none;min-height:58px;outline:none;line-height:1.5;transition:border-color .15s;}
         .lsn-ta:focus{border-color:var(--gold);}
         .lsn-ta::placeholder{color:var(--text3);}
@@ -1737,8 +1737,8 @@ export default function GstPage() {
         .mbtn{flex:1;padding:8px 10px;border:none;background:none;font-size:10px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;display:flex;align-items:center;justify-content:center;gap:5px;}
         .mbtn:hover{color:var(--text);background:var(--bg);}
         .mbtn.active{color:var(--red);border-bottom-color:var(--red);}
-        .mbtn-doing.active{color:#ef4444;border-bottom-color:#ef4444;}
-        .mbtn-learning.active{color:#8b5cf6;border-bottom-color:#8b5cf6;}
+        .mbtn-doing.active{color:var(--red);border-bottom-color:var(--red);}
+        .mbtn-learning.active{color:var(--red);border-bottom-color:var(--red);}
         .mbtn .mct{font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;background:var(--bg);color:var(--text3);}
         .mbtn.active .mct{background:rgba(255,255,255,.08);}
         .cat-bar{padding:6px 16px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0;align-items:center;}
@@ -1765,13 +1765,13 @@ export default function GstPage() {
         .sbtn-done.active .sct{background:rgba(255,255,255,.25);color:#fff;}
         .sbtn-done.active .sdot-green{background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.3);}
         .sbtn:not(.active):hover{border-color:var(--text2);}
-        .todo-add{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-shrink:0;}
+        .todo-add{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-shrink:0;}
         .todo-inp{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:11px;color:var(--text);outline:none;transition:border-color .15s;}
         .todo-inp:focus{border-color:var(--red);}
         .todo-inp::placeholder{color:var(--text4);}
         .todo-addbtn{background:var(--red);color:#fff;border:none;border-radius:var(--r2);width:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:300;flex-shrink:0;}
         .todo-addbtn:hover{background:var(--red2);}
-        .wish-compact-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;flex-shrink:0;box-shadow:var(--sb);}
+        .wish-compact-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;flex-shrink:0;box-shadow:var(--sb);}
         .wish-compact-row{display:flex;gap:6px;}
         .wish-compact-inp{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:11.5px;color:#fff;outline:none;transition:border-color .15s;}
         .wish-compact-inp:focus{border-color:var(--red);}
@@ -1984,12 +1984,12 @@ export default function GstPage() {
               <div className="chart-title">Your Productivity Graph</div>
               <div className="chart-sub">STACKED BAR — DAILY SCORE DISTRIBUTION</div>
               <div className="chart-legend">
-                <div className="cl-item" onClick={e => toggleDataset('bar', 0, e.currentTarget)}><div className="cl-dot" style={{ background: '#60a5fa' }}></div>Religion</div>
-                <div className="cl-item" onClick={e => toggleDataset('bar', 1, e.currentTarget)}><div className="cl-dot" style={{ background: '#f87171' }}></div>Working Stage</div>
-                <div className="cl-item" onClick={e => toggleDataset('bar', 2, e.currentTarget)}><div className="cl-dot" style={{ background: '#fbbf24' }}></div>Personal Wish</div>
-                <div className="cl-item" onClick={e => toggleDataset('bar', 3, e.currentTarget)}><div className="cl-dot" style={{ background: '#4ade80' }}></div>Exercise</div>
-                <div className="cl-item" onClick={e => toggleDataset('bar', 4, e.currentTarget)}><div className="cl-dot" style={{ background: '#a78bfa' }}></div>Habit</div>
-                <div className="cl-item" onClick={e => toggleDataset('bar', 5, e.currentTarget)}><div className="cl-dot" style={{ background: '#2dd4bf' }}></div>Humanity</div>
+                <div className="cl-item" onClick={e => toggleDataset('bar', 0, e.currentTarget)}><div className="cl-dot" style={{ background: '#4f7cf0' }}></div>Religion</div>
+                <div className="cl-item" onClick={e => toggleDataset('bar', 1, e.currentTarget)}><div className="cl-dot" style={{ background: '#f0a93e' }}></div>Working Stage</div>
+                <div className="cl-item" onClick={e => toggleDataset('bar', 2, e.currentTarget)}><div className="cl-dot" style={{ background: '#e879a8' }}></div>Personal Wish</div>
+                <div className="cl-item" onClick={e => toggleDataset('bar', 3, e.currentTarget)}><div className="cl-dot" style={{ background: '#3fc98a' }}></div>Exercise</div>
+                <div className="cl-item" onClick={e => toggleDataset('bar', 4, e.currentTarget)}><div className="cl-dot" style={{ background: '#9b6ef0' }}></div>Habit</div>
+                <div className="cl-item" onClick={e => toggleDataset('bar', 5, e.currentTarget)}><div className="cl-dot" style={{ background: '#34c2d4' }}></div>Humanity</div>
               </div>
               <div className="chart-wrap"><canvas id="chart-bar"></canvas></div>
             </div>
@@ -2015,12 +2015,12 @@ export default function GstPage() {
               <div className="chart-title">Trend Line — Semua Kategori</div>
               <div className="chart-sub">7-DAY ROLLING AVERAGE PER KATEGORI</div>
               <div className="chart-legend">
-                <div className="cl-item" onClick={e => toggleDataset('line', 0, e.currentTarget)}><div className="cl-dot" style={{ background: '#60a5fa' }}></div>Religion</div>
-                <div className="cl-item" onClick={e => toggleDataset('line', 1, e.currentTarget)}><div className="cl-dot" style={{ background: '#f87171' }}></div>Working Stage</div>
-                <div className="cl-item" onClick={e => toggleDataset('line', 2, e.currentTarget)}><div className="cl-dot" style={{ background: '#fbbf24' }}></div>Personal Wish</div>
-                <div className="cl-item" onClick={e => toggleDataset('line', 3, e.currentTarget)}><div className="cl-dot" style={{ background: '#4ade80' }}></div>Exercise</div>
-                <div className="cl-item" onClick={e => toggleDataset('line', 4, e.currentTarget)}><div className="cl-dot" style={{ background: '#a78bfa' }}></div>Habit</div>
-                <div className="cl-item" onClick={e => toggleDataset('line', 5, e.currentTarget)}><div className="cl-dot" style={{ background: '#2dd4bf' }}></div>Humanity</div>
+                <div className="cl-item" onClick={e => toggleDataset('line', 0, e.currentTarget)}><div className="cl-dot" style={{ background: '#4f7cf0' }}></div>Religion</div>
+                <div className="cl-item" onClick={e => toggleDataset('line', 1, e.currentTarget)}><div className="cl-dot" style={{ background: '#f0a93e' }}></div>Working Stage</div>
+                <div className="cl-item" onClick={e => toggleDataset('line', 2, e.currentTarget)}><div className="cl-dot" style={{ background: '#e879a8' }}></div>Personal Wish</div>
+                <div className="cl-item" onClick={e => toggleDataset('line', 3, e.currentTarget)}><div className="cl-dot" style={{ background: '#3fc98a' }}></div>Exercise</div>
+                <div className="cl-item" onClick={e => toggleDataset('line', 4, e.currentTarget)}><div className="cl-dot" style={{ background: '#9b6ef0' }}></div>Habit</div>
+                <div className="cl-item" onClick={e => toggleDataset('line', 5, e.currentTarget)}><div className="cl-dot" style={{ background: '#34c2d4' }}></div>Humanity</div>
               </div>
               <div className="chart-wrap"><canvas id="chart-line"></canvas></div>
             </div>
