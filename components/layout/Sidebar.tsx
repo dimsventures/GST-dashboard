@@ -43,6 +43,18 @@ function TrendUpIcon({ className }: IconProps) {
   )
 }
 
+function GraphIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="6" cy="7" r="2.2" />
+      <circle cx="18" cy="6" r="2.2" />
+      <circle cx="17" cy="17" r="2.2" />
+      <circle cx="8" cy="16" r="2.2" />
+      <path d="M8 8.4l7.8 7M7.6 8.2L7 13.9M9.9 15.4L16 7.3M9.9 16.6l5 .6" />
+    </svg>
+  )
+}
+
 function UserIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -59,6 +71,7 @@ const NAV: NavItem[] = [
   { Icon: DumbbellIcon, label: 'GST', href: '/gst' },
   { Icon: DollarIcon, label: 'Finance', href: '/finance' },
   { Icon: TrendUpIcon, label: 'Portfolio', href: '/portfolio' },
+  { Icon: GraphIcon, label: 'Peta', href: '/garden' },
   { Icon: UserIcon, label: 'Profil', href: '/profile' },
 ]
 
