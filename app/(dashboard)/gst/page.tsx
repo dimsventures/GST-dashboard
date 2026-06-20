@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -386,10 +386,9 @@ function toggleRow(dstr: string) {
 // ── LESSONS ──
 function lockLesson() {
   const ta = gid<HTMLTextAreaElement>('lta'); const catInp = gid<HTMLInputElement>('lta-cat')
-  const dateInp = gid<HTMLInputElement>('lta-date')
   const text = (ta?.value || '').trim(); if (!text) return
   const cat = (catInp?.value || '').trim() || null
-  const date = (dateInp?.value || '').trim() || todayStr()
+  const date = lessonDate || todayStr()
   if (ta) ta.value = ''
   if (catInp) catInp.value = ''
   api('/api/lesson-items', 'POST', { date, text, category: cat, ts: new Date().toISOString() }).then(item => {
@@ -1404,6 +1403,67 @@ function closeGoalsModal() { gid('gmo')?.classList.remove('open') }
 
 function closeAchieveWishModal() { gid('achieve-wish-modal')?.classList.remove('open') }
 
+// ── Custom date picker buat lesson (popup native browser gak bisa di-tema) ──
+let lessonDate = ''
+const LDP_MN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+const LDP_DN = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
+function LessonDatePicker() {
+  const today = todayStr()
+  const [value, setValue] = useState(today)
+  const [open, setOpen] = useState(false)
+  const [view, setView] = useState(today.slice(0, 7))
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => { lessonDate = value }, [value])
+  useEffect(() => {
+    if (!open) return
+    const h = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest('.lsn-dp')) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [open])
+
+  function openPop() {
+    const r = btnRef.current?.getBoundingClientRect()
+    if (r) setPos({ top: r.bottom + 6, left: Math.min(r.left, window.innerWidth - 248) })
+    setView(value.slice(0, 7))
+    setOpen(true)
+  }
+
+  const [vy, vm] = view.split('-').map(Number)
+  const startDow = (new Date(vy, vm - 1, 1).getDay() + 6) % 7
+  const daysInMonth = new Date(vy, vm, 0).getDate()
+  const cells: (string | null)[] = []
+  for (let i = 0; i < startDow; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(`${vy}-${String(vm).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
+  function nav(delta: number) { const dt = new Date(vy, vm - 1 + delta, 1); setView(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`) }
+  function label(v: string) { const [y, m, d] = v.split('-'); return `${d}/${m}/${y}` }
+
+  return (
+    <div className="lsn-dp" style={{ position: 'relative', marginTop: 5 }}>
+      <button type="button" ref={btnRef} className="lsn-date-btn" onClick={() => (open ? setOpen(false) : openPop())}>
+        <span>{label(value)}</span>
+        <span className="lsn-date-ic">📅</span>
+      </button>
+      {open && pos && (
+        <div className="lsn-date-pop" style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 600 }}>
+          <div className="ldp-nav">
+            <button type="button" onClick={() => nav(-1)}>‹</button>
+            <span>{LDP_MN[vm - 1]} {vy}</span>
+            <button type="button" onClick={() => nav(1)}>›</button>
+          </div>
+          <div className="ldp-grid">
+            {LDP_DN.map(n => <div key={n} className="ldp-dn">{n}</div>)}
+            {cells.map((c, i) => c === null
+              ? <div key={'e' + i} />
+              : <div key={c} className={'ldp-day' + (c === value ? ' sel' : '') + (c === today ? ' today' : '')} onClick={() => { setValue(c); setOpen(false) }}>{Number(c.split('-')[2])}</div>)}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const WINDOW_FNS = [
   'openEditActCatModal', 'addActivity', 'delActivity', 'openAddActCatModal',
   'selectWishCat', 'selectGoalCat', 'selectLearningCat', 'selectDoingCat',
@@ -1457,7 +1517,7 @@ export default function GstPage() {
           --gold:#f0b429;--gold-bg:rgba(240,180,41,.12);--gold-border:rgba(240,180,41,.3);
           --blue:#60a5fa;--blue-bg:rgba(96,165,250,.12);
           --r:10px;--r2:7px;
-          --s1:0 1px 3px rgba(0,0,0,.35),0 4px 16px rgba(62,109,240,.10);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);
+          --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);--sb:0 1px 3px rgba(0,0,0,.35),0 6px 18px rgba(62,109,240,.13);
         }
         .cnav-btn,.now-btn,.gnav-btn,.gnav-now,.todo-addbtn,.goal-addbtn,.cchip,.sbtn,.rchip,.lock-btn,.btn-cancel,.btn-save,.scopt,.vtab{transition:all .18s cubic-bezier(.4,0,.2,1);}
         .cnav-btn:active,.now-btn:active,.gnav-btn:active,.gnav-now:active,.todo-addbtn:active,.goal-addbtn:active{transform:scale(.92);}
@@ -1473,7 +1533,7 @@ export default function GstPage() {
         .gst-app{display:grid;grid-template-columns:310px 1fr 290px;height:calc(100vh - 52px);overflow:hidden;}
         .lp{background:var(--bg);display:flex;flex-direction:column;overflow:hidden;min-height:0;padding:16px;gap:16px;}
 
-        .cal-wrap{padding:14px 16px;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--s1);}
+        .cal-wrap{padding:14px 16px;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sb);}
         .sec-lbl{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
         .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
         .cal-mnth{font-size:12px;font-weight:700;color:var(--text);}
@@ -1484,7 +1544,7 @@ export default function GstPage() {
         .target-quote:hover{color:var(--red);}
         .target-quote .tq-by{display:block;font-style:normal;font-size:9px;letter-spacing:.06em;color:var(--text3);margin-top:3px;text-transform:uppercase;}
         .target-quote .tq-by:empty{display:none;}
-        .goals-wrap{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--s1);overflow:hidden;}
+        .goals-wrap{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);overflow:hidden;}
         .goals-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--white);}
         .gtab{flex:1;background:none;border:none;padding:9px 10px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:2px;border-bottom:2px solid transparent;transition:all .15s;}
         .gtab:hover{background:var(--bg);}
@@ -1545,7 +1605,7 @@ export default function GstPage() {
         .cday.selweek{background:rgba(62,109,240,.30);color:#fff;}
         .cday.selweek::after{background:#fff!important;}
 
-        .stats-wrap{padding:18px 20px;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--s1);}
+        .stats-wrap{padding:18px 20px;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sb);}
         .stats-wrap .sec-lbl{color:var(--text);font-size:11px;font-weight:700;letter-spacing:.12em;}
         .sval.left-val{color:var(--text);}
         .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
@@ -1642,7 +1702,7 @@ export default function GstPage() {
 
         .rp{background:var(--bg);display:flex;flex-direction:column;overflow:hidden;padding:16px;gap:16px;}
 
-        .lsn-sec{flex:0 0 auto;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--s1);overflow:hidden;}
+        .lsn-sec{flex:0 0 auto;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);overflow:hidden;}
         .ph{padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px;}
         .ph-title{font-size:12px;font-weight:700;color:var(--text);}
         .lsn-input-area{padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
@@ -1652,15 +1712,27 @@ export default function GstPage() {
         .lsn-cat-inp{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:6px 9px;font-size:10.5px;color:#fff;outline:none;transition:border-color .15s;margin-top:5px;}
         .lsn-cat-inp:focus{border-color:var(--gold);}
         .lsn-cat-inp::placeholder{color:var(--text3);}
-        .lsn-date-inp{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:6px 9px;font-size:10.5px;color:var(--text2);outline:none;transition:border-color .15s;margin-top:5px;cursor:pointer;font-family:inherit;color-scheme:dark;}
-        .lsn-date-inp:focus{border-color:var(--gold);}
+        .lsn-date-btn{width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:11px;color:var(--text);cursor:pointer;margin-top:5px;transition:border-color .15s;font-family:inherit;}
+        .lsn-date-btn:hover{border-color:var(--red-border);}
+        .lsn-date-ic{font-size:12px;opacity:.65;}
+        .lsn-date-pop{background:var(--white);border:1px solid var(--border2);border-radius:16px;box-shadow:var(--s3);padding:11px;width:236px;}
+        .ldp-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;padding:0 2px;}
+        .ldp-nav span{font-size:11px;font-weight:700;color:var(--text);}
+        .ldp-nav button{width:24px;height:24px;border:1px solid var(--border);background:var(--bg);border-radius:8px;color:var(--text2);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+        .ldp-nav button:hover{border-color:var(--red);color:var(--red);}
+        .ldp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+        .ldp-dn{text-align:center;font-size:8px;font-weight:600;color:var(--text4);padding:2px 0 3px;}
+        .ldp-day{text-align:center;font-size:11px;padding:6px 0;border-radius:9px;cursor:pointer;color:var(--text2);transition:all .12s;}
+        .ldp-day:hover{background:var(--bg);color:var(--text);}
+        .ldp-day.today{color:var(--red);font-weight:700;}
+        .ldp-day.sel{background:var(--red);color:#fff;font-weight:700;}
         .lsn-cat-tag{display:inline-flex;align-items:center;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:10px;background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border);margin-right:4px;}
         .lock-btn{margin-top:6px;width:100%;background:var(--gold-bg);border:1px solid var(--gold-border);color:var(--gold);border-radius:var(--r2);padding:6px;font-size:10px;font-weight:600;letter-spacing:.02em;cursor:pointer;}
         .lock-btn:hover{filter:brightness(.9);}
         .lsn-list{overflow-y:auto;padding:10px 16px;max-height:200px;display:flex;flex-direction:column;gap:7px;}
         .empty-note{text-align:center;padding:14px;color:var(--text4);font-size:10px;font-style:italic;}
 
-        .todo-sec{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--s1);}
+        .todo-sec{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);}
         .mode-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
         .mbtn{flex:1;padding:8px 10px;border:none;background:none;font-size:10px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;display:flex;align-items:center;justify-content:center;gap:5px;}
         .mbtn:hover{color:var(--text);background:var(--bg);}
@@ -1699,11 +1771,11 @@ export default function GstPage() {
         .todo-inp::placeholder{color:var(--text4);}
         .todo-addbtn{background:var(--red);color:#fff;border:none;border-radius:var(--r2);width:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:300;flex-shrink:0;}
         .todo-addbtn:hover{background:var(--red2);}
-        .wish-compact-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;flex-shrink:0;box-shadow:var(--s1);}
+        .wish-compact-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;flex-shrink:0;box-shadow:var(--sb);}
         .wish-compact-row{display:flex;gap:6px;}
-        .wish-compact-inp{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:11px;color:var(--text);outline:none;transition:border-color .15s;}
+        .wish-compact-inp{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:11.5px;color:#fff;outline:none;transition:border-color .15s;}
         .wish-compact-inp:focus{border-color:var(--red);}
-        .wish-compact-inp::placeholder{color:var(--text4);}
+        .wish-compact-inp::placeholder{color:var(--text3);}
         .wish-compact-btn{background:var(--red);color:#fff;border:none;border-radius:var(--r2);padding:7px 14px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;}
         .wish-compact-btn:hover{filter:brightness(.9);}
         .wish-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--r2);border:1px solid var(--border);background:var(--white);margin-bottom:8px;}
@@ -1718,7 +1790,9 @@ export default function GstPage() {
         .wish-meta{font-size:10px;color:var(--red);margin-top:4px;line-height:1.5;font-style:italic;}
         .wish-del{background:none;border:none;color:var(--text4);cursor:pointer;font-size:12px;padding:2px 4px;flex-shrink:0;}
         .wish-del:hover{color:var(--red);}
-        .todo-list{overflow-y:auto;padding:10px 14px;flex:1;display:flex;flex-direction:column;gap:8px;}
+        .todo-list{overflow-y:auto;overflow-x:hidden;padding:10px 14px;flex:1;display:flex;flex-direction:column;gap:8px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+        .todo-list::-webkit-scrollbar{width:3px;}
+        .todo-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
         .titem{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);cursor:pointer;}
         .titem:hover{border-color:var(--red-border);background:var(--red-bg);}
         .titem.done{opacity:.55;background:var(--red-bg);border-color:var(--red-border);}
@@ -1726,7 +1800,7 @@ export default function GstPage() {
         .tcb{width:15px;height:15px;border:2px solid var(--red);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--red-bg);margin-top:1px;}
         .titem.done .tcb{background:var(--red);border-color:var(--red);}
         .titem.done .tcb::after{content:'✓';color:#fff;font-size:9px;font-weight:700;}
-        .ttxt{font-size:11px;color:var(--text);line-height:1.5;flex:1;font-weight:400;}
+        .ttxt{font-size:11px;color:var(--text);line-height:1.5;flex:1;min-width:0;font-weight:400;overflow-wrap:anywhere;}
         .titem.done .ttxt{text-decoration:line-through;color:var(--text3);}
         .tcat{font-size:8px;padding:2px 6px;border-radius:10px;background:rgba(255,255,255,.05);color:var(--text2);border:1px solid var(--border);white-space:nowrap;align-self:flex-start;font-weight:500;}
         .tdone-badge{font-size:8px;padding:2px 6px;border-radius:10px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);white-space:nowrap;align-self:flex-start;}
@@ -1966,7 +2040,7 @@ export default function GstPage() {
               <textarea className="lsn-ta" id="lta" placeholder="Tulis insight atau pelajaran hari ini..."></textarea>
               <input type="text" className="lsn-cat-inp" id="lta-cat" placeholder="# Kategori? (AI, Bisnis, Coding...)" list="lsn-cats-list" autoComplete="off" onKeyDown={e => { if (e.key === 'Enter') lockLesson() }} />
               <datalist id="lsn-cats-list"></datalist>
-              <input type="date" className="lsn-date-inp" id="lta-date" defaultValue={todayStr()} title="Tanggal pelajaran (bisa backdate)" />
+              <LessonDatePicker />
               <button className="lock-btn" onClick={lockLesson} style={{ color: 'var(--red)', background: 'var(--red-bg)', borderColor: 'var(--red-border)' }}>Send to my mind</button>
             </div>
             <div className="lsn-list" id="lsn-list" style={{ display: 'none' }}></div>
