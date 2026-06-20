@@ -43,6 +43,17 @@ function TrendUpIcon({ className }: IconProps) {
   )
 }
 
+function WalletIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H17a2 2 0 0 1 2 2v1" />
+      <path d="M3 7.5V17a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-2" />
+      <path d="M21 9.5h-4.5a2.5 2.5 0 0 0 0 5H21z" />
+      <circle cx="16.5" cy="12" r=".6" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 function GraphIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -69,6 +80,7 @@ type NavItem = { Icon: (props: IconProps) => ReactElement; label: string; href: 
 const NAV: NavItem[] = [
   { Icon: HomeIcon, label: 'Dashboard', href: '/dashboard' },
   { Icon: DumbbellIcon, label: 'GST', href: '/gst' },
+  { Icon: WalletIcon, label: 'The Budget', href: '/budget' },
   { Icon: DollarIcon, label: 'Finance', href: '/finance' },
   { Icon: TrendUpIcon, label: 'Portfolio', href: '/portfolio' },
   { Icon: GraphIcon, label: 'Peta', href: '/garden' },
