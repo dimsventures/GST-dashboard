@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
+import { JarvisChat } from '@/components/features/JarvisChat'
 
 interface DashboardShellProps {
   children: React.ReactNode
@@ -42,6 +43,8 @@ export function DashboardShell({ children, title = 'Dashboard' }: DashboardShell
         />
         {children}
       </div>
+
+      <JarvisChat />
     </div>
   )
 }

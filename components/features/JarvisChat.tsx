@@ -83,7 +83,7 @@ export function JarvisChat() {
         title="Jarvis AI"
         className={[
           'fixed bottom-6 right-6 z-[999] w-12 h-12 rounded-full border-none cursor-pointer flex items-center justify-center text-xl text-white shadow-[0_4px_16px_rgba(0,0,0,.25)] transition-all duration-200',
-          open ? 'bg-[#d12b2b] scale-110' : 'bg-[#111] hover:bg-[#d12b2b] hover:scale-110',
+          open ? 'bg-[#3e6df0] scale-110' : 'bg-[#111] hover:bg-[#3e6df0] hover:scale-110',
         ].join(' ')}
       >
         🤖
@@ -150,7 +150,7 @@ export function JarvisChat() {
           />
           <button
             onClick={() => { setMessages([]); setInput('') }}
-            className="bg-transparent border-none text-[#888] cursor-pointer text-[10px] shrink-0 p-1 transition-colors hover:text-[#d12b2b]"
+            className="bg-transparent border-none text-[#888] cursor-pointer text-[10px] shrink-0 p-1 transition-colors hover:text-[#3e6df0]"
             title="Clear chat"
           >
             ↺
@@ -158,7 +158,7 @@ export function JarvisChat() {
           <button
             onClick={send}
             disabled={loading || !input.trim()}
-            className="bg-[#111] text-white border-none rounded-lg w-[34px] h-[34px] flex items-center justify-center cursor-pointer shrink-0 text-sm transition-colors hover:bg-[#d12b2b] disabled:opacity-40 disabled:cursor-default"
+            className="bg-[#111] text-white border-none rounded-lg w-[34px] h-[34px] flex items-center justify-center cursor-pointer shrink-0 text-sm transition-colors hover:bg-[#3e6df0] disabled:opacity-40 disabled:cursor-default"
           >
             ➤
           </button>
