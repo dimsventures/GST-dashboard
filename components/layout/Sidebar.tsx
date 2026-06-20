@@ -104,7 +104,7 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
       >
         {collapsed
           ? <span className="text-[#3e6df0] font-bold text-sm w-full text-center">G</span>
-          : <span className="text-sm font-bold text-white tracking-[.05em]">GST<em className="text-[#3e6df0] not-italic">.</em></span>
+          : <span className="text-sm font-bold tracking-[.05em]"><span className="text-white">GST</span> <span className="text-[#3e6df0]">dashboard</span></span>
         }
       </div>
 

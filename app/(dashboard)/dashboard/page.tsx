@@ -62,7 +62,7 @@ function startDashClock() {
     ctx.beginPath(); ctx.moveTo(cx, cy)
     ctx.lineTo(cx + (r*.72)*Math.sin(ma), cy - (r*.72)*Math.cos(ma))
     ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.stroke()
-    ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 2*Math.PI); ctx.fillStyle = '#d12b2b'; ctx.fill()
+    ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 2*Math.PI); ctx.fillStyle = '#3e6df0'; ctx.fill()
   }
   draw()
   if (clockTimer) clearInterval(clockTimer)
@@ -435,6 +435,18 @@ export default function DashboardPage() {
   return (
     <DashboardShell title="Dashboard">
       <style>{`
+        :root{
+          --bg:#0b0c10;--bg2:#1c1e27;--white:#15161c;
+          --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
+          --text:#eef0f5;--text2:#97a0b3;--text3:#687087;--text4:rgba(255,255,255,.14);
+          --blk:#eef0f5;
+          --red:#3e6df0;--red2:#2f56d1;--red-bg:rgba(62,109,240,.14);--red-border:rgba(62,109,240,.35);
+          --green:#34d399;--green-bg:rgba(52,211,153,.12);--green-border:rgba(52,211,153,.3);
+          --gold:#f0b429;--gold-bg:rgba(240,180,41,.12);--gold-border:rgba(240,180,41,.3);
+          --blue:#60a5fa;--blue-bg:rgba(96,165,250,.12);
+          --r:10px;--r2:7px;
+          --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);
+        }
         .dash-content{padding:20px 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-content:start;}
         @media(max-width:768px){.dash-content{grid-template-columns:1fr;padding:12px;gap:12px;}}
         .card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--s1);overflow:hidden;}

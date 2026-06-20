@@ -77,7 +77,7 @@ export default function ProfilePage() {
       <div className="p-7 max-w-[560px]">
 
         {/* Name */}
-        <div className="bg-[#111] border border-white/8 rounded-lg mb-4 overflow-hidden">
+        <div className="bg-[#15161c] border border-white/8 rounded-lg mb-4 overflow-hidden">
           <div className="px-[18px] py-3.5 border-b border-white/8">
             <div className="text-[10px] font-bold tracking-[.1em] uppercase text-white/40">Nama Pengguna</div>
           </div>
@@ -104,7 +104,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Email */}
-        <div className="bg-[#111] border border-white/8 rounded-lg mb-4 overflow-hidden">
+        <div className="bg-[#15161c] border border-white/8 rounded-lg mb-4 overflow-hidden">
           <div className="px-[18px] py-3.5 border-b border-white/8">
             <div className="text-[10px] font-bold tracking-[.1em] uppercase text-white/40">Info Akun</div>
           </div>
@@ -120,7 +120,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Google */}
-        <div className="bg-[#111] border border-white/8 rounded-lg mb-4 overflow-hidden">
+        <div className="bg-[#15161c] border border-white/8 rounded-lg mb-4 overflow-hidden">
           <div className="px-[18px] py-3.5 border-b border-white/8">
             <div className="text-[10px] font-bold tracking-[.1em] uppercase text-white/40">Akun Terhubung</div>
           </div>
@@ -150,7 +150,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Danger Zone */}
-        <div className="bg-[#111] border border-[#d12b2b]/30 rounded-lg overflow-hidden">
+        <div className="bg-[#15161c] border border-[#d12b2b]/30 rounded-lg overflow-hidden">
           <div className="px-[18px] py-3.5 border-b border-[#d12b2b]/20 bg-[#d12b2b]/8">
             <div className="text-[10px] font-bold tracking-[.1em] uppercase text-[#d12b2b]">Danger Zone</div>
           </div>
@@ -172,7 +172,7 @@ export default function ProfilePage() {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/60 z-[500] flex items-center justify-center p-5">
-          <div className="bg-[#1a1a1a] border border-white/8 rounded-xl w-full max-w-[360px] shadow-[0_8px_32px_rgba(0,0,0,.6)]">
+          <div className="bg-[#1c1e27] border border-white/8 rounded-xl w-full max-w-[360px] shadow-[0_8px_32px_rgba(0,0,0,.6)]">
             <div className="px-5 pt-4 pb-3 border-b border-white/8">
               <div className="text-[13px] font-bold text-[#d12b2b]">Hapus Akun</div>
             </div>
@@ -200,7 +200,7 @@ export default function ProfilePage() {
 
       {/* Toast */}
       <div
-        className={`fixed bottom-6 right-6 z-[9999] px-[18px] py-[11px] rounded-lg text-[12px] font-semibold shadow-[0_4px_16px_rgba(0,0,0,.4)] transition-all duration-[250ms] pointer-events-none text-white ${toast.show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} ${toast.err ? 'bg-[#d12b2b]' : 'bg-[#1a1a1a] border border-white/10'}`}
+        className={`fixed bottom-6 right-6 z-[9999] px-[18px] py-[11px] rounded-lg text-[12px] font-semibold shadow-[0_4px_16px_rgba(0,0,0,.4)] transition-all duration-[250ms] pointer-events-none text-white ${toast.show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} ${toast.err ? 'bg-[#d12b2b]' : 'bg-[#1c1e27] border border-white/10'}`}
       >
         {toast.msg}
       </div>

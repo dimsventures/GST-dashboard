@@ -883,6 +883,18 @@ export default function FinancePage() {
   return (
     <DashboardShell title="Finance">
       <style>{`
+        :root{
+          --bg:#0b0c10;--bg2:#1c1e27;--white:#15161c;
+          --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
+          --text:#eef0f5;--text2:#97a0b3;--text3:#687087;--text4:rgba(255,255,255,.14);
+          --blk:#eef0f5;
+          --red:#3e6df0;--red2:#2f56d1;--red-bg:rgba(62,109,240,.14);--red-border:rgba(62,109,240,.35);
+          --green:#34d399;--green-bg:rgba(52,211,153,.12);--green-border:rgba(52,211,153,.3);
+          --gold:#f0b429;--gold-bg:rgba(240,180,41,.12);--gold-border:rgba(240,180,41,.3);
+          --blue:#60a5fa;--blue-bg:rgba(96,165,250,.12);
+          --r:10px;--r2:7px;
+          --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);
+        }
         .fin-main{display:grid;grid-template-columns:380px 1fr 300px;gap:12px;padding:12px;min-height:0;}
         @media(max-width:1024px){.fin-main{grid-template-columns:1fr;padding:8px;gap:8px;}}
         .fin-col{display:flex;flex-direction:column;gap:12px;min-height:0;}

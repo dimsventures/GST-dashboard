@@ -52,7 +52,6 @@ let tqIdx = Math.floor(Math.random() * 10)
 let clockTimer: ReturnType<typeof setInterval> | null = null
 let quoteTimer: ReturnType<typeof setInterval> | null = null
 let tokenRefreshTimer: ReturnType<typeof setInterval> | null = null
-let lsnTimer: ReturnType<typeof setTimeout> | null = null
 
 // ── CONSTANTS ──
 const ACT_CATS_DEFAULT = [
@@ -202,7 +201,7 @@ async function init() {
 }
 
 // ── RENDER ALL ──
-function render() { renderCal(); renderStats(); renderChain(); renderLessons(); renderHdrLessons(); renderCatBar(); renderTodos(); renderGoals() }
+function render() { renderCal(); renderStats(); renderChain(); renderLessons(); renderCatBar(); renderTodos(); renderGoals() }
 
 // ── CALENDAR ──
 function renderCal() {
@@ -311,7 +310,7 @@ function renderChain() {
     const doneGoals = goals.filter(g => g.done && g.doneDate === dstr)
     doneGoals.forEach(g => { tags += `<span class="tag tg">★ ${g.text.slice(0, 16)}${g.text.length > 16 ? '...' : ''}</span>` })
     const doneWishes = wishes.filter(w => w.done && w.doneDate === dstr)
-    doneWishes.forEach(w => { tags += `<span class="tag" style="background:#fff5f5;color:#d12b2b;border:1px solid #fecaca;">✦ ${w.text.slice(0, 16)}${w.text.length > 16 ? '...' : ''}</span>` })
+    doneWishes.forEach(w => { tags += `<span class="tag" style="background:#eef3ff;color:#3e6df0;border:1px solid #c7d9fc;">✦ ${w.text.slice(0, 16)}${w.text.length > 16 ? '...' : ''}</span>` })
 
     const sc = dayActs.length ? Math.min(actScoreTotal(dstr), 5) : e ? Math.round((e.ws + e.ms) / 2) : 0
     let pips = ''; for (let p = 0; p < 5; p++) pips += `<div class="pip${p < sc ? ' on' : ''}"></div>`
@@ -397,7 +396,7 @@ function lockLesson() {
     const idx = lessons.findIndex(l => l.date === today)
     if (idx >= 0) lessons[idx].items.push(item)
     else lessons.push({ date: today, items: [item] })
-    updateLsnCatsList(); renderLessons(); renderChain(); renderStats(); renderHdrLessons()
+    updateLsnCatsList(); renderLessons(); renderChain(); renderStats()
   }).catch(console.error)
 }
 function updateLsnCatsList() {
@@ -417,34 +416,6 @@ function delLessonFromModal(id: string) {
     } catch (e) { alert('Gagal hapus: ' + (e as Error).message) }
   }, { title: 'Hapus Pelajaran?', icon: '🗑️', okLabel: 'Hapus' })
 }
-function renderHdrLessons() {
-  const trackEl = gid('hdr-lessons-track')
-  if (!trackEl) return
-  const track = trackEl
-  if (lsnTimer) { clearTimeout(lsnTimer); lsnTimer = null }
-  const today = todayStr()
-  const fmt = (d: string) => { const dt = new Date(d + 'T00:00:00'); const m = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des']; return dt.getDate() + ' ' + m[dt.getMonth()] }
-  const esc = (s: string) => (s || '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c] as string))
-  const past: Any[] = []
-  ;[...lessons].filter(l => l.date < today).sort((a, b) => b.date.localeCompare(a.date)).forEach(l => (l.items || [{ text: l.text || '', date: l.date }]).forEach((item: Any) => past.push({ date: l.date, text: item.text, category: item.category || null })))
-  if (!past.length) { track.innerHTML = '<div class="hdr-lesson-empty">Belum ada pelajaran terkunci.</div>'; return }
-  let lsnIdx = 0
-  function showLsn() {
-    const l = past[lsnIdx]
-    const el = document.createElement('div')
-    el.className = 'hdr-lesson-item'
-    el.innerHTML = (l.category ? `<span class="lsn-cat-tag">${esc(l.category)}</span>` : `<span class="hdr-lesson-date">🔒 ${fmt(l.date)}</span>`) + `<span class="hdr-lesson-text">${esc(l.text)}</span>`
-    track.innerHTML = ''
-    track.appendChild(el)
-    const dur = Math.max(16, Math.min(30, 16 + (l.text.length * 0.12)))
-    el.style.setProperty('--lsn-dur', dur + 's')
-    void el.offsetWidth
-    el.classList.add('lsn-scrolling')
-    lsnTimer = setTimeout(() => { lsnIdx = (lsnIdx + 1) % past.length; showLsn() }, dur * 1000)
-  }
-  showLsn()
-}
-
 function renderLessons() {
   const el = gid('lsn-list')
   if (el) el.style.display = 'none'
@@ -929,7 +900,6 @@ async function delActivity(id: string, cat: string) {
   renderActList(cat); render()
 }
 
-function openLog() { openLogDate(todayStr()) }
 function openLogDate(dstr: string) {
   logDate = dstr
   const badge = gid('mdbadge'); if (badge) badge.textContent = fmtFull(dstr)
@@ -1475,7 +1445,6 @@ export default function GstPage() {
       if (clockTimer) { clearInterval(clockTimer); clockTimer = null }
       if (quoteTimer) { clearInterval(quoteTimer); quoteTimer = null }
       if (tokenRefreshTimer) { clearInterval(tokenRefreshTimer); tokenRefreshTimer = null }
-      if (lsnTimer) { clearTimeout(lsnTimer); lsnTimer = null }
       WINDOW_FNS.forEach(fn => delete w[fn])
     }
   }, [])
@@ -1495,10 +1464,9 @@ export default function GstPage() {
           --r:10px;--r2:7px;
           --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);
         }
-        .gst-subhdr{display:flex;align-items:center;gap:14px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--white);}
-        .cnav-btn,.now-btn,.gnav-btn,.gnav-now,.btn-log,.todo-addbtn,.goal-addbtn,.cchip,.sbtn,.rchip,.lock-btn,.btn-cancel,.btn-save,.scopt,.vtab{transition:all .18s cubic-bezier(.4,0,.2,1);}
+        .cnav-btn,.now-btn,.gnav-btn,.gnav-now,.todo-addbtn,.goal-addbtn,.cchip,.sbtn,.rchip,.lock-btn,.btn-cancel,.btn-save,.scopt,.vtab{transition:all .18s cubic-bezier(.4,0,.2,1);}
         .cnav-btn:active,.now-btn:active,.gnav-btn:active,.gnav-now:active,.todo-addbtn:active,.goal-addbtn:active{transform:scale(.92);}
-        .btn-log:active,.btn-save:active{transform:translateY(1px);}
+        .btn-save:active{transform:translateY(1px);}
         .titem,.gitem,.lsn-item,.drow{transition:all .2s cubic-bezier(.4,0,.2,1);}
         .titem:hover,.gitem:hover{transform:translateX(2px);}
         .sbox{transition:all .18s ease;}
@@ -1506,16 +1474,6 @@ export default function GstPage() {
         .tag{transition:transform .15s ease;}
         .tag:hover{transform:scale(1.05);}
 
-        .btn-log{background:var(--red);color:#fff;border:none;padding:7px 18px;border-radius:var(--r2);font-size:11px;font-weight:600;letter-spacing:.03em;cursor:pointer;}
-        .btn-log:hover{background:var(--red2);}
-        .hdr-lessons{flex:1;min-width:0;display:flex;align-items:center;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent);}
-        @keyframes lsn-scroll{from{transform:translateX(80vw)}to{transform:translateX(-80vw)}}
-        .hdr-lessons-track{display:flex;align-items:center;white-space:nowrap;width:100%;}
-        .hdr-lesson-item.lsn-scrolling{animation:lsn-scroll var(--lsn-dur,22s) linear forwards;}
-        .hdr-lesson-item{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;background:var(--red-bg);border:1px solid var(--red-border);border-radius:6px;font-size:11px;color:var(--text);white-space:nowrap;margin-right:24px;flex-shrink:0;}
-        .hdr-lesson-item .hdr-lesson-date{font-weight:700;color:var(--red);font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
-        .hdr-lesson-item .hdr-lesson-text{color:var(--text2);}
-        .hdr-lesson-empty{font-size:11px;color:var(--text3);font-style:italic;}
 
         .gst-app{display:grid;grid-template-columns:310px 1fr 290px;height:calc(100vh - 96px);overflow:hidden;}
         .lp{background:var(--bg);display:flex;flex-direction:column;overflow:hidden;min-height:0;padding:16px;gap:16px;}
@@ -1836,7 +1794,6 @@ export default function GstPage() {
           .lp,.rp{overflow:visible;}
         }
         @media(max-width:768px){
-          .gst-subhdr{padding:8px 12px;}
           .gst-app{display:flex;flex-direction:column;height:auto;overflow:visible;padding:8px;gap:10px;}
           .lp{border-radius:10px;border:1px solid var(--border);min-height:auto;overflow:visible;}
           .stat-grid{grid-template-columns:repeat(2,1fr)!important;}
@@ -1861,13 +1818,6 @@ export default function GstPage() {
           .modal{border-radius:16px 16px 0 0;max-height:92vh;max-width:100%;border-bottom:none;}
         }
       `}</style>
-
-      <div className="gst-subhdr">
-        <div className="hdr-lessons" id="hdr-lessons">
-          <div className="hdr-lessons-track" id="hdr-lessons-track"></div>
-        </div>
-        <button className="btn-log" onClick={openLog}>+ Log Hari Ini</button>
-      </div>
 
       <div className="gst-app">
         <div className="lp">
@@ -2110,7 +2060,7 @@ export default function GstPage() {
           <div className="mhdr">
             <div className="mtitle">✦ Dream List</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div className="mdbadge" id="wish-modal-count" style={{ background: '#fff5f5', borderColor: '#fecaca', color: '#d12b2b' }}>0</div>
+              <div className="mdbadge" id="wish-modal-count" style={{ background: '#eef3ff', borderColor: '#c7d9fc', color: '#3e6df0' }}>0</div>
               <button className="mclose" onClick={closeWishesModal}>✕</button>
             </div>
           </div>
