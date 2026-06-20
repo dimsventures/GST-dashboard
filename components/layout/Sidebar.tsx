@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactElement } from 'react'
 import { usePathname } from 'next/navigation'
 
 type IconProps = { className?: string }
@@ -52,7 +52,7 @@ function UserIcon({ className }: IconProps) {
   )
 }
 
-type NavItem = { Icon: (props: IconProps) => JSX.Element; label: string; href: string }
+type NavItem = { Icon: (props: IconProps) => ReactElement; label: string; href: string }
 
 const NAV: NavItem[] = [
   { Icon: HomeIcon, label: 'Dashboard', href: '/dashboard' },
