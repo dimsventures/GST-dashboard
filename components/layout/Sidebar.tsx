@@ -78,13 +78,13 @@ function UserIcon({ className }: IconProps) {
 type NavItem = { Icon: (props: IconProps) => ReactElement; label: string; href: string }
 
 const NAV: NavItem[] = [
-  { Icon: HomeIcon, label: 'Dashboard', href: '/dashboard' },
-  { Icon: DumbbellIcon, label: 'GST', href: '/gst' },
+  { Icon: HomeIcon, label: 'The Dashboard', href: '/dashboard' },
+  { Icon: DumbbellIcon, label: 'The Sh*t Things', href: '/gst' },
   { Icon: WalletIcon, label: 'The Budget', href: '/budget' },
-  { Icon: DollarIcon, label: 'Finance', href: '/finance' },
-  { Icon: TrendUpIcon, label: 'Portfolio', href: '/portfolio' },
-  { Icon: GraphIcon, label: 'Peta', href: '/garden' },
-  { Icon: UserIcon, label: 'Profil', href: '/profile' },
+  { Icon: DollarIcon, label: 'The Finance', href: '/finance' },
+  { Icon: TrendUpIcon, label: 'The Portfolio', href: '/portfolio' },
+  { Icon: GraphIcon, label: 'The Mind', href: '/garden' },
+  { Icon: UserIcon, label: 'The Profile', href: '/profile' },
 ]
 
 interface SidebarProps {
