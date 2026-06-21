@@ -194,7 +194,7 @@ function renderYtdChips() {
   const years = [...new Set(transactions.map(t => t.date.slice(0, 4)))].sort()
   const chip = (label: string, val: string | null) => {
     const active = String(ytdYear || '') === String(val || '')
-    return `<button data-yr="${val || ''}" onclick="selectYtdYear(this.dataset.yr||null)" style="font-size:9px;font-weight:700;padding:4px 11px;border-radius:20px;cursor:pointer;letter-spacing:.04em;transition:all .15s;border:1px solid ${active ? 'var(--blk);background:var(--blk);color:#fff' : 'var(--border);background:var(--bg);color:var(--text2)'};">${label}</button>`
+    return `<button data-yr="${val || ''}" onclick="selectYtdYear(this.dataset.yr||null)" style="font-size:9px;font-weight:700;padding:4px 11px;border-radius:20px;cursor:pointer;letter-spacing:.04em;transition:all .15s;border:1px solid ${active ? 'var(--red);background:var(--red);color:#fff' : 'var(--border);background:var(--bg);color:var(--text2)'};">${label}</button>`
   }
   const el = document.getElementById('ytd-yr-chips')
   if (el) el.innerHTML = chip('All Time', null) + years.map(y => chip(y, y)).join('')
@@ -559,7 +559,7 @@ function calcRecon() {
     else { warnEl.style.display = 'block'; warnEl.style.color = 'var(--red)'; warnEl.textContent = 'Ada transaksi yang belum tercatat.' }
   }
   const badge = document.getElementById('recon-badge') as HTMLElement
-  if (badge) { badge.textContent = diff === 0 ? '✓ Balance' : '⚠ Selisih'; badge.style.color = diff === 0 ? 'var(--green)' : 'var(--red)' }
+  if (badge) { badge.textContent = diff === 0 ? '✓ Balance' : '⚠ Selisih'; badge.style.color = diff === 0 ? 'var(--blue)' : 'var(--red)' }
 }
 
 async function saveRecon() {
@@ -588,7 +588,7 @@ function renderReconHistory() {
   h.innerHTML = reconciliations.slice(0, 4).map(r => `
     <div class="recon-hist-item">
       <span style="color:var(--text3)">${r.date}</span>
-      <span style="font-weight:700;color:${r.difference === 0 ? 'var(--green)' : 'var(--red)'}">
+      <span style="font-weight:700;color:${r.difference === 0 ? 'var(--blue)' : 'var(--red)'}">
         ${r.difference === 0 ? 'Balance' : 'Selisih ' + fmtRp(Math.abs(r.difference))}
       </span>
       <button onclick="delRecon('${r.id}')" style="background:none;border:none;cursor:pointer;color:var(--text4);font-size:11px;padding:0 2px;">×</button>
@@ -890,18 +890,18 @@ export default function FinancePage() {
           --blk:#eef0f5;
           --red:#3e6df0;--red2:#2f56d1;--red-bg:rgba(62,109,240,.14);--red-border:rgba(62,109,240,.35);
           --green:#34d399;--green-bg:rgba(52,211,153,.12);--green-border:rgba(52,211,153,.3);
-          --gold:#f0b429;--gold-bg:rgba(240,180,41,.12);--gold-border:rgba(240,180,41,.3);
+          --gold:#818cf8;--gold-bg:rgba(129,140,248,.14);--gold-border:rgba(129,140,248,.34);
           --blue:#60a5fa;--blue-bg:rgba(96,165,250,.12);
           --r:10px;--r2:7px;
-          --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);
+          --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);--sb:0 2px 8px rgba(0,0,0,.30),0 3px 11px rgba(62,109,240,.22);
         }
-        .fin-main{display:grid;grid-template-columns:380px 1fr 300px;gap:12px;padding:12px;min-height:0;}
-        @media(max-width:1024px){.fin-main{grid-template-columns:1fr;padding:8px;gap:8px;}}
+        .fin-main{display:grid;grid-template-columns:380px 1fr 300px;gap:12px;padding:12px;min-height:0;height:calc(100vh - 52px);overflow:hidden;}
+        @media(max-width:1024px){.fin-main{grid-template-columns:1fr;padding:8px;gap:8px;height:auto;overflow:visible;}}
         .fin-col{display:flex;flex-direction:column;gap:12px;min-height:0;}
         .fin-col:first-child{overflow:hidden;}
         .fin-col:nth-child(2){overflow-y:auto;min-width:0;}
         .fin-col:last-child{overflow-y:auto;}
-        .card{background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--s1);overflow:hidden;}
+        .card{background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);overflow:hidden;}
         .card-hdr{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
         .card-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text);}
         .fin-cal{padding:12px 14px;}
@@ -934,7 +934,7 @@ export default function FinancePage() {
         .date-inp:focus,.note-inp:focus{border-color:rgba(255,255,255,.25);}
         .fin-btn-add{width:calc(100% - 28px);margin:0 14px 14px;background:var(--red);color:#fff;border:none;border-radius:var(--r2);padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
         .fin-btn-add:hover{background:var(--red2);}
-        .trx-list{flex:1;overflow-y:auto;max-height:340px;}
+        .trx-list{flex:1;overflow-y:auto;}
         .trx-item{display:flex;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid var(--border);transition:background .1s;}
         .trx-item:hover{background:rgba(255,255,255,.03);}
         .trx-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
@@ -1177,7 +1177,7 @@ export default function FinancePage() {
                 <button onClick={openAcctManager} title="Kelola rekening" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--text3)', padding: 2 }}>✏</button>
               </div>
             </div>
-            <div id="recon-inputs-wrap"></div>
+            <div id="recon-inputs-wrap" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}></div>
             <div className="recon-result">
               <div className="recon-diff-row"><span className="recon-diff-lbl">Total Aktual</span><span id="rc-actual" style={{ fontSize: 11, fontWeight: 700 }}>Rp 0</span></div>
               <div className="recon-diff-row"><span className="recon-diff-lbl">Saldo Sistem</span><span id="rc-system" style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)' }}>Rp 0</span></div>

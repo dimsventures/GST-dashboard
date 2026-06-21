@@ -932,11 +932,11 @@ export default function PortfolioPage() {
           --gold:#f0b429;--gold-bg:rgba(240,180,41,.12);--gold-border:rgba(240,180,41,.3);
           --blue:#60a5fa;--blue-bg:rgba(96,165,250,.12);
           --r:10px;--r2:7px;
-          --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);
+          --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);--sb:0 2px 8px rgba(0,0,0,.30),0 3px 11px rgba(62,109,240,.22);
         }
         .porto-main{display:grid;grid-template-columns:260px 1fr 280px;gap:12px;padding:12px;}
         @media(max-width:768px){.porto-main{grid-template-columns:1fr;padding:8px;gap:8px;}}
-        .card{background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--s1);overflow:hidden;margin-bottom:12px;}
+        .card{background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);overflow:hidden;margin-bottom:12px;}
         .card:last-child{margin-bottom:0;}
         .card-hdr{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
         .card-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text);}
