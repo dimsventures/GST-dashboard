@@ -30,6 +30,51 @@ const M_IND: Cfg[] = [
 ]
 const SECS: [string, string][] = [['engine', 'Engine — Bias Risk'], ['policy', 'Policy & Inflasi'], ['backdrop', 'Backdrop Ekonomi']]
 
+// Penjelasan panjang per indikator: what = ini apa, how = cara baca/pakai
+const INFO: Record<string, { what: string; how: string }> = {
+  netLiquidity: { what: 'Likuiditas bersih yang Fed alirkan ke sistem: aset Fed (WALCL) dikurangi saldo kas pemerintah (TGA) dan reverse repo (RRP). Proksi "berapa banyak uang nganggur yang bisa ngalir ke aset".', how: 'Naik = likuiditas longgar, biasanya ngangkat risk asset (saham, BTC). Turun = ketat. Salah satu driver paling kuat buat crypto/Nasdaq sejak 2020.' },
+  m2: { what: 'Total uang beredar di ekonomi AS (tunai + tabungan + deposito), proksi global money supply.', how: 'Naik = lebih banyak uang nyari rumah, sering lead BTC ~10–12 minggu. Flat/turun = headwind likuiditas.' },
+  dollar: { what: 'Indeks kekuatan dolar AS terhadap 6 mata uang utama (DXY).', how: 'Dolar kuat = pengetat global, headwind buat risk asset, emerging market & crypto. Dolar lemah = tailwind.' },
+  y10: { what: 'Imbal hasil obligasi pemerintah AS tenor 10 tahun — patokan "harga uang" jangka panjang.', how: 'Naik = cost of capital naik, tekan valuasi aset growth. Turun = melonggar.' },
+  realYield: { what: 'Yield 10Y dikurangi ekspektasi inflasi (TIPS 10Y) — "bunga riil" setelah inflasi.', how: 'Tinggi/naik = aset tanpa-yield (emas, BTC, growth) kurang menarik. Negatif/turun = tailwind buat aset itu.' },
+  curve: { what: 'Selisih yield 10Y dikurangi 2Y — bentuk kurva imbal hasil.', how: 'Negatif (inverted) = pasar ekspektasi pemangkasan/resesi (akurat tiap resesi sejak 1955, dengan lag). Positif & menanjak = ekspansi sehat.' },
+  hySpread: { what: 'Selisih yield obligasi high-yield (junk) terhadap Treasury — premi risiko kredit.', how: 'Melebar = investor minta kompensasi lebih → stress kredit/risk-off (melonjak di 2008, 2020, 2022). Menyempit = tenang, risk-on.' },
+  vix: { what: 'Indeks volatilitas opsi S&P 500 — "indeks ketakutan" pasar.', how: '>30 panik, 20–30 waspada, 15–20 normal, <15 tenang (kadang komplasen). Spike tajam sering nandain dasar pasar jangka pendek.' },
+  nfci: { what: 'Chicago Fed National Financial Conditions Index — gabungan 100+ indikator kondisi keuangan jadi satu angka.', how: '>0 = kondisi lebih ketat dari rata-rata (risk-off), <0 = lebih longgar (risk-on), 0 = netral.' },
+  fedRate: { what: 'Suku bunga acuan Fed (Fed Funds Rate) — induk dari semua yield lain.', how: 'Naik = pengetatan moneter (tekan likuiditas & risk asset). Dipangkas = pelonggaran.' },
+  cpi: { what: 'Inflasi harga konsumen tahunan (headline, termasuk pangan & energi).', how: 'Target Fed ~2%. >4% panas (Fed hawkish), 2–4% menuju normal, <2% lembut/disinflasi (ruang pelonggaran).' },
+  coreCpi: { what: 'Inflasi inti — CPI tanpa pangan & energi yang volatil. Lebih "lengket" & jadi acuan utama Fed.', how: 'Sama: target ~2%. Inti tinggi & lengket = Fed susah pangkas. Turun = sinyal pelonggaran ke depan.' },
+  ppi: { what: 'Inflasi harga produsen — biaya di tingkat pabrik/grosir.', how: 'Sering mendahului CPI (biaya produsen diteruskan ke konsumen). Naik = tekanan inflasi di pipeline.' },
+  philly: { what: 'Survei manufaktur Philadelphia Fed — proksi ISM (ISM asli gak gratis di FRED).', how: '>0 = manufaktur ekspansi, <0 = kontraksi. Leading buat siklus ekonomi.' },
+  nfp: { what: 'Nonfarm Payrolls — tambahan lapangan kerja non-tani per bulan.', how: '>150K sehat, 50–150K melambat, <0 kontraksi (PHK bersih). Kerja kuat = ekonomi kuat, tapi bisa bikin Fed hawkish.' },
+  unemployment: { what: 'Tingkat pengangguran AS.', how: 'Naik = ekonomi melemah (bisa picu pelonggaran Fed). <~4% = pasar kerja ketat. Naik tajam = warning resesi (Sahm rule).' },
+  retail: { what: 'Penjualan ritel tahunan — denyut belanja konsumen (~70% ekonomi AS).', how: '>4% permintaan kuat, 0–4% moderat, <0 lemah.' },
+}
+
+type Reading = { tone: string; text: string }
+const READ: Record<string, (v: number, d: number | null) => Reading> = {
+  vix: v => v > 30 ? { tone: RED, text: 'panik ekstrem — sering dekat titik kapitulasi/bottom jangka pendek.' } : v >= 22 ? { tone: RED, text: 'pasar waspada/takut.' } : v >= 15 ? { tone: NEU, text: 'volatilitas normal.' } : { tone: GREEN, text: 'tenang — hati-hati komplasen.' },
+  nfci: v => v > 0.1 ? { tone: RED, text: 'kondisi keuangan ketat (risk-off).' } : v < -0.1 ? { tone: GREEN, text: 'kondisi keuangan longgar (risk-on).' } : { tone: NEU, text: 'netral.' },
+  curve: v => v < 0 ? { tone: RED, text: 'inverted — sinyal resesi klasik (dengan lag).' } : v < 0.5 ? { tone: NEU, text: 'datar — belum sehat penuh.' } : { tone: GREEN, text: 'normal & menanjak — sehat.' },
+  hySpread: v => v > 5 ? { tone: RED, text: 'spread lebar — stress kredit tinggi.' } : v > 3.5 ? { tone: NEU, text: 'mulai naik — waspada kredit.' } : { tone: GREEN, text: 'sempit — kredit tenang.' },
+  realYield: v => v > 2 ? { tone: RED, text: 'real yield tinggi — tekan emas/BTC/growth.' } : v > 1 ? { tone: NEU, text: 'moderat.' } : { tone: GREEN, text: 'rendah/negatif — tailwind aset tanpa-yield.' },
+  cpi: v => v > 4 ? { tone: RED, text: 'inflasi panas — Fed cenderung ketat.' } : v > 2.5 ? { tone: NEU, text: 'di atas target, menuju normal.' } : { tone: GREEN, text: 'dekat/di bawah target 2% — ruang pelonggaran.' },
+  coreCpi: v => v > 4 ? { tone: RED, text: 'inti panas & lengket — Fed susah pangkas.' } : v > 2.5 ? { tone: NEU, text: 'di atas target, masih lengket.' } : { tone: GREEN, text: 'mendekati target — sinyal pelonggaran.' },
+  ppi: v => v > 3 ? { tone: RED, text: 'tekanan harga produsen tinggi.' } : v > 1 ? { tone: NEU, text: 'moderat.' } : { tone: GREEN, text: 'jinak.' },
+  fedRate: (_v, d) => d != null && d > 0 ? { tone: RED, text: 'lagi dinaikin — pengetatan.' } : d != null && d < 0 ? { tone: GREEN, text: 'lagi dipangkas — pelonggaran.' } : { tone: NEU, text: 'ditahan.' },
+  philly: v => v < 0 ? { tone: RED, text: 'manufaktur kontraksi.' } : { tone: GREEN, text: 'manufaktur ekspansi.' },
+  nfp: v => v < 0 ? { tone: RED, text: 'kontraksi lapangan kerja — PHK bersih.' } : v < 100 ? { tone: NEU, text: 'pertumbuhan kerja melambat.' } : { tone: GREEN, text: 'pasar kerja sehat.' },
+  unemployment: (v, d) => v > 5 ? { tone: RED, text: 'pengangguran tinggi — ekonomi lemah.' } : d != null && d >= 0.3 ? { tone: RED, text: 'naik tajam — warning (Sahm rule).' } : v < 4 ? { tone: GREEN, text: 'pasar kerja ketat/kuat.' } : { tone: NEU, text: 'stabil.' },
+  retail: v => v < 0 ? { tone: RED, text: 'belanja konsumen lemah.' } : v < 4 ? { tone: NEU, text: 'belanja moderat.' } : { tone: GREEN, text: 'belanja kuat.' },
+}
+function readNow(cfg: Cfg, v: number | null, d: number | null): Reading {
+  if (v == null) return { tone: NEU, text: 'data belum tersedia.' }
+  if (READ[cfg.key]) return READ[cfg.key](v, d)
+  const good = cfg.up === 'good' ? (d ?? 0) >= 0 : (d ?? 0) < 0
+  const arah = d == null ? 'flat' : d >= 0 ? 'lagi naik' : 'lagi turun'
+  return { tone: d == null ? NEU : good ? GREEN : RED, text: `${arah} (30 hari terakhir) → secara makna condong ${good ? 'risk-on' : 'risk-off'}.` }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let macroData: any = null
 let chartKey = '', chartRange = 'all'
@@ -117,7 +162,18 @@ async function openChart(key: string) {
   chartKey = key; chartRange = 'all'
   const cfg = cfgOf(key)
   document.getElementById('mc-title')!.textContent = cfg?.label || ''
-  document.getElementById('mc-desc')!.textContent = cfg?.desc || ''
+  const dd = document.getElementById('mc-desc')
+  if (dd && cfg) {
+    const data: Packed = macroData[key]
+    const v = data?.value ?? null
+    const delta = (v != null && data?.prev != null) ? v - data.prev : null
+    const info = INFO[key]
+    const rd = readNow(cfg, v, delta)
+    dd.innerHTML = `
+      <div class="mc-info-row"><span class="mc-info-k">Apa ini</span><span class="mc-info-v">${info?.what || cfg.desc}</span></div>
+      <div class="mc-info-row"><span class="mc-info-k">Cara baca</span><span class="mc-info-v">${info?.how || ''}</span></div>
+      <div class="mc-info-row"><span class="mc-info-k">Sekarang</span><span class="mc-info-v"><b style="color:${rd.tone}">${v != null ? cfg.fmt(v) : '—'}${delta != null ? ' (' + (delta >= 0 ? '▲' : '▼') + ' ' + cfg.dfmt(delta) + ' / 30 hari)' : ''}</b> — ${rd.text}</span></div>`
+  }
   document.querySelectorAll('#mc-overlay .mc-range').forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.r === 'all'))
   document.getElementById('mc-overlay')!.classList.add('open')
   await drawChart()
@@ -311,7 +367,14 @@ export default function MacroPage() {
         .mc-range{font-size:9px;font-weight:700;padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;}
         .mc-range.active{background:var(--blue);color:#fff;border-color:var(--blue);}
         .mc-chart-wrap{position:relative;height:300px;}
-        .mc-desc{font-size:11px;color:var(--text3);line-height:1.6;margin-top:12px;}
+        .mc-desc{font-size:11px;color:var(--text3);line-height:1.6;margin-top:14px;display:flex;flex-direction:column;gap:9px;}
+        .mc-info-row{display:flex;gap:10px;align-items:flex-start;}
+        .mc-info-k{flex:0 0 64px;font-size:8.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);padding-top:1px;}
+        .mc-info-v{flex:1;font-size:11.5px;color:var(--text2);line-height:1.6;}
+        .m-comb-legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:8px 18px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+        .m-cl-item{display:flex;gap:8px;align-items:flex-start;font-size:10.5px;color:var(--text2);line-height:1.5;}
+        .m-cl-dot{flex:0 0 9px;width:9px;height:9px;border-radius:50%;margin-top:3px;}
+        .m-cl-or{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.02em;}
         @media(max-width:768px){.macro-grid{grid-template-columns:1fr;}}
       `}</style>
       <div className="macro-wrap">
@@ -340,6 +403,20 @@ export default function MacroPage() {
             </div>
             <div className="m-comb-wrap"><canvas id="macro-comb-chart"></canvas></div>
             <div className="m-comb-note">Garis tebal putih = <b>Composite</b> (rata-rata semua indikator engine, di-orient ke arah risk-on, sumbu kiri). Garis oranye/hijau = <b>BTC/USD</b> &amp; <b>S&amp;P 500</b> (di-indeks ke 100 di awal periode, sumbu kanan) — buat validasi visual apakah regime risk-on/off beneran nempel sama gerak harga. Histori narik balik sampai 2013 (titik mulai RRP/Net Liquidity). Klik legend buat munculin/sembunyiin indikator individual — pas garis-garis <b>clustering</b> searah = regime kuat.</div>
+            <div className="m-comb-legend">
+              <div className="m-cl-item"><span className="m-cl-dot" style={{ background: '#eef0f5' }}></span><div><b>Composite (Bias Risk)</b> — rata-rata z-score 9 indikator engine yang udah di-orient. Di atas 0 = bias risk-on, di bawah 0 = risk-off.</div></div>
+              <div className="m-cl-item"><span className="m-cl-dot" style={{ background: '#f7931a' }}></span><div><b>BTC/USD</b> <span className="m-cl-or">aset referensi (sumbu kanan)</span> — buat ngecek apakah composite nempel sama harga aset beneran.</div></div>
+              <div className="m-cl-item"><span className="m-cl-dot" style={{ background: '#4ade80' }}></span><div><b>S&amp;P 500</b> <span className="m-cl-or">aset referensi (sumbu kanan)</span> — pembanding ekuitas AS.</div></div>
+              {ENGINE.map(k => {
+                const c = cfgOf(k); if (!c) return null
+                return (
+                  <div className="m-cl-item" key={k}>
+                    <span className="m-cl-dot" style={{ background: COMB_COLORS[k] }}></span>
+                    <div><b>{c.label}</b> <span className="m-cl-or">{ORIENT[k] > 0 ? 'naik = risk-on' : 'naik = risk-off (garis dibalik)'}</span> — {c.desc}</div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       </div>
