@@ -8,7 +8,7 @@ type Obs = { date: string; value: number }
 type Pt = { d: string; v: number }
 type Packed = { value: number | null; prev: number | null; series: Pt[] }
 
-async function fred(seriesId: string, limit = 1500): Promise<Obs[]> {
+async function fred(seriesId: string, limit = 6000): Promise<Obs[]> {
   if (!KEY) return []
   try {
     const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${KEY}&file_type=json&sort_order=desc&limit=${limit}`
@@ -22,10 +22,10 @@ async function fred(seriesId: string, limit = 1500): Promise<Obs[]> {
   } catch { return [] }
 }
 
-// DXY murni via Yahoo (DX-Y.NYB), dikembalikan desc (newest first) biar sama pola dgn FRED
-async function yahooDaily(symbol: string): Promise<Obs[]> {
+// DXY/BTC/SPX via Yahoo, dikembalikan desc (newest first) biar sama pola dgn FRED
+async function yahooDaily(symbol: string, range = 'max'): Promise<Obs[]> {
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5y`
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=${range}`
     const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, next: { revalidate: 1800 } })
     if (!r.ok) return []
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,7 +49,7 @@ function ago(obs: Obs[], days: number) {
   const key = t.toISOString().slice(0, 10)
   return (obs.find(o => o.date <= key)?.value) ?? obs[obs.length - 1].value
 }
-function series(obs: Obs[], years = 5): Pt[] {
+function series(obs: Obs[], years = 14): Pt[] {
   const c = new Date(); c.setFullYear(c.getFullYear() - years)
   const cut = c.toISOString().slice(0, 10)
   return obs.filter(o => o.date >= cut).map(o => ({ d: o.date, v: o.value })).reverse() // oldest -> newest
@@ -81,13 +81,13 @@ export async function GET() {
 
   const [
     walcl, tga, rrp, m2, dgs10, dfii10, curve, hy, vix, nfci,
-    fedRate, cpiIdx, coreCpiIdx, ppiIdx, philly, payems, unrate, retailIdx, dxy,
+    fedRate, cpiIdx, coreCpiIdx, ppiIdx, philly, payems, unrate, retailIdx, dxy, btc, spx,
   ] = await Promise.all([
     fred('WALCL'), fred('WTREGEN'), fred('RRPONTSYD'), fred('WM2NS'),
     fred('DGS10'), fred('DFII10'), fred('T10Y2Y'), fred('BAMLH0A0HYM2'), fred('VIXCLS'), fred('NFCI'),
     fred('FEDFUNDS'), fred('CPIAUCSL'), fred('CPILFESL'), fred('PPIFIS'),
     fred('GACDISA066MSFRBPHI'), fred('PAYEMS'), fred('UNRATE'), fred('RSAFS'),
-    yahooDaily('DX-Y.NYB'),
+    yahooDaily('DX-Y.NYB'), yahooDaily('BTC-USD'), yahooDaily('^GSPC'),
   ])
 
   const netLiq = buildNetLiq(walcl, tga, rrp)
@@ -112,6 +112,9 @@ export async function GET() {
     nfp: pack(mom(payems)),
     unemployment: pack(unrate),
     retail: pack(yoy(retailIdx)),
+    // Aset referensi — overlay validasi di tab Combined, bukan bagian skor
+    btcusd: pack(btc),
+    spx: pack(spx),
   }
 
   const dir = (a: number | null, b: number | null) => (a == null || b == null) ? 0 : Math.sign(a - b)

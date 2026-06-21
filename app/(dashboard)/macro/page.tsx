@@ -194,9 +194,16 @@ function setCombRange(r: string) {
   document.querySelectorAll('.comb-range').forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.r === r))
   drawCombined()
 }
+function indexSeries(s: Pt[], grid: string[]): (number | null)[] {
+  const raw = grid.map(g => valOnOrBefore(s, g.slice(0, 7) + '-31'))
+  const base = raw.find((v): v is number => v != null)
+  if (base == null) return raw.map(() => null)
+  return raw.map(v => v == null ? null : (v / base) * 100)
+}
 async function drawCombined() {
   if (!macroData || macroData.error) return
-  const yrs = combRange === '1y' ? 1 : combRange === '3y' ? 3 : combRange === '5y' ? 5 : 5
+  const maxYrs = new Date().getFullYear() - 2013
+  const yrs = combRange === '1y' ? 1 : combRange === '3y' ? 3 : combRange === '5y' ? 5 : maxYrs
   const grid = monthGrid(yrs)
   const labels = grid.map(g => g.slice(0, 7))
   const z: Record<string, (number | null)[]> = {}
@@ -209,6 +216,8 @@ async function drawCombined() {
     const vals = ENGINE.map(k => z[k][i]).filter((v): v is number => v != null)
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null
   })
+  const btcIdx = indexSeries((macroData.btcusd?.series || []) as Pt[], grid)
+  const spxIdx = indexSeries((macroData.spx?.series || []) as Pt[], grid)
   const canvas = document.getElementById('macro-comb-chart') as HTMLCanvasElement
   if (!canvas) return
   if (combChart) { combChart.destroy(); combChart = null }
@@ -217,6 +226,8 @@ async function drawCombined() {
   const datasets: any[] = [
     { label: '__zero', data: grid.map(() => 0), borderColor: 'rgba(255,255,255,.22)', borderDash: [4, 4], borderWidth: 1, pointRadius: 0, fill: false },
     { label: 'Composite (Bias Risk)', data: composite, borderColor: '#eef0f5', borderWidth: 2.6, pointRadius: 0, tension: .3, fill: false },
+    { label: 'BTC/USD (indexed=100)', data: btcIdx, borderColor: '#f7931a', borderWidth: 1.6, pointRadius: 0, tension: .25, fill: false, yAxisID: 'y1' },
+    { label: 'S&P 500 (indexed=100)', data: spxIdx, borderColor: '#4ade80', borderWidth: 1.6, pointRadius: 0, tension: .25, fill: false, yAxisID: 'y1' },
     ...ENGINE.map(k => ({ label: cfgOf(k)?.label || k, data: z[k], borderColor: COMB_COLORS[k], borderWidth: 1, pointRadius: 0, tension: .3, fill: false, hidden: true })),
   ]
   combChart = new Chart(canvas, {
@@ -232,6 +243,7 @@ async function drawCombined() {
       scales: {
         x: { grid: { display: false }, ticks: { color: '#687087', font: { size: 9 }, maxTicksLimit: 8, maxRotation: 0 } },
         y: { grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color: '#687087', font: { size: 9 } }, suggestedMin: -2.5, suggestedMax: 2.5 },
+        y1: { position: 'right', grid: { display: false }, ticks: { color: '#687087', font: { size: 9 } }, title: { display: true, text: 'Price index', color: '#687087', font: { size: 9 } } },
       },
     },
   })
@@ -327,7 +339,7 @@ export default function MacroPage() {
               </div>
             </div>
             <div className="m-comb-wrap"><canvas id="macro-comb-chart"></canvas></div>
-            <div className="m-comb-note">Garis tebal putih = <b>Composite</b> (rata-rata semua indikator engine, di-orient ke arah risk-on). Di atas 0 = bias <b>risk-on</b>, di bawah 0 = <b>risk-off</b>. Klik legend buat munculin/sembunyiin indikator individual — pas garis-garis <b>clustering</b> searah = regime kuat.</div>
+            <div className="m-comb-note">Garis tebal putih = <b>Composite</b> (rata-rata semua indikator engine, di-orient ke arah risk-on, sumbu kiri). Garis oranye/hijau = <b>BTC/USD</b> &amp; <b>S&amp;P 500</b> (di-indeks ke 100 di awal periode, sumbu kanan) — buat validasi visual apakah regime risk-on/off beneran nempel sama gerak harga. Histori narik balik sampai 2013 (titik mulai RRP/Net Liquidity). Klik legend buat munculin/sembunyiin indikator individual — pas garis-garis <b>clustering</b> searah = regime kuat.</div>
           </div>
         </div>
       </div>
