@@ -115,31 +115,41 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
   }
 
   const isLogin = mode === 'login'
+  const disabled = loading || !email || !password
 
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#f5f4f2',
+      background: 'radial-gradient(1100px 520px at 50% -8%, #141b38 0%, #0b0c10 58%)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       fontFamily: "'Poppins', sans-serif",
+      padding: 16,
     }}>
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+      <style>{`
+        .gl-inp::placeholder{color:#5b6273;}
+        .gl-inp:focus{border-color:#3e6df0 !important;}
+        .gl-inp:-webkit-autofill,.gl-inp:-webkit-autofill:hover,.gl-inp:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 1000px #1c1e27 inset !important;-webkit-text-fill-color:#eef0f5 !important;caret-color:#eef0f5;}
+        .gl-btn-primary:not(:disabled):hover{background:#2f56d1 !important;}
+        .gl-btn-google:hover{background:#23262f !important;border-color:rgba(255,255,255,.2) !important;}
+        .gl-tab:hover{filter:brightness(1.12);}
+      `}</style>
       <div style={{
-        background: '#fff',
-        border: '1px solid #e4e2de',
-        borderRadius: 12,
+        background: '#15161c',
+        border: '1px solid rgba(255,255,255,.08)',
+        borderRadius: 14,
         padding: '40px 36px',
         width: '100%',
         maxWidth: 380,
-        boxShadow: '0 8px 24px rgba(0,0,0,.08)',
+        boxShadow: '0 14px 44px rgba(0,0,0,.55), 0 6px 22px rgba(62,109,240,.16)',
       }}>
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a', letterSpacing: '.02em' }}>
-            GST<span style={{ color: '#d12b2b' }}>.</span>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#eef0f5', letterSpacing: '.02em' }}>
+            GST<span style={{ color: '#3e6df0' }}>.</span>
           </div>
-          <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: '#687087', marginTop: 4 }}>
             {isLogin ? 'Masuk ke akun kamu' : 'Buat akun baru'}
           </div>
         </div>
@@ -148,29 +158,31 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
           display: 'flex',
           gap: 0,
           marginBottom: 20,
-          borderRadius: 6,
-          border: '1px solid #e4e2de',
+          borderRadius: 8,
+          border: '1px solid rgba(255,255,255,.1)',
           overflow: 'hidden',
         }}>
           <button
             type="button"
+            className="gl-tab"
             onClick={() => { setMode('login'); setError(''); setSuccess('') }}
             style={{
               flex: 1, padding: '8px', border: 'none', fontSize: 11, fontWeight: 600,
               fontFamily: 'inherit', cursor: 'pointer',
-              background: isLogin ? '#1a1a1a' : '#f5f4f2',
-              color: isLogin ? '#fff' : '#888',
+              background: isLogin ? '#3e6df0' : 'rgba(255,255,255,.03)',
+              color: isLogin ? '#fff' : '#97a0b3',
               transition: 'all .15s',
             }}
           >Masuk</button>
           <button
             type="button"
+            className="gl-tab"
             onClick={() => { setMode('register'); setError(''); setSuccess('') }}
             style={{
               flex: 1, padding: '8px', border: 'none', fontSize: 11, fontWeight: 600,
               fontFamily: 'inherit', cursor: 'pointer',
-              background: !isLogin ? '#1a1a1a' : '#f5f4f2',
-              color: !isLogin ? '#fff' : '#888',
+              background: !isLogin ? '#3e6df0' : 'rgba(255,255,255,.03)',
+              color: !isLogin ? '#fff' : '#97a0b3',
               transition: 'all .15s',
             }}
           >Daftar</button>
@@ -178,20 +190,19 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
 
         {success && (
           <div style={{
-            fontSize: 11, color: '#15a34a', marginBottom: 14, fontWeight: 500,
-            background: '#f0fdf4', padding: '8px 10px', borderRadius: 6,
-            border: '1px solid #bbf7d0',
+            fontSize: 11, color: '#34d399', marginBottom: 14, fontWeight: 500,
+            background: 'rgba(52,211,153,.1)', padding: '8px 10px', borderRadius: 7,
+            border: '1px solid rgba(52,211,153,.28)',
           }}>{success}</div>
         )}
 
         <form onSubmit={handleSubmit}>
           {!isLogin && (
             <>
-              <label style={{ fontSize: 10, fontWeight: 600, color: '#4a4a4a', display: 'block', marginBottom: 4 }}>
-                Nama
-              </label>
+              <label style={labelStyle}>Nama</label>
               <input
                 type="text"
+                className="gl-inp"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="Nama kamu"
@@ -200,11 +211,10 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
             </>
           )}
 
-          <label style={{ fontSize: 10, fontWeight: 600, color: '#4a4a4a', display: 'block', marginBottom: 4 }}>
-            Email
-          </label>
+          <label style={labelStyle}>Email</label>
           <input
             type="email"
+            className="gl-inp"
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder="email@example.com"
@@ -213,11 +223,10 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
             style={inputStyle(false)}
           />
 
-          <label style={{ fontSize: 10, fontWeight: 600, color: '#4a4a4a', display: 'block', marginBottom: 4 }}>
-            Password
-          </label>
+          <label style={labelStyle}>Password</label>
           <input
             type="password"
+            className="gl-inp"
             value={password}
             onChange={e => setPassword(e.target.value)}
             placeholder={isLogin ? 'Password' : 'Min. 6 karakter'}
@@ -227,19 +236,20 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
 
           {error && (
             <div style={{
-              fontSize: 11, color: '#d12b2b', marginBottom: 12, fontWeight: 500,
+              fontSize: 11, color: '#f6685e', marginBottom: 12, fontWeight: 500,
             }}>{error}</div>
           )}
 
           <button
             type="submit"
-            disabled={loading || !email || !password}
+            className="gl-btn-primary"
+            disabled={disabled}
             style={{
-              width: '100%', padding: '10px', border: 'none', borderRadius: 6,
+              width: '100%', padding: '11px', border: 'none', borderRadius: 8,
               fontSize: 12, fontWeight: 600, fontFamily: 'inherit', letterSpacing: '.04em',
-              cursor: loading || !email || !password ? 'not-allowed' : 'pointer',
-              background: loading || !email || !password ? '#c0bdb8' : '#d12b2b',
-              color: '#fff', transition: 'background .15s', marginTop: 4,
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              background: disabled ? '#2a2d3a' : '#3e6df0',
+              color: disabled ? '#687087' : '#fff', transition: 'background .15s', marginTop: 4,
             }}
           >
             {loading ? 'Tunggu...' : isLogin ? 'Masuk' : 'Daftar'}
@@ -247,20 +257,21 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
         </form>
 
         <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0', gap: 8 }}>
-          <div style={{ flex: 1, height: 1, background: '#e4e2de' }} />
-          <span style={{ fontSize: 10, color: '#aaa', fontWeight: 500 }}>atau</span>
-          <div style={{ flex: 1, height: 1, background: '#e4e2de' }} />
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,.08)' }} />
+          <span style={{ fontSize: 10, color: '#687087', fontWeight: 500 }}>atau</span>
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,.08)' }} />
         </div>
 
         <button
           type="button"
+          className="gl-btn-google"
           onClick={handleGoogleLogin}
           disabled={loading}
           style={{
-            width: '100%', padding: '10px', border: '1px solid #e4e2de', borderRadius: 6,
+            width: '100%', padding: '11px', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8,
             fontSize: 12, fontWeight: 600, fontFamily: 'inherit', letterSpacing: '.02em',
             cursor: loading ? 'not-allowed' : 'pointer',
-            background: '#fff', color: '#1a1a1a', transition: 'background .15s',
+            background: '#1c1e27', color: '#eef0f5', transition: 'all .15s',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}
         >
@@ -277,12 +288,16 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
   )
 }
 
+const labelStyle: React.CSSProperties = {
+  fontSize: 10, fontWeight: 600, color: '#97a0b3', display: 'block', marginBottom: 4,
+}
+
 function inputStyle(hasError: boolean): React.CSSProperties {
   return {
     width: '100%', padding: '10px 13px',
-    border: `1px solid ${hasError ? '#d12b2b' : '#e4e2de'}`,
-    borderRadius: 6, fontSize: 13, fontFamily: 'inherit',
-    color: '#1a1a1a', background: '#f5f4f2', outline: 'none',
+    border: `1px solid ${hasError ? '#f6685e' : 'rgba(255,255,255,.09)'}`,
+    borderRadius: 8, fontSize: 13, fontFamily: 'inherit',
+    color: '#eef0f5', background: '#1c1e27', outline: 'none',
     marginBottom: 14, transition: 'border-color .15s',
     boxSizing: 'border-box' as const,
   }
