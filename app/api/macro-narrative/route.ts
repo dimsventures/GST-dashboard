@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth'
+import { getMacroData } from '@/lib/macro-data'
 
 // Narasi makro = data GLOBAL (sama buat semua user). Pola "generate once, serve many":
 // generate 1x/hari, di-cache di Next Data Cache (shared antar semua user), bukan per-user.
@@ -33,18 +34,10 @@ function summarize(d: any): string {
   return `REGIME ENGINE: risk=${r.risk} (skor ${r.score}), likuiditas=${r.liquidity}, dollar=${r.dollar}, curve=${r.curve}\n\nINDIKATOR:\n${lines.join('\n')}`
 }
 
-function baseUrl(): string {
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
-  return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-}
-
 // keyed by tanggal → tiap hari baru regenerate sekali, sisanya cache hit (gak manggil Claude)
 const getNarrative = (dateKey: string) => unstable_cache(
   async () => {
-    const macro = await fetch(`${baseUrl()}/api/macro`, { next: { revalidate: 1800 } })
-    if (!macro.ok) throw new Error('macro fetch failed')
-    const d = await macro.json()
-    if (d.error) throw new Error(d.error)
+    const d = await getMacroData()
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const resp = await anthropic.messages.create({
