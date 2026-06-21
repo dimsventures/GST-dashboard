@@ -34,6 +34,12 @@ const SECS: [string, string][] = [['engine', 'Engine — Bias Risk'], ['policy',
 let macroData: any = null
 let chartKey = '', chartRange = 'all'
 let macroChart: import('chart.js').Chart | null = null
+let macroView = 'cards', combRange = 'all'
+let combChart: import('chart.js').Chart | null = null
+const ENGINE = ['netLiquidity', 'm2', 'dollar', 'y10', 'realYield', 'curve', 'hySpread', 'vix', 'nfci']
+// orientasi ke arah risk-on (+1 = naik berarti risk-on, -1 = naik berarti risk-off)
+const ORIENT: Record<string, number> = { netLiquidity: 1, m2: 1, dollar: -1, y10: -1, realYield: -1, curve: 1, hySpread: -1, vix: -1, nfci: -1 }
+const COMB_COLORS: Record<string, string> = { netLiquidity: '#3e6df0', m2: '#60a5fa', dollar: '#f0a93e', y10: '#e879a8', realYield: '#9b6ef0', curve: '#34c2d4', hySpread: '#f6685e', vix: '#fb923c', nfci: '#a3e635' }
 let ChartLib: typeof import('chart.js') | null = null
 async function getChart() {
   if (!ChartLib) { ChartLib = await import('chart.js'); ChartLib.Chart.register(...ChartLib.registerables) }
@@ -112,13 +118,13 @@ async function openChart(key: string) {
   const cfg = cfgOf(key)
   document.getElementById('mc-title')!.textContent = cfg?.label || ''
   document.getElementById('mc-desc')!.textContent = cfg?.desc || ''
-  document.querySelectorAll('.mc-range').forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.r === 'all'))
+  document.querySelectorAll('#mc-overlay .mc-range').forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.r === 'all'))
   document.getElementById('mc-overlay')!.classList.add('open')
   await drawChart()
 }
 function setChartRange(r: string) {
   chartRange = r
-  document.querySelectorAll('.mc-range').forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.r === r))
+  document.querySelectorAll('#mc-overlay .mc-range').forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.r === r))
   drawChart()
 }
 function closeChart() {
@@ -155,6 +161,82 @@ async function drawChart() {
   })
 }
 
+function monthGrid(years: number): string[] {
+  const out: string[] = []
+  const d = new Date(); d.setFullYear(d.getFullYear() - years); d.setDate(1)
+  const end = new Date()
+  while (d <= end) { out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`); d.setMonth(d.getMonth() + 1) }
+  return out
+}
+function valOnOrBefore(s: Pt[], key: string): number | null {
+  let r: number | null = null
+  for (const p of s) { if (p.d <= key) r = p.v; else break }
+  return r
+}
+function zscore(arr: (number | null)[]): (number | null)[] {
+  const vals = arr.filter((x): x is number => x != null)
+  if (vals.length < 2) return arr.map(() => null)
+  const mean = vals.reduce((a, b) => a + b, 0) / vals.length
+  const sd = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length) || 1
+  return arr.map(x => x == null ? null : (x - mean) / sd)
+}
+function setMacroView(v: string) {
+  macroView = v
+  document.getElementById('mv-cards')?.classList.toggle('active', v === 'cards')
+  document.getElementById('mv-comb')?.classList.toggle('active', v === 'comb')
+  const cv = document.getElementById('macro-cards-view'), cmv = document.getElementById('macro-comb-view')
+  if (cv) cv.style.display = v === 'cards' ? 'block' : 'none'
+  if (cmv) cmv.style.display = v === 'comb' ? 'block' : 'none'
+  if (v === 'comb') drawCombined()
+}
+function setCombRange(r: string) {
+  combRange = r
+  document.querySelectorAll('.comb-range').forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.r === r))
+  drawCombined()
+}
+async function drawCombined() {
+  if (!macroData || macroData.error) return
+  const yrs = combRange === '1y' ? 1 : combRange === '3y' ? 3 : combRange === '5y' ? 5 : 5
+  const grid = monthGrid(yrs)
+  const labels = grid.map(g => g.slice(0, 7))
+  const z: Record<string, (number | null)[]> = {}
+  ENGINE.forEach(k => {
+    const s = (macroData[k]?.series || []) as Pt[]
+    const raw = grid.map(g => valOnOrBefore(s, g.slice(0, 7) + '-31'))
+    z[k] = zscore(raw).map(v => v == null ? null : v * (ORIENT[k] || 1))
+  })
+  const composite = grid.map((_, i) => {
+    const vals = ENGINE.map(k => z[k][i]).filter((v): v is number => v != null)
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null
+  })
+  const canvas = document.getElementById('macro-comb-chart') as HTMLCanvasElement
+  if (!canvas) return
+  if (combChart) { combChart.destroy(); combChart = null }
+  const Chart = await getChart()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const datasets: any[] = [
+    { label: '__zero', data: grid.map(() => 0), borderColor: 'rgba(255,255,255,.22)', borderDash: [4, 4], borderWidth: 1, pointRadius: 0, fill: false },
+    { label: 'Composite (Bias Risk)', data: composite, borderColor: '#eef0f5', borderWidth: 2.6, pointRadius: 0, tension: .3, fill: false },
+    ...ENGINE.map(k => ({ label: cfgOf(k)?.label || k, data: z[k], borderColor: COMB_COLORS[k], borderWidth: 1, pointRadius: 0, tension: .3, fill: false, hidden: true })),
+  ]
+  combChart = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'top', labels: { color: '#97a0b3', font: { size: 9 }, boxWidth: 12, padding: 9, filter: (it: { text: string }) => it.text !== '__zero' } },
+        tooltip: { filter: (it: { dataset: { label?: string } }) => it.dataset.label !== '__zero' },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#687087', font: { size: 9 }, maxTicksLimit: 8, maxRotation: 0 } },
+        y: { grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color: '#687087', font: { size: 9 } }, suggestedMin: -2.5, suggestedMax: 2.5 },
+      },
+    },
+  })
+}
+
 export default function MacroPage() {
   const initRef = useRef(false)
   useEffect(() => {
@@ -166,7 +248,7 @@ export default function MacroPage() {
       if (card?.dataset.key) openChart(card.dataset.key)
     }
     document.addEventListener('click', onClick)
-    return () => { document.removeEventListener('click', onClick); if (macroChart) { macroChart.destroy(); macroChart = null }; macroData = null }
+    return () => { document.removeEventListener('click', onClick); if (macroChart) { macroChart.destroy(); macroChart = null }; if (combChart) { combChart.destroy(); combChart = null }; macroData = null }
   }, [])
 
   return (
@@ -190,6 +272,13 @@ export default function MacroPage() {
         .m-verdict{font-size:12.5px;color:var(--text2);line-height:1.6;border-top:1px solid var(--border);padding-top:11px;}
         .m-err{font-size:12px;color:var(--loss);line-height:1.6;}
         .m-sec-hd{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin:6px 2px 9px;}
+        .m-view-tabs{display:flex;gap:3px;margin-bottom:16px;}
+        .m-vtab{font-size:11px;font-weight:700;padding:7px 16px;border-radius:9px;border:none;background:none;color:var(--text3);cursor:pointer;transition:all .15s;}
+        .m-vtab.active{background:var(--blue);color:#fff;}
+        .m-vtab:not(.active):hover{color:var(--text);}
+        .m-comb-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+        .m-comb-wrap{position:relative;height:380px;}
+        .m-comb-note{font-size:10.5px;color:var(--text3);line-height:1.6;margin-top:12px;}
         .macro-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:12px;margin-bottom:22px;}
         .m-card{background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--sb);padding:14px 16px;cursor:pointer;transition:border-color .15s,transform .15s;}
         .m-card[data-key]:hover{border-color:var(--border2);transform:translateY(-1px);}
@@ -215,12 +304,32 @@ export default function MacroPage() {
       `}</style>
       <div className="macro-wrap">
         <div className="macro-banner" id="macro-banner"><div className="m-err" style={{ color: 'var(--text3)' }}>Memuat data makro…</div></div>
-        {SECS.map(([sec, label]) => (
-          <div key={sec}>
-            <div className="m-sec-hd">{label}</div>
-            <div className="macro-grid" id={'macro-grid-' + sec}></div>
+        <div className="m-view-tabs">
+          <button id="mv-cards" className="m-vtab active" onClick={() => setMacroView('cards')}>Indikator</button>
+          <button id="mv-comb" className="m-vtab" onClick={() => setMacroView('comb')}>Combined</button>
+        </div>
+        <div id="macro-cards-view">
+          {SECS.map(([sec, label]) => (
+            <div key={sec}>
+              <div className="m-sec-hd">{label}</div>
+              <div className="macro-grid" id={'macro-grid-' + sec}></div>
+            </div>
+          ))}
+        </div>
+        <div id="macro-comb-view" style={{ display: 'none' }}>
+          <div className="macro-banner">
+            <div className="m-comb-hd">
+              <div className="m-sec-hd" style={{ margin: 0 }}>Composite Regime — z-score (oriented: naik = risk-on)</div>
+              <div className="mc-ranges" style={{ margin: 0 }}>
+                {[['1y', '1Y'], ['3y', '3Y'], ['5y', '5Y'], ['all', 'All']].map(([r, l]) => (
+                  <button key={r} className={'comb-range mc-range' + (r === 'all' ? ' active' : '')} data-r={r} onClick={() => setCombRange(r)}>{l}</button>
+                ))}
+              </div>
+            </div>
+            <div className="m-comb-wrap"><canvas id="macro-comb-chart"></canvas></div>
+            <div className="m-comb-note">Garis tebal putih = <b>Composite</b> (rata-rata semua indikator engine, di-orient ke arah risk-on). Di atas 0 = bias <b>risk-on</b>, di bawah 0 = <b>risk-off</b>. Klik legend buat munculin/sembunyiin indikator individual — pas garis-garis <b>clustering</b> searah = regime kuat.</div>
           </div>
-        ))}
+        </div>
       </div>
 
       <div className="mc-overlay" id="mc-overlay" onClick={e => { if (e.target === e.currentTarget) closeChart() }}>
