@@ -88,6 +88,7 @@ function render() {
   renderAssets()
   renderPositions()
   renderSummary()
+  renderOutlook()
   renderChart()
   renderWithdrawals()
   renderWdAssetSelect()
@@ -633,7 +634,11 @@ function openAddPosition(assetId: string) {
      <label class="mlbl-f">Jumlah ${isUsd ? '(unit/share)' : '(lot)'}</label>
      <input type="number" class="mini-inp" id="m-qty" placeholder="0" step="${isUsd ? '0.0001' : '1'}">
      <label class="mlbl-f">Harga Beli Rata-rata ${isUsd ? '(USD)' : '(per lembar IDR)'}</label>
-     <input type="number" class="mini-inp" id="m-avg" placeholder="0" step="${isUsd ? '0.01' : '1'}">`,
+     <input type="number" class="mini-inp" id="m-avg" placeholder="0" step="${isUsd ? '0.01' : '1'}">
+     <label class="mlbl-f">Target / Nilai Wajar ${isUsd ? '(USD)' : '(IDR)'} — opsional</label>
+     <input type="number" class="mini-inp" id="m-target" placeholder="target jual / intrinsic" step="${isUsd ? '0.01' : '1'}">
+     <label class="mlbl-f">Tesis singkat — opsional</label>
+     <input class="mini-inp" id="m-thesis" placeholder="kenapa beli & target segini?">`,
     `<button class="btn-cancel" onclick="closeModal()">Batal</button>
      <button class="btn-primary" onclick="submitAddPosition('${assetId}')">Tambah</button>`
   )
@@ -646,9 +651,12 @@ async function submitAddPosition(assetId: string) {
   const type = brokerTickerType(asset)
   const qty = parseFloat((document.getElementById('m-qty') as HTMLInputElement).value)
   const avg = parseFloat((document.getElementById('m-avg') as HTMLInputElement).value)
+  const target = parseFloat((document.getElementById('m-target') as HTMLInputElement)?.value) || null
+  const thesis = (document.getElementById('m-thesis') as HTMLInputElement)?.value.trim() || null
+  const vtype = (type === 'stock_idr' || type === 'stock_usd') ? 'intrinsic' : 'cycle'
   if (!ticker || !qty || !avg) { alert('Lengkapi semua field.'); return }
   try {
-    const p = await api('/api/portfolio/positions', 'POST', { ticker, ticker_type: type, asset_id: assetId, qty, avg_buy_price: avg })
+    const p = await api('/api/portfolio/positions', 'POST', { ticker, ticker_type: type, asset_id: assetId, qty, avg_buy_price: avg, target_price: target, valuation_type: vtype, thesis })
     positions.push(p)
     closeModal()
     await fetchMarketPrices()
@@ -914,6 +922,114 @@ async function loadMarketOverview() {
   }
 }
 
+function classDrawdown(tt: string) {
+  if (tt === 'stock_idr') return 0.30
+  if (tt === 'stock_usd') return 0.25
+  return 0.65 // crypto & lainnya — default agresif
+}
+
+function renderOutlook() {
+  const scnEl = document.getElementById('outlook-scenarios')
+  const tblEl = document.getElementById('outlook-table')
+  if (!scnEl || !tblEl) return
+  const activePos = positions.filter(p => p.is_active && Number(p.qty) > 0)
+  const totalCash = getTotalCash()
+  let curTotal = totalCash, bestTotal = totalCash, worstTotal = totalCash
+  let anyTarget = false
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows: any[] = []
+  activePos.forEach(p => {
+    const mv = calcMarketValue(p)
+    const curPrice = getMktPrice(p)
+    const dd = classDrawdown(p.ticker_type)
+    const target = Number(p.target_price) || 0
+    const bear = Number(p.bear_price) || 0
+    if (target) anyTarget = true
+    const best = (target && curPrice) ? mv * (target / curPrice) : mv
+    const worst = (bear && curPrice) ? mv * (bear / curPrice) : mv * (1 - dd)
+    curTotal += mv; bestTotal += best; worstTotal += worst
+    const avg = Number(p.avg_buy_price) || 0
+    const mos = (target && avg) ? (target - avg) / target * 100 : null
+    const upside = (target && curPrice) ? (target - curPrice) / curPrice * 100 : null
+    rows.push({ id: p.id, ticker: p.ticker, tt: p.ticker_type, curPrice, target, mos, upside, vtype: p.valuation_type })
+  })
+
+  const pct = (v: number) => curTotal > 0 ? ((v - curTotal) / curTotal * 100) : 0
+  const box = (lbl: string, val: number, p: number, cls: string, note: string) =>
+    `<div class="scn-box ${cls}"><div class="scn-lbl">${lbl}</div><div class="scn-val">${fmtRp(val)}</div>` +
+    `<div class="scn-pct ${cls}">${p >= 0 ? '+' : ''}${p.toFixed(1)}%</div><div class="scn-note">${note}</div></div>`
+  scnEl.innerHTML =
+    box('Worst Case', worstTotal, pct(worstTotal), 'worst', 'bear / drawdown kelas') +
+    box('Base (sekarang)', curTotal, 0, 'base', 'nilai saat ini') +
+    box('Best Case', bestTotal, pct(bestTotal), 'best', anyTarget ? 'semua target tesis kena' : 'belum ada target')
+
+  if (!rows.length) { tblEl.innerHTML = '<div class="outlook-empty">Belum ada posisi. Tambah dulu di tengah.</div>'; return }
+  tblEl.innerHTML = `<table class="outlook-tbl"><thead><tr>
+    <th>Aset</th><th>Harga</th><th>Target</th><th>MOS</th><th>Upside</th><th></th>
+  </tr></thead><tbody>${rows.map(r => {
+    const isUsd = r.tt === 'crypto' || r.tt === 'stock_usd'
+    const f = (n: number) => isUsd ? fmtUsd(n) : fmtRp(n)
+    const vt = r.vtype === 'cycle' ? ' <span class="vt-tag">cycle</span>' : r.vtype === 'intrinsic' ? ' <span class="vt-tag">intrinsic</span>' : ''
+    const targetCell = r.target ? f(r.target) + vt : '<span class="vt-set">— set target —</span>'
+    const mosCell = r.mos != null ? `<span class="${r.mos >= 0 ? 'pos' : 'neg'}">${r.mos.toFixed(0)}%</span>` : '—'
+    const upCell = r.upside != null ? `<span class="${r.upside >= 0 ? 'pos' : 'neg'}">${r.upside >= 0 ? '+' : ''}${r.upside.toFixed(0)}%</span>` : '—'
+    return `<tr onclick="openValuation('${r.id}')" style="cursor:pointer;">
+      <td class="ot-ticker">${r.ticker}</td>
+      <td>${r.curPrice ? f(r.curPrice) : '—'}</td>
+      <td>${targetCell}</td>
+      <td>${mosCell}</td>
+      <td>${upCell}</td>
+      <td><button class="ot-edit" onclick="event.stopPropagation();openValuation('${r.id}')" title="Edit valuasi">🎯</button></td>
+    </tr>`
+  }).join('')}</tbody></table>`
+}
+
+function openValuation(posId: string) {
+  const p = positions.find(x => x.id === posId)
+  if (!p) return
+  const isUsd = p.ticker_type === 'crypto' || p.ticker_type === 'stock_usd'
+  const cur = isUsd ? 'USD' : 'IDR'
+  const unit = p.ticker_type === 'stock_idr' ? 'lembar' : 'unit'
+  openModal('Valuasi — ' + p.ticker,
+    `<label class="mlbl-f">Target / Nilai Wajar (${cur} per ${unit})</label>
+     <input type="number" class="mini-inp" id="v-target" value="${p.target_price || ''}" placeholder="target jual / intrinsic value">
+     <label class="mlbl-f">Tipe Valuasi</label>
+     <select class="mini-sel" id="v-type">
+       <option value="intrinsic"${p.valuation_type === 'intrinsic' ? ' selected' : ''}>Intrinsic (nilai wajar — saham)</option>
+       <option value="cycle"${p.valuation_type === 'cycle' ? ' selected' : ''}>Cycle / Macro target (crypto, gold)</option>
+     </select>
+     <label class="mlbl-f">Bear / Worst price (opsional — kosong = drawdown kelas)</label>
+     <input type="number" class="mini-inp" id="v-bear" value="${p.bear_price || ''}" placeholder="harga skenario terburuk">
+     <label class="mlbl-f">Conviction</label>
+     <select class="mini-sel" id="v-conv">
+       <option value=""${!p.conviction ? ' selected' : ''}>—</option>
+       <option value="low"${p.conviction === 'low' ? ' selected' : ''}>Low</option>
+       <option value="med"${p.conviction === 'med' ? ' selected' : ''}>Medium</option>
+       <option value="high"${p.conviction === 'high' ? ' selected' : ''}>High</option>
+     </select>
+     <label class="mlbl-f">Tesis (kenapa nilainya segini?)</label>
+     <textarea class="mini-inp" id="v-thesis" rows="3" placeholder="mis. fair P/E 16 × EPS 690 = 11.040" style="resize:vertical;">${p.thesis || ''}</textarea>`,
+    `<button class="btn-cancel" onclick="closeModal()">Batal</button>
+     <button class="btn-primary" onclick="submitValuation('${posId}')">Simpan</button>`
+  )
+  setTimeout(() => (document.getElementById('v-target') as HTMLInputElement)?.focus(), 100)
+}
+
+async function submitValuation(posId: string) {
+  const p = positions.find(x => x.id === posId)
+  if (!p) return
+  const target = parseFloat((document.getElementById('v-target') as HTMLInputElement)?.value) || null
+  const bear = parseFloat((document.getElementById('v-bear') as HTMLInputElement)?.value) || null
+  const vtype = (document.getElementById('v-type') as HTMLSelectElement)?.value || null
+  const conv = (document.getElementById('v-conv') as HTMLSelectElement)?.value || null
+  const thesis = (document.getElementById('v-thesis') as HTMLTextAreaElement)?.value.trim() || null
+  try {
+    await api('/api/portfolio/positions', 'PATCH', { id: posId, target_price: target, bear_price: bear, valuation_type: vtype, conviction: conv, thesis })
+    p.target_price = target; p.bear_price = bear; p.valuation_type = vtype; p.conviction = conv; p.thesis = thesis
+    closeModal(); renderOutlook()
+  } catch (e) { alert('Gagal simpan valuasi: ' + (e as Error).message) }
+}
+
 async function init() {
   loadMarketOverview()
   const now = new Date()
@@ -942,6 +1058,7 @@ const WINDOW_FNS = [
   'saveWithdrawal', 'updateWdAlloc', 'delWithdrawal', 'confirmDelWithdrawal',
   'closeModal', 'refreshPrices', 'snapMonthChange', 'saveSnapshots',
   'setBenchPeriod', 'toggleBenchSeries',
+  'openValuation', 'submitValuation',
 ] as const
 
 export default function PortfolioPage() {
@@ -994,6 +1111,35 @@ export default function PortfolioPage() {
         .mkt-chg{font-size:10px;font-weight:700;white-space:nowrap;display:flex;align-items:baseline;gap:4px;}
         .mkt-chgp{font-size:7px;font-weight:600;color:var(--text4);letter-spacing:.04em;}
         .mkt-strip .loading{grid-column:1/-1;text-align:center;padding:18px;color:var(--text4);font-size:11px;font-style:italic;}
+        .outlook-body{display:grid;grid-template-columns:300px 1fr;}
+        @media(max-width:768px){.outlook-body{grid-template-columns:1fr;}}
+        .outlook-donut{border-right:1px solid var(--border);padding:14px 16px;}
+        @media(max-width:768px){.outlook-donut{border-right:none;border-bottom:1px solid var(--border);}}
+        .outlook-right{padding:14px 16px;min-width:0;}
+        .scn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+        .scn-box{border:1px solid var(--border);border-radius:var(--r2);padding:11px 13px;}
+        .scn-box.worst{border-color:rgba(246,104,94,.32);}
+        .scn-box.best{border-color:var(--green-border);}
+        .scn-lbl{font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);}
+        .scn-val{font-size:16px;font-weight:700;color:var(--text);margin-top:5px;line-height:1.1;}
+        .scn-pct{font-size:11px;font-weight:700;margin-top:3px;}
+        .scn-pct.worst{color:#f6685e;}.scn-pct.best{color:#34d399;}.scn-pct.base{color:var(--text3);}
+        .scn-note{font-size:8.5px;color:var(--text4);margin-top:4px;}
+        .outlook-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+        .outlook-tbl th{text-align:left;padding:5px 8px;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);}
+        .outlook-tbl th:nth-child(n+2){text-align:right;}
+        .outlook-tbl td{padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text);}
+        .outlook-tbl td:nth-child(n+2){text-align:right;}
+        .outlook-tbl tr:last-child td{border-bottom:none;}
+        .outlook-tbl tr:hover{background:rgba(255,255,255,.03);}
+        .ot-ticker{font-weight:700;}
+        .outlook-tbl .pos{color:var(--green);font-weight:600;}
+        .outlook-tbl .neg{color:#f6685e;font-weight:600;}
+        .vt-tag{font-size:7px;background:rgba(255,255,255,.06);color:var(--text3);padding:1px 4px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em;}
+        .vt-set{color:var(--blue);font-size:10px;}
+        .ot-edit{background:none;border:none;cursor:pointer;font-size:12px;padding:0;opacity:.6;}
+        .ot-edit:hover{opacity:1;}
+        .outlook-empty{padding:18px;text-align:center;font-size:10px;color:var(--text4);}
         .card-hdr{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
         .card-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text);}
         .card-body{padding:14px 16px;}
@@ -1102,6 +1248,24 @@ export default function PortfolioPage() {
           <div className="mkt-strip" id="mkt-strip"><div className="loading">Memuat data market…</div></div>
         </div>
 
+        {/* Portfolio Outlook */}
+        <div className="card" style={{ gridColumn: '1 / -1', marginBottom: 0 }}>
+          <div className="card-hdr">
+            <div className="card-title">Portfolio Outlook</div>
+            <span style={{ fontSize: 9, color: 'var(--text3)' }}>worst · base · best — proyeksi dari target tesis lu</span>
+          </div>
+          <div className="outlook-body">
+            <div className="outlook-donut">
+              <div style={{ position: 'relative', height: 200 }}><canvas id="alloc-chart"></canvas></div>
+              <div id="alloc-legend" style={{ marginTop: 8 }}></div>
+            </div>
+            <div className="outlook-right">
+              <div className="scn-grid" id="outlook-scenarios"></div>
+              <div id="outlook-table"></div>
+            </div>
+          </div>
+        </div>
+
         {/* LEFT */}
         <div>
           <div className="card">
@@ -1206,14 +1370,6 @@ export default function PortfolioPage() {
             <div className="sum-row"><span className="sum-row-lbl">Cash</span><span className="sum-row-val" id="total-cash" style={{ color: 'var(--gold)' }}>Rp 0</span></div>
             <div className="sum-row"><span className="sum-row-lbl">Cash %</span><span className="sum-row-val" id="cash-pct">0%</span></div>
             <div className="sum-row"><span className="sum-row-lbl">Posisi Aktif</span><span className="sum-row-val" id="active-count">0</span></div>
-          </div>
-
-          <div className="card">
-            <div className="card-hdr"><div className="card-title">Alokasi Portfolio</div></div>
-            <div style={{ position: 'relative', height: 200, padding: '12px 16px' }}>
-              <canvas id="alloc-chart"></canvas>
-            </div>
-            <div id="alloc-legend" style={{ padding: '0 14px 14px' }}></div>
           </div>
 
           <div className="card">

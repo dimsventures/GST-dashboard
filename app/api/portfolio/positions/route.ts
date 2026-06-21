@@ -100,7 +100,7 @@ export async function POST(req: Request) {
     return NextResponse.json(data)
   }
 
-  const { ticker, ticker_type, asset_id, qty, avg_buy_price } = rest
+  const { ticker, ticker_type, asset_id, qty, avg_buy_price, target_price, bear_price, valuation_type, conviction, thesis } = rest
   if (!ticker || !asset_id) {
     return NextResponse.json({ error: 'ticker and asset_id required' }, { status: 400 })
   }
@@ -114,6 +114,11 @@ export async function POST(req: Request) {
       qty: qty || 0,
       avg_buy_price: avg_buy_price || 0,
       is_active: true,
+      target_price: target_price || null,
+      bear_price: bear_price || null,
+      valuation_type: valuation_type || null,
+      conviction: conviction || null,
+      thesis: thesis || null,
     })
     .select()
     .single()
