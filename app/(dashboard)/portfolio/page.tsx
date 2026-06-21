@@ -651,12 +651,22 @@ async function submitAddPosition(assetId: string) {
   const type = brokerTickerType(asset)
   const qty = parseFloat((document.getElementById('m-qty') as HTMLInputElement).value)
   const avg = parseFloat((document.getElementById('m-avg') as HTMLInputElement).value)
-  const target = parseFloat((document.getElementById('m-target') as HTMLInputElement)?.value) || null
-  const thesis = (document.getElementById('m-thesis') as HTMLInputElement)?.value.trim() || null
-  const vtype = (type === 'stock_idr' || type === 'stock_usd') ? 'intrinsic' : 'cycle'
+  let target = parseFloat((document.getElementById('m-target') as HTMLInputElement)?.value) || null
+  let thesis = (document.getElementById('m-thesis') as HTMLInputElement)?.value.trim() || null
+  let vtype = (type === 'stock_idr' || type === 'stock_usd') ? 'intrinsic' : 'cycle'
+  let bear: number | null = null, conviction: string | null = null
+  // warisin valuasi dari posisi ticker yang sama (valuasi = properti ticker)
+  const existing = positions.find(x => x.ticker === ticker && x.target_price)
+  if (existing) {
+    if (!target) target = Number(existing.target_price)
+    if (!thesis) thesis = existing.thesis || null
+    vtype = existing.valuation_type || vtype
+    bear = existing.bear_price != null ? Number(existing.bear_price) : null
+    conviction = existing.conviction || null
+  }
   if (!ticker || !qty || !avg) { alert('Lengkapi semua field.'); return }
   try {
-    const p = await api('/api/portfolio/positions', 'POST', { ticker, ticker_type: type, asset_id: assetId, qty, avg_buy_price: avg, target_price: target, valuation_type: vtype, thesis })
+    const p = await api('/api/portfolio/positions', 'POST', { ticker, ticker_type: type, asset_id: assetId, qty, avg_buy_price: avg, target_price: target, valuation_type: vtype, bear_price: bear, conviction, thesis })
     positions.push(p)
     closeModal()
     await fetchMarketPrices()
@@ -937,7 +947,7 @@ function renderOutlook() {
   let curTotal = totalCash, bestTotal = totalCash, worstTotal = totalCash
   let anyTarget = false
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rows: any[] = []
+  const byTicker: Record<string, any> = {}
   activePos.forEach(p => {
     const mv = calcMarketValue(p)
     const curPrice = getMktPrice(p)
@@ -948,10 +958,11 @@ function renderOutlook() {
     const best = (target && curPrice) ? mv * (target / curPrice) : mv
     const worst = (bear && curPrice) ? mv * (bear / curPrice) : mv * (1 - dd)
     curTotal += mv; bestTotal += best; worstTotal += worst
-    const avg = Number(p.avg_buy_price) || 0
-    const mos = (target && avg) ? (target - avg) / target * 100 : null
-    const upside = (target && curPrice) ? (target - curPrice) / curPrice * 100 : null
-    rows.push({ id: p.id, ticker: p.ticker, tt: p.ticker_type, curPrice, target, mos, upside, vtype: p.valuation_type })
+    // gabung per ticker (sama walau beda broker) — valuasi itu properti ticker
+    const t = byTicker[p.ticker] || (byTicker[p.ticker] = { id: p.id, ticker: p.ticker, tt: p.ticker_type, curPrice, mv: 0, qty: 0, cost: 0, target: 0, vtype: null })
+    t.id = p.id; t.mv += mv; t.qty += Number(p.qty); t.cost += Number(p.avg_buy_price) * Number(p.qty)
+    if (!t.target && target) t.target = target
+    if (!t.vtype && p.valuation_type) t.vtype = p.valuation_type
   })
 
   const pct = (v: number) => curTotal > 0 ? ((v - curTotal) / curTotal * 100) : 0
@@ -963,16 +974,20 @@ function renderOutlook() {
     box('Base (sekarang)', curTotal, 0, 'base', 'nilai saat ini') +
     box('Best Case', bestTotal, pct(bestTotal), 'best', anyTarget ? 'semua target tesis kena' : 'belum ada target')
 
+  const rows = Object.values(byTicker).sort((a, b) => b.mv - a.mv)
   if (!rows.length) { tblEl.innerHTML = '<div class="outlook-empty">Belum ada posisi. Tambah dulu di tengah.</div>'; return }
   tblEl.innerHTML = `<table class="outlook-tbl"><thead><tr>
     <th>Aset</th><th>Harga</th><th>Target</th><th>MOS</th><th>Upside</th><th></th>
   </tr></thead><tbody>${rows.map(r => {
     const isUsd = r.tt === 'crypto' || r.tt === 'stock_usd'
     const f = (n: number) => isUsd ? fmtUsd(n) : fmtRp(n)
+    const wavg = r.qty ? r.cost / r.qty : 0
+    const mos = (r.target && wavg) ? (r.target - wavg) / r.target * 100 : null
+    const upside = (r.target && r.curPrice) ? (r.target - r.curPrice) / r.curPrice * 100 : null
     const vt = r.vtype === 'cycle' ? ' <span class="vt-tag">cycle</span>' : r.vtype === 'intrinsic' ? ' <span class="vt-tag">intrinsic</span>' : ''
     const targetCell = r.target ? f(r.target) + vt : '<span class="vt-set">— set target —</span>'
-    const mosCell = r.mos != null ? `<span class="${r.mos >= 0 ? 'pos' : 'neg'}">${r.mos.toFixed(0)}%</span>` : '—'
-    const upCell = r.upside != null ? `<span class="${r.upside >= 0 ? 'pos' : 'neg'}">${r.upside >= 0 ? '+' : ''}${r.upside.toFixed(0)}%</span>` : '—'
+    const mosCell = mos != null ? `<span class="${mos >= 0 ? 'pos' : 'neg'}">${mos.toFixed(0)}%</span>` : '—'
+    const upCell = upside != null ? `<span class="${upside >= 0 ? 'pos' : 'neg'}">${upside >= 0 ? '+' : ''}${upside.toFixed(0)}%</span>` : '—'
     return `<tr onclick="openValuation('${r.id}')" style="cursor:pointer;">
       <td class="ot-ticker">${r.ticker}</td>
       <td>${r.curPrice ? f(r.curPrice) : '—'}</td>
@@ -991,7 +1006,8 @@ function openValuation(posId: string) {
   const cur = isUsd ? 'USD' : 'IDR'
   const unit = p.ticker_type === 'stock_idr' ? 'lembar' : 'unit'
   openModal('Valuasi — ' + p.ticker,
-    `<label class="mlbl-f">Target / Nilai Wajar (${cur} per ${unit})</label>
+    `<div style="font-size:10px;color:var(--text3);margin-bottom:12px;line-height:1.5;">Berlaku ke <b style="color:var(--text2)">semua posisi ${p.ticker}</b> di semua broker.</div>
+     <label class="mlbl-f">Target / Nilai Wajar (${cur} per ${unit})</label>
      <input type="number" class="mini-inp" id="v-target" value="${p.target_price || ''}" placeholder="target jual / intrinsic value">
      <label class="mlbl-f">Tipe Valuasi</label>
      <select class="mini-sel" id="v-type">
@@ -1023,9 +1039,10 @@ async function submitValuation(posId: string) {
   const vtype = (document.getElementById('v-type') as HTMLSelectElement)?.value || null
   const conv = (document.getElementById('v-conv') as HTMLSelectElement)?.value || null
   const thesis = (document.getElementById('v-thesis') as HTMLTextAreaElement)?.value.trim() || null
+  const sameTicker = positions.filter(x => x.ticker === p.ticker)
   try {
-    await api('/api/portfolio/positions', 'PATCH', { id: posId, target_price: target, bear_price: bear, valuation_type: vtype, conviction: conv, thesis })
-    p.target_price = target; p.bear_price = bear; p.valuation_type = vtype; p.conviction = conv; p.thesis = thesis
+    await Promise.all(sameTicker.map(pos => api('/api/portfolio/positions', 'PATCH', { id: pos.id, target_price: target, bear_price: bear, valuation_type: vtype, conviction: conv, thesis })))
+    sameTicker.forEach(pos => { pos.target_price = target; pos.bear_price = bear; pos.valuation_type = vtype; pos.conviction = conv; pos.thesis = thesis })
     closeModal(); renderOutlook()
   } catch (e) { alert('Gagal simpan valuasi: ' + (e as Error).message) }
 }
