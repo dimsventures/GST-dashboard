@@ -157,6 +157,21 @@ async function init() {
   }
 }
 
+async function loadNarrative() {
+  const el = document.getElementById('macro-agent-body')
+  if (!el) return
+  try {
+    const d = await api('/api/macro-narrative')
+    if (d.error) { el.innerHTML = `<div class="m-err">${d.error}</div>`; return }
+    const paras = String(d.narrative || '').split('\n').filter(p => p.trim()).map(p => `<p>${p.trim()}</p>`).join('')
+    el.innerHTML = paras || `<div class="m-err" style="color:var(--text3)">Narasi kosong.</div>`
+    const tsEl = document.getElementById('macro-agent-ts')
+    if (tsEl && d.generatedAt) tsEl.textContent = 'Diperbarui ' + new Date(d.generatedAt).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  } catch (e) {
+    el.innerHTML = `<div class="m-err">Gagal memuat narasi: ${(e as Error).message}</div>`
+  }
+}
+
 async function openChart(key: string) {
   if (!macroData || !macroData[key]) return
   chartKey = key; chartRange = 'all'
@@ -311,6 +326,7 @@ export default function MacroPage() {
     if (initRef.current) return
     initRef.current = true
     init()
+    loadNarrative()
     const onClick = (e: MouseEvent) => {
       const card = (e.target as HTMLElement).closest('.m-card') as HTMLElement | null
       if (card?.dataset.key) openChart(card.dataset.key)
@@ -338,6 +354,13 @@ export default function MacroPage() {
         .m-chip-v{font-size:15px;font-weight:700;color:var(--text);}
         .m-chip.good .m-chip-v{color:var(--green);}.m-chip.bad .m-chip-v{color:var(--loss);}
         .m-verdict{font-size:12.5px;color:var(--text2);line-height:1.6;border-top:1px solid var(--border);padding-top:11px;}
+        .m-agent{border-color:rgba(62,109,240,.28);}
+        .m-agent-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+        .m-agent-title{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text2);}
+        .m-agent-ts{font-size:9px;color:var(--text3);white-space:nowrap;}
+        .m-agent-body{font-size:12.5px;color:var(--text2);line-height:1.7;}
+        .m-agent-body p{margin:0 0 9px;}
+        .m-agent-body p:last-child{margin-bottom:0;}
         .m-err{font-size:12px;color:var(--loss);line-height:1.6;}
         .m-sec-hd{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin:6px 2px 9px;}
         .m-view-tabs{display:flex;gap:3px;margin-bottom:16px;}
@@ -379,6 +402,13 @@ export default function MacroPage() {
       `}</style>
       <div className="macro-wrap">
         <div className="macro-banner" id="macro-banner"><div className="m-err" style={{ color: 'var(--text3)' }}>Memuat data makro…</div></div>
+        <div className="macro-banner m-agent">
+          <div className="m-agent-hd">
+            <span className="m-agent-title">🤖 Macro Agent — Narasi Harian</span>
+            <span className="m-agent-ts" id="macro-agent-ts"></span>
+          </div>
+          <div className="m-agent-body" id="macro-agent-body"><div className="m-err" style={{ color: 'var(--text3)' }}>Nyusun narasi makro…</div></div>
+        </div>
         <div className="m-view-tabs">
           <button id="mv-cards" className="m-vtab active" onClick={() => setMacroView('cards')}>Indikator</button>
           <button id="mv-comb" className="m-vtab" onClick={() => setMacroView('comb')}>Combined</button>
