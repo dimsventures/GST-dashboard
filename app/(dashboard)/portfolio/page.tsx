@@ -89,7 +89,8 @@ function render() {
   renderPositions()
   renderSummary()
   renderOutlook()
-  renderChart()
+  renderPortoPeriodBar()
+  renderPortoSection()
   renderWithdrawals()
   renderWdAssetSelect()
   updateWdAlloc()
@@ -266,9 +267,9 @@ function renderSummary() {
   const gl = totalVal - totalDep, roi = totalDep > 0 ? (gl / totalDep * 100) : 0
 
   const el = (id: string) => document.getElementById(id)
-  if (el('total-value')) { el('total-value')!.textContent = fmtRp(totalVal); (el('total-value') as HTMLElement).style.color = totalVal > 0 ? 'var(--green)' : 'var(--red)' }
+  if (el('total-value')) { el('total-value')!.textContent = fmtRp(totalVal); (el('total-value') as HTMLElement).style.color = 'var(--text)' }
   if (el('total-deposit')) el('total-deposit')!.textContent = fmtRp(totalDep)
-  if (el('total-gl')) { el('total-gl')!.textContent = fmtRp(gl); (el('total-gl') as HTMLElement).style.color = gl >= 0 ? 'var(--green)' : 'var(--red)' }
+  if (el('total-gl')) { el('total-gl')!.textContent = fmtRp(gl); (el('total-gl') as HTMLElement).style.color = gl >= 0 ? 'var(--green)' : 'var(--loss)' }
   if (el('total-cash')) el('total-cash')!.textContent = fmtRp(totalCash)
   const cashPct = totalVal > 0 ? (totalCash / totalVal * 100) : 0
   const cashEl = el('cash-pct') as HTMLElement
@@ -293,12 +294,12 @@ function renderSummary() {
     return `<div class="bk-item">
       <div class="bk-item-hdr">
         <div class="bk-item-name"><span style="width:7px;height:7px;border-radius:50%;background:${color};display:inline-block;"></span>${pos.ticker}</div>
-        <div class="bk-item-val" style="color:${mv > 0 ? 'var(--green)' : 'var(--text3)'}">${mv > 0 ? fmtRp(mv) : '—'}</div>
+        <div class="bk-item-val" style="color:${mv > 0 ? 'var(--text)' : 'var(--text3)'}">${mv > 0 ? fmtRp(mv) : '—'}</div>
       </div>
       <div class="bk-item-bar"><div class="bk-item-fill" style="width:${pct.toFixed(1)}%;background:${color};"></div></div>
       <div class="bk-item-meta">
         <span>${Number(pos.qty)}${pos.ticker_type === 'stock_idr' ? ' lot' : ' unit'} @ ${asset?.type === 'stocks_idr' ? fmtRp(Number(pos.avg_buy_price)) : fmtUsd(Number(pos.avg_buy_price))}</span>
-        <span style="color:${gl >= 0 ? 'var(--green)' : 'var(--red)'}">${mv > 0 ? fmtPct(glPct) : '—'}</span>
+        <span style="color:${gl >= 0 ? 'var(--green)' : 'var(--loss)'}">${mv > 0 ? fmtPct(glPct) : '—'}</span>
       </div>
     </div>`
   }).join('')
@@ -404,15 +405,74 @@ async function saveSnapshots() {
   } catch (e) { alert('Gagal: ' + (e as Error).message); if (btn) { btn.textContent = '💾 Simpan Snapshot'; btn.disabled = false } }
 }
 
+let portoPeriod = 'all', portoTab = 'chart'
+const PORTO_PERIODS: [string, string][] = [['all', 'All'], ['5y', '5Y'], ['3y', '3Y'], ['1y', '1Y'], ['6m', '6M'], ['1m', '1M'], ['ytd', 'YTD']]
+function monthsBack(n: number) { const d = new Date(); d.setMonth(d.getMonth() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` }
+function portoPeriodFrom(allMonths: string[]) {
+  const now = new Date()
+  switch (portoPeriod) {
+    case 'ytd': return `${now.getFullYear()}-01`
+    case '1m': return monthsBack(1)
+    case '6m': return monthsBack(6)
+    case '1y': return monthsBack(12)
+    case '3y': return monthsBack(36)
+    case '5y': return monthsBack(60)
+    default: return allMonths[0] || '2000-01'
+  }
+}
+function renderPortoPeriodBar() {
+  const el = document.getElementById('porto-period-bar'); if (!el) return
+  el.innerHTML = PORTO_PERIODS.map(([k, l]) => `<button class="porto-period${portoPeriod === k ? ' active' : ''}" onclick="setPortoPeriod('${k}')">${l}</button>`).join('')
+}
+function setPortoPeriod(p: string) { portoPeriod = p; renderPortoPeriodBar(); renderPortoSection() }
+function setPortoTab(t: string) {
+  portoTab = t
+  document.getElementById('porto-tab-chart')?.classList.toggle('active', t === 'chart')
+  document.getElementById('porto-tab-perf')?.classList.toggle('active', t === 'perf')
+  const cw = document.getElementById('porto-chart-wrap'), pw = document.getElementById('porto-perf-wrap')
+  if (cw) cw.style.display = t === 'chart' ? 'block' : 'none'
+  if (pw) pw.style.display = t === 'perf' ? 'block' : 'none'
+  renderPortoSection()
+}
+function renderPortoSection() { if (portoTab === 'chart') renderChart(); else renderPerfTable() }
+
+function renderPerfTable() {
+  const el = document.getElementById('porto-perf-wrap'); if (!el) return
+  const allMonths = [...new Set(snapshots.map(s => s.month))].sort() as string[]
+  if (allMonths.length < 2) { el.innerHTML = '<div class="outlook-empty">Belum cukup snapshot bulanan buat performance.</div>'; return }
+  const monthly = getPortfolioMonthlyValues()
+  const valByMonth: Record<string, number> = Object.fromEntries(monthly.map(d => [d.month, d.value]))
+  const depByMonth: Record<string, number> = Object.fromEntries(allMonths.map(m => [m, financeTransactions.filter(t => t.date.slice(0, 7) <= m).reduce((s, t) => s + (t.amount || 0), 0)]))
+  const from = portoPeriodFrom(allMonths)
+  const rows = allMonths.map((m, i) => {
+    const equity = valByMonth[m] || 0
+    if (i === 0) return { m, equity, pnl: null as number | null, pct: null as number | null }
+    const prev = valByMonth[allMonths[i - 1]] || 0
+    const netDep = (depByMonth[m] || 0) - (depByMonth[allMonths[i - 1]] || 0)
+    const pnl = (equity - prev) - netDep
+    const pct = prev > 0 ? pnl / prev * 100 : 0
+    return { m, equity, pnl, pct }
+  }).filter(r => r.m >= from).reverse()
+  el.innerHTML = `<table class="perf-tbl"><thead><tr><th>Bulan</th><th>Equity</th><th>P&amp;L (market)</th></tr></thead><tbody>${rows.map(r => {
+    const mo = parseInt(r.m.slice(5)) - 1
+    const lbl = `${MNS[mo]} '${r.m.slice(2, 4)}`
+    const pnlCell = r.pnl == null ? '<span style="color:var(--text4)">—</span>'
+      : `<span class="${r.pnl >= 0 ? 'pos' : 'neg'}">${r.pnl >= 0 ? '+' : ''}${fmtRp(r.pnl)} <span class="perf-pct">(${(r.pct as number) >= 0 ? '+' : ''}${(r.pct as number).toFixed(2)}%)</span></span>`
+    return `<tr><td>${lbl}</td><td>${fmtRp(r.equity)}</td><td>${pnlCell}</td></tr>`
+  }).join('')}</tbody></table>`
+}
+
 async function renderChart() {
   const allMonths = [...new Set(snapshots.map(s => s.month))].sort() as string[]
-  if (allMonths.length < 2) return
-  const labels = allMonths.map(m => { const mo = parseInt(m.slice(5)) - 1; return MNS[mo] + ' ' + m.slice(2, 4) })
-  const totalValues = allMonths.map(m => assets.filter(a => a.is_active).reduce((sum, a) => {
+  const from = portoPeriodFrom(allMonths)
+  const months = allMonths.filter(m => m >= from)
+  if (months.length < 1) return
+  const labels = months.map(m => { const mo = parseInt(m.slice(5)) - 1; return MNS[mo] + ' ' + m.slice(2, 4) })
+  const totalValues = months.map(m => assets.filter(a => a.is_active).reduce((sum, a) => {
     const snap = snapshots.filter(s => s.asset_id === a.id && s.month <= m).sort((a: {month:string}, b: {month:string}) => b.month.localeCompare(a.month))[0]
     return sum + (snap?.current_value || 0)
   }, 0))
-  const totalDeps = allMonths.map(m => financeTransactions.filter(t => t.date.slice(0, 7) <= m).reduce((sum, t) => sum + (t.amount || 0), 0))
+  const totalDeps = months.map(m => financeTransactions.filter(t => t.date.slice(0, 7) <= m).reduce((sum, t) => sum + (t.amount || 0), 0))
 
   const canvas = document.getElementById('porto-chart') as HTMLCanvasElement
   if (!canvas) return
@@ -1075,7 +1135,7 @@ const WINDOW_FNS = [
   'saveWithdrawal', 'updateWdAlloc', 'delWithdrawal', 'confirmDelWithdrawal',
   'closeModal', 'refreshPrices', 'snapMonthChange', 'saveSnapshots',
   'setBenchPeriod', 'toggleBenchSeries',
-  'openValuation', 'submitValuation',
+  'openValuation', 'submitValuation', 'setPortoPeriod',
 ] as const
 
 export default function PortfolioPage() {
@@ -1110,6 +1170,7 @@ export default function PortfolioPage() {
           --green:#34d399;--green-bg:rgba(52,211,153,.12);--green-border:rgba(52,211,153,.3);
           --gold:#f0b429;--gold-bg:rgba(240,180,41,.12);--gold-border:rgba(240,180,41,.3);
           --blue:#60a5fa;--blue-bg:rgba(96,165,250,.12);
+          --loss:#f6685e;--loss-bg:rgba(246,104,94,.14);--loss-border:rgba(246,104,94,.35);
           --r:10px;--r2:7px;
           --s1:0 1px 3px rgba(0,0,0,.4);--s2:0 6px 20px rgba(0,0,0,.45);--s3:0 10px 36px rgba(0,0,0,.55);--sb:0 2px 8px rgba(0,0,0,.30),0 3px 11px rgba(62,109,240,.22);
         }
@@ -1200,9 +1261,9 @@ export default function PortfolioPage() {
         .pos-empty{padding:20px 16px;text-align:center;font-size:10px;color:var(--text4);}
         .pos-gl{font-weight:600;font-size:10px;}
         .pos-gl.pos{color:var(--green);}
-        .pos-gl.neg{color:var(--red);}
+        .pos-gl.neg{color:var(--loss);}
         .mkt-up{color:var(--green);}
-        .mkt-down{color:var(--red);}
+        .mkt-down{color:var(--loss);}
         .refresh-btn{background:none;border:1px solid var(--border);border-radius:var(--r2);padding:3px 8px;font-size:9px;cursor:pointer;color:var(--text3);transition:all .12s;font-weight:600;}
         .refresh-btn:hover{border-color:var(--green);color:var(--green);}
         .fetched-at{font-size:8px;color:var(--text4);margin-left:6px;}
@@ -1215,12 +1276,27 @@ export default function PortfolioPage() {
         .btn-save:hover{background:#128c40;}
         .chart-wrap-porto{position:relative;width:100%;overflow-x:auto;padding:12px 14px;}
         .chart-wrap-porto canvas{width:100%!important;height:220px!important;}
+        .porto-tab{background:none;border:none;font-size:11px;font-weight:700;color:var(--text3);cursor:pointer;padding:5px 13px;border-radius:8px;letter-spacing:.02em;transition:all .15s;}
+        .porto-tab.active{background:var(--red);color:#fff;}
+        .porto-tab:not(.active):hover{color:var(--text);}
+        .porto-period{font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;}
+        .porto-period.active{background:var(--blk);color:var(--white);border-color:var(--blk);}
+        .porto-period:not(.active):hover{border-color:var(--red);color:var(--red);}
+        .perf-tbl{width:100%;border-collapse:collapse;font-size:11.5px;}
+        .perf-tbl th{position:sticky;top:0;background:var(--white);text-align:left;padding:8px 16px;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);}
+        .perf-tbl th:nth-child(n+2){text-align:right;}
+        .perf-tbl td{padding:8px 16px;border-bottom:1px solid var(--border);color:var(--text);}
+        .perf-tbl td:nth-child(n+2){text-align:right;}
+        .perf-tbl tr:hover{background:rgba(255,255,255,.03);}
+        .perf-tbl .pos{color:var(--green);font-weight:600;}
+        .perf-tbl .neg{color:var(--loss);font-weight:600;}
+        .perf-pct{font-size:9px;opacity:.85;}
         .total-val{text-align:center;padding:16px 14px 10px;border-bottom:1px solid var(--border);}
         .total-num{font-size:24px;font-weight:700;}
         .total-lbl{font-size:9px;color:var(--text3);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
         .roi-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;margin-top:6px;}
         .roi-pill.pos{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
-        .roi-pill.neg{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);}
+        .roi-pill.neg{background:var(--loss-bg);color:var(--loss);border:1px solid var(--loss-border);}
         .sum-row{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;border-bottom:1px solid var(--border);font-size:11px;}
         .sum-row:last-child{border-bottom:none;}
         .sum-row-lbl{color:var(--text2);font-weight:500;}
@@ -1337,8 +1413,15 @@ export default function PortfolioPage() {
         {/* CENTER */}
         <div>
           <div className="card">
-            <div className="card-hdr"><div className="card-title">Deposit vs Portfolio Value</div></div>
-            <div className="chart-wrap-porto"><canvas id="porto-chart"></canvas></div>
+            <div className="card-hdr" style={{ flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 2 }}>
+                <button id="porto-tab-chart" className="porto-tab active" onClick={() => setPortoTab('chart')}>Chart</button>
+                <button id="porto-tab-perf" className="porto-tab" onClick={() => setPortoTab('perf')}>Performance</button>
+              </div>
+              <div id="porto-period-bar" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}></div>
+            </div>
+            <div id="porto-chart-wrap" className="chart-wrap-porto"><canvas id="porto-chart"></canvas></div>
+            <div id="porto-perf-wrap" style={{ display: 'none', maxHeight: 320, overflowY: 'auto' }}></div>
           </div>
 
           <div className="card">
@@ -1381,7 +1464,7 @@ export default function PortfolioPage() {
         <div>
           <div className="card">
             <div className="total-val">
-              <div className="total-num" id="total-value" style={{ color: 'var(--green)' }}>Rp 0</div>
+              <div className="total-num" id="total-value" style={{ color: 'var(--text)' }}>Rp 0</div>
               <div className="total-lbl">Total Portfolio Value</div>
               <div id="roi-pill"></div>
             </div>
