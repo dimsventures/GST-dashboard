@@ -870,7 +870,52 @@ async function fetchBenchmarks() {
   }
 }
 
+function sparkSvg(vals: number[], color: string) {
+  const w = 54, h = 22, n = vals.length
+  if (n < 2) return ''
+  const min = Math.min(...vals), max = Math.max(...vals), rng = (max - min) || 1
+  const pts = vals.map((v, i) => `${(i / (n - 1) * w).toFixed(1)},${(h - 2 - ((v - min) / rng) * (h - 4)).toFixed(1)}`).join(' ')
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="mkt-spark"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`
+}
+
+type MktItem = { key: string; label: string; sub?: string; value: string; changePct: number | null; period: string; spark: number[] | null }
+function renderMarket(items: MktItem[]) {
+  const el = document.getElementById('mkt-strip')
+  if (!el) return
+  if (!items.length) { el.innerHTML = '<div class="loading">Data market tidak tersedia.</div>'; return }
+  el.innerHTML = items.map(it => {
+    const has = it.changePct != null
+    const up = (it.changePct ?? 0) >= 0
+    const col = !has ? 'var(--text3)' : up ? '#34d399' : '#f6685e'
+    const chg = !has ? '—' : (up ? '▲ ' : '▼ ') + Math.abs(it.changePct as number).toFixed(2) + '%'
+    const right = it.spark && it.spark.length > 1 ? sparkSvg(it.spark, has ? col : '#687087') : ''
+    return `<div class="mkt-cell">
+      <div class="mkt-cell-l">
+        <div class="mkt-name">${it.label}${it.sub ? ` <span class="mkt-sub">${it.sub}</span>` : ''}</div>
+        <div class="mkt-val">${it.value}</div>
+      </div>
+      <div class="mkt-cell-r">
+        ${right}
+        <div class="mkt-chg" style="color:${col}">${chg}<span class="mkt-chgp">${it.period}</span></div>
+      </div>
+    </div>`
+  }).join('')
+}
+
+async function loadMarketOverview() {
+  try {
+    const r = await fetch('/api/market-overview')
+    if (!r.ok) throw new Error('fetch failed')
+    const d = await r.json()
+    renderMarket(d.items || [])
+  } catch {
+    const el = document.getElementById('mkt-strip')
+    if (el) el.innerHTML = '<div class="loading">Gagal memuat data market.</div>'
+  }
+}
+
 async function init() {
+  loadMarketOverview()
   const now = new Date()
   const wdDateEl = document.getElementById('wd-date') as HTMLInputElement
   if (wdDateEl) wdDateEl.value = todayStr()
@@ -938,6 +983,17 @@ export default function PortfolioPage() {
         @media(max-width:768px){.porto-main{grid-template-columns:1fr;padding:8px;gap:8px;}}
         .card{background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);overflow:hidden;margin-bottom:12px;}
         .card:last-child{margin-bottom:0;}
+        .mkt-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(208px,1fr));}
+        .mkt-cell{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-width:0;}
+        .mkt-cell-l{min-width:0;}
+        .mkt-name{font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--text2);text-transform:uppercase;white-space:nowrap;display:flex;align-items:baseline;gap:4px;}
+        .mkt-sub{font-size:7.5px;font-weight:600;color:var(--text3);text-transform:none;letter-spacing:0;}
+        .mkt-val{font-size:14px;font-weight:700;color:var(--text);margin-top:3px;white-space:nowrap;}
+        .mkt-cell-r{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;}
+        .mkt-spark{display:block;}
+        .mkt-chg{font-size:10px;font-weight:700;white-space:nowrap;display:flex;align-items:baseline;gap:4px;}
+        .mkt-chgp{font-size:7px;font-weight:600;color:var(--text4);letter-spacing:.04em;}
+        .mkt-strip .loading{grid-column:1/-1;text-align:center;padding:18px;color:var(--text4);font-size:11px;font-style:italic;}
         .card-hdr{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
         .card-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text);}
         .card-body{padding:14px 16px;}
@@ -1037,6 +1093,15 @@ export default function PortfolioPage() {
       `}</style>
 
       <div className="porto-main">
+        {/* Market Card */}
+        <div className="card" style={{ gridColumn: '1 / -1', marginBottom: 0 }}>
+          <div className="card-hdr">
+            <div className="card-title">Kondisi Market</div>
+            <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: 'var(--green-bg)', color: 'var(--green)', border: '1px solid var(--green-border)' }}>● Live</span>
+          </div>
+          <div className="mkt-strip" id="mkt-strip"><div className="loading">Memuat data market…</div></div>
+        </div>
+
         {/* LEFT */}
         <div>
           <div className="card">
