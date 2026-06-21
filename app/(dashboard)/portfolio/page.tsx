@@ -405,7 +405,9 @@ async function saveSnapshots() {
   } catch (e) { alert('Gagal: ' + (e as Error).message); if (btn) { btn.textContent = '💾 Simpan Snapshot'; btn.disabled = false } }
 }
 
-let portoPeriod = 'all', portoTab = 'chart'
+let portoPeriod = 'all', portoTab = 'chart', portoGran = 'monthly'
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let dailyData: any[] = []
 const PORTO_PERIODS: [string, string][] = [['all', 'All'], ['5y', '5Y'], ['3y', '3Y'], ['1y', '1Y'], ['6m', '6M'], ['1m', '1M'], ['ytd', 'YTD']]
 function monthsBack(n: number) { const d = new Date(); d.setMonth(d.getMonth() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` }
 function portoPeriodFrom(allMonths: string[]) {
@@ -419,6 +421,51 @@ function portoPeriodFrom(allMonths: string[]) {
     case '5y': return monthsBack(60)
     default: return allMonths[0] || '2000-01'
   }
+}
+function daysBack(n: number) { const d = new Date(); d.setDate(d.getDate() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+function fmtDayLabel(d: string) { const [, m, dd] = d.split('-'); return `${parseInt(dd)} ${MNS[parseInt(m) - 1]}` }
+function getPortoSeries(): { key: string; label: string; value: number; deposited: number }[] {
+  if (portoGran === 'daily') {
+    return [...dailyData].sort((a, b) => a.date.localeCompare(b.date)).map(d => ({ key: d.date, label: fmtDayLabel(d.date), value: Number(d.total_value) || 0, deposited: Number(d.total_deposited) || 0 }))
+  }
+  const allMonths = [...new Set(snapshots.map(s => s.month))].sort() as string[]
+  const valBy: Record<string, number> = Object.fromEntries(getPortfolioMonthlyValues().map(d => [d.month, d.value]))
+  return allMonths.map(m => ({ key: m, label: `${MNS[parseInt(m.slice(5)) - 1]} '${m.slice(2, 4)}`, value: valBy[m] || 0, deposited: financeTransactions.filter(t => t.date.slice(0, 7) <= m).reduce((s, t) => s + (t.amount || 0), 0) }))
+}
+function portoFromKey(keys: string[]) {
+  const now = new Date()
+  if (portoGran === 'daily') {
+    switch (portoPeriod) {
+      case 'ytd': return `${now.getFullYear()}-01-01`
+      case '1m': return daysBack(30)
+      case '6m': return daysBack(182)
+      case '1y': return daysBack(365)
+      case '3y': return daysBack(1095)
+      case '5y': return daysBack(1825)
+      default: return keys[0] || ''
+    }
+  }
+  return portoPeriodFrom(keys)
+}
+function setPortoGran(g: string) {
+  portoGran = g
+  document.getElementById('porto-gran-daily')?.classList.toggle('active', g === 'daily')
+  document.getElementById('porto-gran-monthly')?.classList.toggle('active', g === 'monthly')
+  renderPortoSection()
+}
+async function recordDailyToday() {
+  if (!fetchedAt) return // harga belum kebaca, jangan rekam nilai salah
+  const today = todayStr()
+  if (dailyData.some(d => d.date === today)) return
+  const activePos = positions.filter(p => p.is_active && Number(p.qty) > 0)
+  let totalVal = getTotalCash()
+  activePos.forEach(p => { totalVal += calcMarketValue(p) })
+  if (totalVal <= 0) return
+  const totalDeposited = financeTransactions.reduce((s, t) => s + (t.amount || 0), 0)
+  try {
+    const row = await api('/api/portfolio/daily', 'POST', { date: today, total_value: Math.round(totalVal), total_deposited: Math.round(totalDeposited) })
+    dailyData.push(row)
+  } catch (e) { console.warn('daily snapshot failed', e) }
 }
 function renderPortoPeriodBar() {
   const el = document.getElementById('porto-period-bar'); if (!el) return
@@ -438,45 +485,35 @@ function renderPortoSection() { if (portoTab === 'chart') renderChart(); else re
 
 function renderPerfTable() {
   const el = document.getElementById('porto-perf-wrap'); if (!el) return
-  const allMonths = [...new Set(snapshots.map(s => s.month))].sort() as string[]
-  if (allMonths.length < 2) { el.innerHTML = '<div class="outlook-empty">Belum cukup snapshot bulanan buat performance.</div>'; return }
-  const monthly = getPortfolioMonthlyValues()
-  const valByMonth: Record<string, number> = Object.fromEntries(monthly.map(d => [d.month, d.value]))
-  const depByMonth: Record<string, number> = Object.fromEntries(allMonths.map(m => [m, financeTransactions.filter(t => t.date.slice(0, 7) <= m).reduce((s, t) => s + (t.amount || 0), 0)]))
-  const from = portoPeriodFrom(allMonths)
-  const rows = allMonths.map((m, i) => {
-    const equity = valByMonth[m] || 0
-    if (i === 0) return { m, equity, pnl: null as number | null, pct: null as number | null }
-    const prev = valByMonth[allMonths[i - 1]] || 0
-    const netDep = (depByMonth[m] || 0) - (depByMonth[allMonths[i - 1]] || 0)
-    const pnl = (equity - prev) - netDep
-    const pct = prev > 0 ? pnl / prev * 100 : 0
-    return { m, equity, pnl, pct }
-  }).filter(r => r.m >= from).reverse()
-  el.innerHTML = `<table class="perf-tbl"><thead><tr><th>Bulan</th><th>Equity</th><th>P&amp;L (market)</th></tr></thead><tbody>${rows.map(r => {
-    const mo = parseInt(r.m.slice(5)) - 1
-    const lbl = `${MNS[mo]} '${r.m.slice(2, 4)}`
+  const series = getPortoSeries()
+  if (series.length < 2) { el.innerHTML = `<div class="outlook-empty">${portoGran === 'daily' ? 'Data harian mulai terkumpul dari hari ini — cek lagi besok.' : 'Belum cukup snapshot bulanan.'}</div>`; return }
+  const from = portoFromKey(series.map(s => s.key))
+  const rows = series.map((p, i) => {
+    if (i === 0) return { key: p.key, label: p.label, equity: p.value, pnl: null as number | null, pct: null as number | null }
+    const prev = series[i - 1]
+    const netDep = p.deposited - prev.deposited
+    const pnl = (p.value - prev.value) - netDep
+    const pct = prev.value > 0 ? pnl / prev.value * 100 : 0
+    return { key: p.key, label: p.label, equity: p.value, pnl, pct }
+  }).filter(r => r.key >= from).reverse()
+  el.innerHTML = `<table class="perf-tbl"><thead><tr><th>${portoGran === 'daily' ? 'Tanggal' : 'Bulan'}</th><th>Equity</th><th>P&amp;L (market)</th></tr></thead><tbody>${rows.map(r => {
     const pnlCell = r.pnl == null ? '<span style="color:var(--text4)">—</span>'
       : `<span class="${r.pnl >= 0 ? 'pos' : 'neg'}">${r.pnl >= 0 ? '+' : ''}${fmtRp(r.pnl)} <span class="perf-pct">(${(r.pct as number) >= 0 ? '+' : ''}${(r.pct as number).toFixed(2)}%)</span></span>`
-    return `<tr><td>${lbl}</td><td>${fmtRp(r.equity)}</td><td>${pnlCell}</td></tr>`
+    return `<tr><td>${r.label}</td><td>${fmtRp(r.equity)}</td><td>${pnlCell}</td></tr>`
   }).join('')}</tbody></table>`
 }
 
 async function renderChart() {
-  const allMonths = [...new Set(snapshots.map(s => s.month))].sort() as string[]
-  const from = portoPeriodFrom(allMonths)
-  const months = allMonths.filter(m => m >= from)
-  if (months.length < 1) return
-  const labels = months.map(m => { const mo = parseInt(m.slice(5)) - 1; return MNS[mo] + ' ' + m.slice(2, 4) })
-  const totalValues = months.map(m => assets.filter(a => a.is_active).reduce((sum, a) => {
-    const snap = snapshots.filter(s => s.asset_id === a.id && s.month <= m).sort((a: {month:string}, b: {month:string}) => b.month.localeCompare(a.month))[0]
-    return sum + (snap?.current_value || 0)
-  }, 0))
-  const totalDeps = months.map(m => financeTransactions.filter(t => t.date.slice(0, 7) <= m).reduce((sum, t) => sum + (t.amount || 0), 0))
-
+  const series = getPortoSeries()
+  const from = portoFromKey(series.map(s => s.key))
+  const pts = series.filter(s => s.key >= from)
   const canvas = document.getElementById('porto-chart') as HTMLCanvasElement
   if (!canvas) return
   if (portoChart) { portoChart.destroy(); portoChart = null }
+  if (pts.length < 1) return
+  const labels = pts.map(p => p.label)
+  const totalValues = pts.map(p => p.value)
+  const totalDeps = pts.map(p => p.deposited)
   const Chart = await getChart()
   portoChart = new Chart(canvas, {
     type: 'line',
@@ -1114,17 +1151,19 @@ async function init() {
   if (wdDateEl) wdDateEl.value = todayStr()
   snapMonth = monthStr(now.getFullYear(), now.getMonth())
   renderSnapMonthLabel()
-  const [a, s, w, p, ft] = await Promise.all([
+  const [a, s, w, p, ft, dly] = await Promise.all([
     api('/api/portfolio/assets'),
     api('/api/portfolio/snapshots'),
     api('/api/portfolio/withdrawals'),
     api('/api/portfolio/positions'),
     api('/api/transactions'),
+    api('/api/portfolio/daily'),
   ])
-  assets = a; snapshots = s; withdrawals = w; positions = p
+  assets = a; snapshots = s; withdrawals = w; positions = p; dailyData = dly || []
   financeTransactions = (ft || []).filter((t: {type:string;category:string;asset_id:unknown}) => t.type === 'investment' && t.category === 'Deposit' && t.asset_id)
   await fetchMarketPrices()
   render()
+  recordDailyToday()
   fetchBenchmarks()
 }
 
@@ -1282,6 +1321,9 @@ export default function PortfolioPage() {
         .porto-period{font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;}
         .porto-period.active{background:var(--blk);color:var(--white);border-color:var(--blk);}
         .porto-period:not(.active):hover{border-color:var(--red);color:var(--red);}
+        .porto-gran{font-size:9px;font-weight:700;padding:4px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;}
+        .porto-gran.active{background:var(--red);color:#fff;border-color:var(--red);}
+        .porto-gran:not(.active):hover{color:var(--text);}
         .perf-tbl{width:100%;border-collapse:collapse;font-size:11.5px;}
         .perf-tbl th{position:sticky;top:0;background:var(--white);text-align:left;padding:8px 16px;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);}
         .perf-tbl th:nth-child(n+2){text-align:right;}
@@ -1417,6 +1459,10 @@ export default function PortfolioPage() {
               <div style={{ display: 'flex', gap: 2 }}>
                 <button id="porto-tab-chart" className="porto-tab active" onClick={() => setPortoTab('chart')}>Chart</button>
                 <button id="porto-tab-perf" className="porto-tab" onClick={() => setPortoTab('perf')}>Performance</button>
+              </div>
+              <div style={{ display: 'flex', gap: 3 }}>
+                <button id="porto-gran-daily" className="porto-gran" onClick={() => setPortoGran('daily')}>Harian</button>
+                <button id="porto-gran-monthly" className="porto-gran active" onClick={() => setPortoGran('monthly')}>Bulanan</button>
               </div>
               <div id="porto-period-bar" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}></div>
             </div>
