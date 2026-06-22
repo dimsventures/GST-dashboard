@@ -4,12 +4,12 @@ import { useEffect, useRef } from 'react'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 
 type Lesson = { id: string; date: string; text: string; category?: string | null; ts?: string }
-type Kind = 'cat' | 'lesson' | 'con'
+type Kind = 'root' | 'cat' | 'lesson'
 type GNode = {
   id: string; kind: Kind; label: string; full?: string; date?: string; cat?: string
   count: number; r: number; x: number; y: number; vx: number; vy: number; color: string
 }
-type GEdge = { a: string; b: string; k: 'cat' | 'con' }
+type GEdge = { a: string; b: string; k: 'root' | 'cat' }
 
 // Module-level state (same pattern as portfolio/page.tsx)
 let lessons: Lesson[] = []
@@ -25,26 +25,14 @@ let ctx: CanvasRenderingContext2D | null = null
 let W = 0, H = 0, dpr = 1
 let tx = 0, ty = 0, scale = 1
 let alpha = 1, running = false, raf = 0
-let showCon = true, frozen = false, query = ''
+let frozen = false, query = ''
+let userName = 'Saya'
 let hover: GNode | null = null, sel: GNode | null = null, drag: GNode | null = null
 let panning = false, panStart = { x: 0, y: 0, tx: 0, ty: 0 }, downAt = { x: 0, y: 0 }, moved = false
 let ro: ResizeObserver | null = null
 
 const PALETTE = ['#3e6df0', '#34d399', '#f0b429', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316', '#a3e635', '#fb7185', '#60a5fa', '#c084fc', '#2dd4bf']
-const CON_COLOR = '#5eead4'
-
-// Stopwords ID (informal) + EN — biar konsep yang muncul kata bermakna, bukan kata sambung
-const STOP = new Set([
-  'yang', 'dan', 'dari', 'untuk', 'dengan', 'pada', 'ini', 'itu', 'adalah', 'akan', 'tidak', 'atau', 'juga',
-  'karena', 'dalam', 'saya', 'gua', 'gue', 'lebih', 'banyak', 'sangat', 'aja', 'sih', 'kan', 'jadi', 'buat',
-  'sama', 'lagi', 'terus', 'tapi', 'kayak', 'kaya', 'supaya', 'agar', 'tiap', 'setiap', 'semua', 'masih',
-  'belum', 'pengen', 'banget', 'kalo', 'kalau', 'biar', 'udah', 'sudah', 'bisa', 'harus', 'gak', 'nggak',
-  'kita', 'mereka', 'kamu', 'dia', 'kita', 'punya', 'biar', 'kita', 'akan', 'agar', 'oleh', 'serta', 'hingga',
-  'learning', 'lesson', 'hari', 'kemarin', 'sekarang', 'waktu', 'orang', 'banget',
-  'the', 'and', 'for', 'with', 'that', 'this', 'from', 'have', 'has', 'was', 'are', 'you', 'your', 'but', 'not',
-  'can', 'will', 'all', 'any', 'into', 'more', 'most', 'just', 'like', 'about', 'what', 'when', 'then', 'them',
-  'they', 'were', 'been', 'than', 'also', 'only', 'because', 'which', 'their', 'there', 'over', 'such',
-])
+const ROOT_COLOR = '#eef0f5'
 
 async function api(path: string): Promise<{ lessons?: Lesson[] }> {
   const r = await fetch(path)
@@ -52,23 +40,17 @@ async function api(path: string): Promise<{ lessons?: Lesson[] }> {
   return r.json()
 }
 
-function tokenize(t: string): string[] {
-  const m = (t || '').toLowerCase().match(/#[\p{L}\d_]+|[\p{L}]{4,}/gu) || []
-  const out: string[] = []
-  for (const w0 of m) {
-    const w = w0.replace(/^#/, '')
-    if (!STOP.has(w) && !/^\d+$/.test(w)) out.push(w)
-  }
-  return out
-}
-
+// Struktur hub radial: inti (nama user) → kategori → pesan/pelajaran. Bukan graph konsep.
 function buildGraph() {
   nodes = []; edges = []
   for (const k in byId) delete byId[k]
   for (const k in nbr) delete nbr[k]
   function addNode(n: GNode) { nodes.push(n); byId[n.id] = n }
 
-  // Categories
+  // Inti = user
+  addNode({ id: 'root', kind: 'root', label: userName, count: lessons.length, r: 0, x: 0, y: 0, vx: 0, vy: 0, color: ROOT_COLOR })
+
+  // Kategori → nyambung ke inti
   const cats: string[] = []
   for (const l of lessons) {
     const c = (l.category || 'Tanpa Kategori').trim() || 'Tanpa Kategori'
@@ -77,10 +59,10 @@ function buildGraph() {
   cats.forEach((c, i) => {
     if (!catColor[c]) catColor[c] = PALETTE[i % PALETTE.length]
     addNode({ id: 'cat:' + c, kind: 'cat', label: c, count: 0, r: 0, x: 0, y: 0, vx: 0, vy: 0, color: catColor[c] })
+    edges.push({ a: 'cat:' + c, b: 'root', k: 'root' })
   })
 
-  // Lessons + cat edges
-  const df: Record<string, Set<string>> = {}
+  // Pelajaran/pesan → nyambung ke kategorinya
   for (const l of lessons) {
     const c = (l.category || 'Tanpa Kategori').trim() || 'Tanpa Kategori'
     const id = 'les:' + l.id
@@ -88,24 +70,12 @@ function buildGraph() {
     addNode({ id, kind: 'lesson', label, full: l.text || '', date: l.date, cat: c, count: 0, r: 5.5, x: 0, y: 0, vx: 0, vy: 0, color: catColor[c] })
     edges.push({ a: id, b: 'cat:' + c, k: 'cat' })
     byId['cat:' + c].count++
-    for (const term of new Set(tokenize(l.text || ''))) {
-      ;(df[term] = df[term] || new Set()).add(id)
-    }
-  }
-
-  // Concepts = recurring terms across >=2 lessons, top 50 by frequency
-  const concepts = Object.entries(df).filter(([, s]) => s.size >= 2)
-    .sort((a, b) => b[1].size - a[1].size).slice(0, 50)
-  for (const [term, set] of concepts) {
-    const id = 'con:' + term
-    addNode({ id, kind: 'con', label: term, count: set.size, r: 0, x: 0, y: 0, vx: 0, vy: 0, color: CON_COLOR })
-    set.forEach(les => edges.push({ a: les, b: id, k: 'con' }))
   }
 
   // Radii + adjacency
   for (const n of nodes) {
-    if (n.kind === 'cat') n.r = 12 + Math.sqrt(n.count) * 3.4
-    else if (n.kind === 'con') n.r = 7 + Math.sqrt(n.count) * 2.4
+    if (n.kind === 'root') n.r = 22 + Math.sqrt(n.count) * 1.2
+    else if (n.kind === 'cat') n.r = 11 + Math.sqrt(n.count) * 3.4
     nbr[n.id] = new Set()
   }
   for (const e of edges) { nbr[e.a].add(e.b); nbr[e.b].add(e.a) }
@@ -113,15 +83,24 @@ function buildGraph() {
 
 function seed() {
   const cx = W / 2, cy = H / 2, rad = Math.min(W, H) * 0.34
-  nodes.forEach((n, i) => {
-    const a = (i / Math.max(1, nodes.length)) * Math.PI * 2
-    const rr = n.kind === 'cat' ? rad * 0.4 : rad * (0.5 + Math.random() * 0.6)
-    n.x = cx + Math.cos(a) * rr; n.y = cy + Math.sin(a) * rr; n.vx = 0; n.vy = 0
+  const cats = nodes.filter(n => n.kind === 'cat')
+  const catAngle: Record<string, number> = {}
+  cats.forEach((c, i) => { catAngle[c.id] = (i / Math.max(1, cats.length)) * Math.PI * 2 })
+  nodes.forEach(n => {
+    if (n.kind === 'root') { n.x = cx; n.y = cy; n.vx = 0; n.vy = 0; return }
+    if (n.kind === 'cat') {
+      const a = catAngle[n.id]
+      n.x = cx + Math.cos(a) * rad * 0.42; n.y = cy + Math.sin(a) * rad * 0.42
+    } else {
+      const a = (catAngle['cat:' + (n.cat || '')] ?? Math.random() * Math.PI * 2) + (Math.random() - 0.5) * 0.6
+      const rr = rad * (0.7 + Math.random() * 0.5)
+      n.x = cx + Math.cos(a) * rr; n.y = cy + Math.sin(a) * rr
+    }
+    n.vx = 0; n.vy = 0
   })
 }
 
 function visible(n: GNode): boolean {
-  if (n.kind === 'con' && !showCon) return false
   if (n.kind === 'cat') return !hiddenCats.has(n.label)
   if (n.kind === 'lesson') return !hiddenCats.has(n.cat || '')
   return true
@@ -134,8 +113,8 @@ function tick() {
       const a = live[i], b = live[j]
       let dx = a.x - b.x, dy = a.y - b.y
       const d2 = dx * dx + dy * dy + 0.01, d = Math.sqrt(d2)
-      const ca = a.kind === 'cat' ? 3.2 : a.kind === 'con' ? 1.8 : 1
-      const cb = b.kind === 'cat' ? 3.2 : b.kind === 'con' ? 1.8 : 1
+      const ca = a.kind === 'root' ? 5 : a.kind === 'cat' ? 3.2 : 1
+      const cb = b.kind === 'root' ? 5 : b.kind === 'cat' ? 3.2 : 1
       const f = 320 * ca * cb / d2
       dx = f * dx / d; dy = f * dy / d
       a.vx += dx; a.vy += dy; b.vx -= dx; b.vy -= dy
@@ -145,13 +124,14 @@ function tick() {
     const a = byId[e.a], b = byId[e.b]
     if (!visible(a) || !visible(b)) continue
     const dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) + 0.01
-    const L = e.k === 'cat' ? 62 : 104
-    const f = 0.024 * (d - L), fx = f * dx / d, fy = f * dy / d
+    const L = e.k === 'root' ? 130 : 60   // inti→kategori lebih jauh, kategori→pesan lebih dekat
+    const f = 0.03 * (d - L), fx = f * dx / d, fy = f * dy / d
     a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy
   }
   const cx = W / 2, cy = H / 2
   for (const n of live) {
-    n.vx += (cx - n.x) * 0.0015; n.vy += (cy - n.y) * 0.0015
+    if (n.kind === 'root') { n.x = cx; n.y = cy; n.vx = 0; n.vy = 0; continue } // inti dipin di tengah
+    n.vx += (cx - n.x) * 0.0012; n.vy += (cy - n.y) * 0.0012
     if (n === drag) continue
     const sp = Math.hypot(n.vx, n.vy); if (sp > 30) { n.vx *= 30 / sp; n.vy *= 30 / sp }
     n.x += n.vx * alpha; n.y += n.vy * alpha; n.vx *= 0.85; n.vy *= 0.85
@@ -189,13 +169,12 @@ function draw() {
     if (!visible(a) || !visible(b)) continue
     const on = !!f && (e.a === f.id || e.b === f.id)
     const faded = dimmed(e.a) && dimmed(e.b)
-    ctx.globalAlpha = faded ? 0.06 : on ? 0.9 : 0.16
-    ctx.strokeStyle = on ? (e.k === 'con' ? CON_COLOR : '#9fb4ff') : '#5b6aa0'
-    ctx.lineWidth = on ? 1.6 : e.k === 'con' ? 0.9 : 0.7
-    if (e.k === 'con') ctx.setLineDash([3, 4]); else ctx.setLineDash([])
+    ctx.globalAlpha = faded ? 0.06 : on ? 0.9 : e.k === 'root' ? 0.3 : 0.16
+    ctx.strokeStyle = on ? '#9fb4ff' : e.k === 'root' ? '#7e8bc0' : '#5b6aa0'
+    ctx.lineWidth = on ? 1.6 : e.k === 'root' ? 1.2 : 0.7
     ctx.beginPath(); ctx.moveTo(sx(a), sy(a)); ctx.lineTo(sx(b), sy(b)); ctx.stroke()
   }
-  ctx.setLineDash([]); ctx.globalAlpha = 1
+  ctx.globalAlpha = 1
 
   // nodes
   for (const n of nodes) {
@@ -204,27 +183,22 @@ function draw() {
     const isF = !!f && f.id === n.id
     const px = sx(n), py = sy(n), r = n.r * Math.max(0.7, Math.min(scale, 1.8))
     ctx.globalAlpha = faded ? 0.18 : 1
-    if (!faded && (n.kind !== 'lesson' || isF)) { ctx.shadowColor = n.color; ctx.shadowBlur = isF ? 22 : 10 }
+    if (!faded && (n.kind !== 'lesson' || isF)) { ctx.shadowColor = n.color; ctx.shadowBlur = n.kind === 'root' ? 26 : isF ? 22 : 10 }
     else ctx.shadowBlur = 0
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2)
-    if (n.kind === 'con') {
-      ctx.fillStyle = '#06231f'; ctx.fill()
-      ctx.lineWidth = isF ? 2.6 : 1.8; ctx.strokeStyle = n.color; ctx.shadowBlur = 0; ctx.stroke()
-    } else {
-      ctx.fillStyle = n.color; ctx.fill()
-      if (isF) { ctx.shadowBlur = 0; ctx.lineWidth = 2.4; ctx.strokeStyle = '#fff'; ctx.stroke() }
-    }
+    ctx.fillStyle = n.color; ctx.fill()
+    if (n.kind === 'root') { ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(62,109,240,.9)'; ctx.stroke() }
+    else if (isF) { ctx.shadowBlur = 0; ctx.lineWidth = 2.4; ctx.strokeStyle = '#fff'; ctx.stroke() }
     ctx.shadowBlur = 0; ctx.globalAlpha = 1
 
-    const showLabel = n.kind === 'cat' || isF || (!!f && nbr[f.id].has(n.id)) ||
-      (n.kind === 'con' && scale > 1.1) ||
+    const showLabel = n.kind === 'root' || n.kind === 'cat' || isF || (!!f && nbr[f.id].has(n.id)) ||
       (!!query && (n.label + ' ' + (n.full || '')).toLowerCase().includes(query))
     if (showLabel && !faded) {
-      ctx.font = (n.kind === 'cat' ? '600 12px ' : n.kind === 'con' ? '600 11px ' : '500 11px ') + 'system-ui,-apple-system,sans-serif'
+      ctx.font = (n.kind === 'root' ? '700 14px ' : n.kind === 'cat' ? '600 12px ' : '500 11px ') + 'system-ui,-apple-system,sans-serif'
       ctx.textAlign = 'center'; ctx.textBaseline = 'top'
       const label = n.label.length > 34 ? n.label.slice(0, 34) + '…' : n.label
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(8,10,20,.85)'; ctx.strokeText(label, px, py + r + 3)
-      ctx.fillStyle = n.kind === 'cat' ? '#fff' : n.kind === 'con' ? CON_COLOR : '#aeb8d4'
+      ctx.fillStyle = n.kind === 'root' ? '#fff' : n.kind === 'cat' ? '#fff' : '#aeb8d4'
       ctx.fillText(label, px, py + r + 3)
     }
   }
@@ -314,12 +288,11 @@ function renderStats() {
   const el = document.getElementById('g-stats'); if (!el) return
   const dates = lessons.map(l => l.date).filter(Boolean).sort()
   const cats = new Set(lessons.map(l => (l.category || 'Tanpa Kategori'))).size
-  const cons = nodes.filter(n => n.kind === 'con').length
   const range = dates.length ? `${dates[0]} → ${dates[dates.length - 1]}` : '—'
   const cell = (n: string | number, l: string) =>
     `<div class="g-stat"><div class="g-stat-n">${n}</div><div class="g-stat-l">${l}</div></div>`
-  el.innerHTML = cell(lessons.length, 'Pelajaran') + cell(cats, 'Kategori') +
-    cell(cons, 'Konsep') + cell(edges.length, 'Koneksi') +
+  el.innerHTML = cell(lessons.length, 'Pesan') + cell(cats, 'Kategori') +
+    cell(edges.length, 'Koneksi') +
     `<div class="g-stat g-stat-wide"><div class="g-stat-n" style="font-size:12px">${range}</div><div class="g-stat-l">Rentang</div></div>`
 }
 
@@ -339,7 +312,7 @@ function renderLegend() {
 function renderDetail(n: GNode | null) {
   const el = document.getElementById('g-detail'); if (!el) return
   if (!n) {
-    el.innerHTML = `<div class="g-d-empty"><div class="g-d-empty-ic">◓</div>Klik node mana aja buat baca detailnya. Hover buat lihat jaringannya.</div>`
+    el.innerHTML = `<div class="g-d-empty"><div class="g-d-empty-ic">◓</div>Klik inti, kategori, atau pesan buat baca detailnya. Hover buat lihat jaringannya.</div>`
     return
   }
   if (n.kind === 'lesson') {
@@ -347,23 +320,29 @@ function renderDetail(n: GNode | null) {
         <span class="g-d-pill" style="background:${n.color}22;color:${n.color};border:1px solid ${n.color}55">${n.cat}</span>
         <span class="g-d-date">${n.date || ''}</span>
       </div>
-      <div class="g-d-text">${escapeHtml(n.full || '')}</div>
-      ${conChips(n.id)}`
-  } else {
-    const kids = nodes.filter(x => x.kind === 'lesson' && nbr[n.id].has(x.id))
-    el.innerHTML = `<div class="g-d-head">
-        <span class="g-d-title">${n.kind === 'con' ? '#' : ''}${n.label}</span>
-        <span class="g-d-date">${kids.length} pelajaran</span>
-      </div>
-      <div class="g-d-list">${kids.map(k =>
-        `<div class="g-d-item" data-id="${k.id}"><span class="g-d-item-dot" style="background:${k.color}"></span>${escapeHtml(k.label)}</div>`
-      ).join('')}</div>`
+      <div class="g-d-text">${escapeHtml(n.full || '')}</div>`
+    return
   }
-}
-function conChips(lessonId: string): string {
-  const cons = nodes.filter(x => x.kind === 'con' && nbr[lessonId].has(x.id))
-  if (!cons.length) return ''
-  return `<div class="g-d-cons">${cons.map(c => `<span class="g-d-chip" data-id="${c.id}">#${c.label}</span>`).join('')}</div>`
+  if (n.kind === 'root') {
+    const cats = nodes.filter(x => x.kind === 'cat').sort((a, b) => b.count - a.count)
+    el.innerHTML = `<div class="g-d-head">
+        <span class="g-d-title">${escapeHtml(n.label)}</span>
+        <span class="g-d-date">${lessons.length} pesan · ${cats.length} kategori</span>
+      </div>
+      <div class="g-d-list">${cats.map(k =>
+        `<div class="g-d-item" data-id="${k.id}"><span class="g-d-item-dot" style="background:${k.color}"></span>${escapeHtml(k.label)}<span style="margin-left:auto;font-size:10px;color:var(--pg-text3);font-weight:700">${k.count}</span></div>`
+      ).join('')}</div>`
+    return
+  }
+  // kategori
+  const kids = nodes.filter(x => x.kind === 'lesson' && nbr[n.id].has(x.id))
+  el.innerHTML = `<div class="g-d-head">
+      <span class="g-d-title">${escapeHtml(n.label)}</span>
+      <span class="g-d-date">${kids.length} pesan</span>
+    </div>
+    <div class="g-d-list">${kids.map(k =>
+      `<div class="g-d-item" data-id="${k.id}"><span class="g-d-item-dot" style="background:${k.color}"></span>${escapeHtml(k.label)}</div>`
+    ).join('')}</div>`
 }
 const HTML_ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
 function escapeHtml(s: string) { return s.replace(/[&<>"']/g, c => HTML_ESC[c] || c) }
@@ -390,9 +369,6 @@ async function init() {
   document.getElementById('g-search')?.addEventListener('input', e => {
     query = (e.target as HTMLInputElement).value.toLowerCase().trim(); reheat(0.1); if (!running) draw()
   })
-  document.getElementById('g-tg-con')?.addEventListener('click', e => {
-    showCon = !showCon; (e.currentTarget as HTMLElement).classList.toggle('active', showCon); reheat(0.5)
-  })
   document.getElementById('g-tg-freeze')?.addEventListener('click', e => {
     frozen = !frozen; (e.currentTarget as HTMLElement).classList.toggle('active', frozen)
     if (!frozen) reheat(0.4)
@@ -417,6 +393,11 @@ async function init() {
     const d = await api('/api/data')
     lessons = (d.lessons || []).filter(l => (l.text || '').trim())
   } catch { lessons = [] }
+
+  try {
+    const me = await fetch('/api/auth/me').then(r => r.ok ? r.json() : null)
+    if (me?.name) userName = me.name
+  } catch { /* default 'Saya' */ }
 
   if (!lessons.length) {
     const empty = document.getElementById('g-empty'); if (empty) empty.style.display = 'flex'
@@ -489,9 +470,6 @@ export default function GardenPage() {
         .g-d-title{font-size:15px;font-weight:700;color:var(--pg-text);}
         .g-d-date{font-size:10px;color:var(--pg-text3);font-weight:600;}
         .g-d-text{font-size:13.5px;line-height:1.72;color:var(--pg-text);white-space:pre-wrap;word-break:break-word;}
-        .g-d-cons{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;padding-top:14px;border-top:1px solid var(--pg-border);}
-        .g-d-chip{font-size:11px;font-weight:600;color:#5eead4;background:rgba(94,234,212,.1);border:1px solid rgba(94,234,212,.3);padding:3px 10px;border-radius:999px;cursor:pointer;transition:all .15s;}
-        .g-d-chip:hover{background:rgba(94,234,212,.2);}
         .g-d-list{display:flex;flex-direction:column;gap:2px;}
         .g-d-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;font-size:12px;color:var(--pg-text2);cursor:pointer;transition:all .12s;line-height:1.4;}
         .g-d-item:hover{background:rgba(255,255,255,.05);color:var(--pg-text);}
@@ -507,8 +485,7 @@ export default function GardenPage() {
         <div className="peta-canvas-area">
           <canvas id="g-canvas" />
           <div className="g-topbar">
-            <div className="g-search"><input id="g-search" placeholder="Cari pelajaran, kategori, konsep…" /></div>
-            <button id="g-tg-con" className="g-btn active" title="Tampilkan node konsep penghubung">Konsep</button>
+            <div className="g-search"><input id="g-search" placeholder="Cari pesan atau kategori…" /></div>
             <button id="g-tg-freeze" className="g-btn" title="Bekukan gerakan">Freeze</button>
           </div>
           <div className="g-stats" id="g-stats" />

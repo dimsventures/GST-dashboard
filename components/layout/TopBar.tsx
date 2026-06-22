@@ -24,6 +24,7 @@ function LessonTicker() {
   const [items, setItems] = useState<LessonItem[]>([])
   const [idx, setIdx] = useState(0)
   const [dur, setDur] = useState(20)
+  const [paused, setPaused] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -42,19 +43,25 @@ function LessonTicker() {
   }, [])
 
   useEffect(() => {
-    if (!items.length) return
+    if (!items.length || paused) return
     const text = items[idx]?.text || ''
     const d = Math.max(16, Math.min(30, 16 + text.length * 0.12))
     setDur(d)
     timerRef.current = setTimeout(() => setIdx(i => (i + 1) % items.length), d * 1000)
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
-  }, [idx, items])
+  }, [idx, items, paused])
 
   if (!items.length) return null
 
   const cur = items[idx]
   return (
-    <div key={idx} className="hdr-lesson-item" style={{ '--lsn-dur': dur + 's' } as CSSProperties}>
+    <div
+      key={idx}
+      className="hdr-lesson-item"
+      style={{ '--lsn-dur': dur + 's', animationPlayState: paused ? 'paused' : 'running' } as CSSProperties}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       {cur.category
         ? <span className="lsn-cat-tag">{cur.category}</span>
         : <span className="hdr-lesson-date">🔒 {fmtLessonDate(cur.date)}</span>}

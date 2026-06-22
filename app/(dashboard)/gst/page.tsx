@@ -310,7 +310,7 @@ function renderChain() {
     const doneGoals = goals.filter(g => g.done && g.doneDate === dstr)
     doneGoals.forEach(g => { tags += `<span class="tag tg">★ ${g.text.slice(0, 16)}${g.text.length > 16 ? '...' : ''}</span>` })
     const doneWishes = wishes.filter(w => w.done && w.doneDate === dstr)
-    doneWishes.forEach(w => { tags += `<span class="tag" style="background:#eef3ff;color:#3e6df0;border:1px solid #c7d9fc;">✦ ${w.text.slice(0, 16)}${w.text.length > 16 ? '...' : ''}</span>` })
+    doneWishes.forEach(w => { tags += `<span class="tag" style="background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);">✦ ${w.text.slice(0, 16)}${w.text.length > 16 ? '...' : ''}</span>` })
 
     const sc = dayActs.length ? Math.min(actScoreTotal(dstr), 5) : e ? Math.round((e.ws + e.ms) / 2) : 0
     let pips = ''; for (let p = 0; p < 5; p++) pips += `<div class="pip${p < sc ? ' on' : ''}"></div>`
@@ -349,8 +349,8 @@ function renderChain() {
     }
     const doneWishesDet = wishes.filter(w => w.done && w.doneDate === dstr)
     if (doneWishesDet.length) {
-      det += `<div class="dlesn-card" style="background:#fff5f5;border-color:#fecaca;"><div class="dlesn-lbl" style="color:var(--red);">✦ Dream Tercapai</div>`
-      doneWishesDet.forEach(w => { det += `<div class="dlesn-txt" style="color:#7f1d1d;margin-bottom:6px;"><strong>${w.text}</strong>${w.achievementStory ? '<br><span style="font-size:10px;opacity:.8;">' + w.achievementStory + '</span>' : ''}</div>` })
+      det += `<div class="dlesn-card"><div class="dlesn-lbl" style="color:var(--red);">✦ Dream Tercapai</div>`
+      doneWishesDet.forEach(w => { det += `<div class="dlesn-txt" style="margin-bottom:6px;"><strong>${w.text}</strong>${w.achievementStory ? '<br><span style="font-size:10px;opacity:.8;">' + w.achievementStory + '</span>' : ''}</div>` })
       det += `</div>`
     }
     if (!isFuture) det += `<button class="edit-entry-btn" onclick="openLogDate('${dstr}')">✎ ${dayActs.length ? 'Tambah / Edit' : 'Log Aktivitas'}</button>`
@@ -1143,12 +1143,12 @@ async function renderBarChart() {
     type: 'bar',
     data: {
       labels, datasets: [
-        { label: 'Religion', data: data.map(e => e.religion), backgroundColor: 'rgba(79,124,240,0.85)', stack: 's' },
-        { label: 'Working Stage', data: data.map(e => e.work), backgroundColor: 'rgba(240,169,62,0.85)', stack: 's' },
-        { label: 'Personal Wish', data: data.map(e => e.personal), backgroundColor: 'rgba(232,121,168,0.85)', stack: 's' },
-        { label: 'Exercise', data: data.map(e => e.exercise), backgroundColor: 'rgba(63,201,138,0.85)', stack: 's' },
-        { label: 'Habit', data: data.map(e => e.habit), backgroundColor: 'rgba(155,110,240,0.85)', stack: 's' },
-        { label: 'Humanity', data: data.map(e => e.humanity), backgroundColor: 'rgba(52,194,212,0.85)', stack: 's' },
+        { label: 'Religion', data: data.map(e => e.religion), backgroundColor: '#3b82f6', stack: 's' },
+        { label: 'Working Stage', data: data.map(e => e.work), backgroundColor: '#ef4444', stack: 's' },
+        { label: 'Personal Wish', data: data.map(e => e.personal), backgroundColor: '#f59e0b', stack: 's' },
+        { label: 'Exercise', data: data.map(e => e.exercise), backgroundColor: '#22c55e', stack: 's' },
+        { label: 'Habit', data: data.map(e => e.habit), backgroundColor: '#8b5cf6', stack: 's' },
+        { label: 'Humanity', data: data.map(e => e.humanity), backgroundColor: '#14b8a6', stack: 's' },
       ],
     },
     options: {
@@ -1392,7 +1392,7 @@ function openGoalsModal() {
   const esc = (s: string) => (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string))
   const MN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
   const col = (title: string, sub: string, arr: Any[]) => {
-    const items = arr.length ? arr.map(g => `<div style="background:#fff;border:1px solid var(--border);border-left:3px solid var(--red);border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:var(--text);line-height:1.5;">• ${esc(g.text)}</div>`).join('') : `<div class="empty-note" style="padding:20px 8px;">Semua goals sudah tercapai 🎉</div>`
+    const items = arr.length ? arr.map(g => `<div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:var(--text);line-height:1.5;">• ${esc(g.text)}</div>`).join('') : `<div class="empty-note" style="padding:20px 8px;">Semua goals sudah tercapai 🎉</div>`
     return `<div><div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:4px;">${title}</div><div style="font-size:10px;color:var(--text3);margin-bottom:10px;">${sub} — <strong style="color:var(--text2);">${arr.length} open</strong></div>${items}</div>`
   }
   const body = gid('gmo-body')
@@ -1587,11 +1587,11 @@ export default function GstPage() {
         .goals-empty{text-align:center;padding:18px 10px;color:var(--text4);font-size:10px;font-style:italic;}
 
         .tag.tg{background:#fef2f8;color:#be185d;border:1px solid #fbcfe8;}
-        .dgoal-card{background:linear-gradient(135deg,#fef2f8 0%,#fff 100%);border:1px solid #fbcfe8;border-radius:var(--r2);padding:10px 12px;margin-top:6px;}
-        .dgoal-lbl{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#be185d;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:5px;}
-        .dgoal-row{display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#1a1a1a;line-height:1.5;padding:2px 0;}
+        .dgoal-card{background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--r2);padding:10px 12px;margin-top:6px;}
+        .dgoal-lbl{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+        .dgoal-row{display:flex;align-items:flex-start;gap:6px;font-size:11px;color:var(--text);line-height:1.5;padding:2px 0;}
         .dgoal-row::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;}
-        .dgoal-scope{font-size:7.5px;color:#888;background:#f5f4f2;padding:1px 5px;border-radius:8px;font-weight:600;flex-shrink:0;}
+        .dgoal-scope{font-size:7.5px;color:var(--text3);background:var(--bg2);padding:1px 5px;border-radius:8px;font-weight:600;flex-shrink:0;}
         .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
         .cdname{text-align:center;font-size:8px;font-weight:600;color:var(--text4);letter-spacing:.05em;padding:2px 0 3px;}
         .cday{text-align:center;font-size:11px;padding:2px 1px;border-radius:var(--r2);cursor:pointer;transition:all .12s;color:var(--text2);line-height:1.2;position:relative;}
@@ -1690,9 +1690,9 @@ export default function GstPage() {
         .dcard-lbl{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-weight:600;margin-bottom:3px;}
         .dcard-val{font-size:11px;color:var(--text);line-height:1.5;font-weight:500;}
         .dcard-val.empty{color:var(--text4);font-style:italic;font-weight:400;}
-        .dlesn-card{background:#fff5f5;border:1px solid #fecaca;border-radius:var(--r2);padding:10px 12px;margin-top:4px;}
+        .dlesn-card{background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--r2);padding:10px 12px;margin-top:4px;}
         .dlesn-lbl{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);font-weight:600;margin-bottom:4px;}
-        .dlesn-txt{font-size:11px;color:#7f1d1d;line-height:1.6;font-style:italic;}
+        .dlesn-txt{font-size:11px;color:var(--text2);line-height:1.6;font-style:italic;}
         .add-chain-btn{width:100%;background:none;border:1.5px dashed var(--border2);border-radius:var(--r2);padding:8px;color:var(--text3);font-size:10px;cursor:pointer;text-align:center;margin-top:8px;}
         .add-chain-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
         .edit-entry-btn{background:none;border:1px solid var(--border2);border-radius:var(--r2);padding:5px 12px;color:var(--text3);font-size:10px;cursor:pointer;margin-top:8px;}
@@ -1779,7 +1779,7 @@ export default function GstPage() {
         .wish-compact-btn{background:var(--red);color:#fff;border:none;border-radius:var(--r2);padding:7px 14px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;}
         .wish-compact-btn:hover{filter:brightness(.9);}
         .wish-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--r2);border:1px solid var(--border);background:var(--white);margin-bottom:8px;}
-        .wish-item.wish-done{background:#fff5f5;border-color:#fecaca;opacity:.8;}
+        .wish-item.wish-done{background:var(--gold-bg);border-color:var(--gold-border);opacity:.75;}
         .wish-cb-wrap{flex-shrink:0;padding-top:1px;}
         .wish-cb{width:18px;height:18px;border-radius:4px;border:2px solid var(--border2);cursor:pointer;flex-shrink:0;}
         .wish-cb:hover{border-color:var(--red);}
@@ -2066,7 +2066,6 @@ export default function GstPage() {
                 <span className="sct" id="sct-done">0</span>
               </button>
             </div>
-            <div className="cat-bar" id="cat-bar"></div>
             <div className="todo-add">
               <input type="text" className="todo-inp" id="ti" placeholder="Tambah task baru..." onKeyDown={e => { if (e.key === 'Enter') addTodo() }} onInput={e => updateCatHint(e.currentTarget.value)} />
               <button className="todo-addbtn" onClick={addTodo}>+</button>
