@@ -400,13 +400,25 @@ function lockLesson() {
     updateLsnCatsList(); renderLessons(); renderChain(); renderStats()
   }).catch(console.error)
 }
+let lsnCats: string[] = []
 function updateLsnCatsList() {
   const cats = new Set<string>()
   lessons.forEach(l => (l.items || []).forEach((item: Any) => { if (item.category) cats.add(item.category) }))
-  const dl = gid('lsn-cats-list')
-  const escCat = (s: string) => s.replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c] as string))
-  if (dl) dl.innerHTML = [...cats].sort().map(c => `<option value="${escCat(c)}">`).join('')
+  lsnCats = [...cats].sort((a, b) => a.localeCompare(b))
+  renderCatSug()
 }
+function renderCatSug() {
+  const box = gid('lta-cat-sug'); const inp = gid('lta-cat') as HTMLInputElement | null
+  if (!box || !inp) return
+  const q = inp.value.toLowerCase().replace(/^#/, '').trim()
+  const matches = lsnCats.filter(c => c.toLowerCase().includes(q))
+  if (!matches.length) { box.style.display = 'none'; box.innerHTML = ''; return }
+  const e = (s: string) => s.replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c] as string))
+  box.innerHTML = matches.slice(0, 14).map(c => `<div class="cat-sug-row" data-cat="${e(c)}"><span class="cat-sug-dot"></span>${e(c)}</div>`).join('')
+  box.style.display = 'block'
+}
+function showCatSug() { renderCatSug() }
+function hideCatSug() { const box = gid('lta-cat-sug'); if (box) box.style.display = 'none' }
 function delLessonFromModal(id: string) {
   showConfirm('Pelajaran ini akan dihapus permanen.', async () => {
     try {
@@ -1493,7 +1505,25 @@ export default function GstPage() {
     }
     WINDOW_FNS.forEach(fn => { w[fn] = fns[fn] })
     init()
+    const sugBox = document.getElementById('lta-cat-sug')
+    const onSug = (e: MouseEvent) => {
+      const row = (e.target as HTMLElement).closest('.cat-sug-row') as HTMLElement | null
+      if (!row) return
+      e.preventDefault()
+      const inp = document.getElementById('lta-cat') as HTMLInputElement | null
+      if (inp) inp.value = row.dataset.cat || ''
+      hideCatSug()
+    }
+    sugBox?.addEventListener('mousedown', onSug)
+    const onDocDown = (e: MouseEvent) => {
+      const tg = e.target as HTMLElement
+      if (tg.closest('#lta-cat') || tg.closest('#lta-cat-sug')) return
+      hideCatSug()
+    }
+    document.addEventListener('mousedown', onDocDown)
     return () => {
+      sugBox?.removeEventListener('mousedown', onSug)
+      document.removeEventListener('mousedown', onDocDown)
       if (chartBarInstance) { chartBarInstance.destroy(); chartBarInstance = null }
       if (chartLineInstance) { chartLineInstance.destroy(); chartLineInstance = null }
       if (chartTotalInstance) { chartTotalInstance.destroy(); chartTotalInstance = null }
@@ -1702,16 +1732,21 @@ export default function GstPage() {
 
         .rp{background:var(--bg);display:flex;flex-direction:column;overflow:hidden;padding:16px;gap:16px;}
 
-        .lsn-sec{flex:0 0 auto;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);overflow:hidden;}
+        .lsn-sec{flex:0 0 auto;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);overflow:visible;}
         .ph{padding:11px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px;}
         .ph-title{font-size:12px;font-weight:700;color:var(--text);}
         .lsn-input-area{padding:11px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
         .lsn-ta{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 9px;font-size:11.5px;color:#fff;resize:none;min-height:58px;outline:none;line-height:1.5;transition:border-color .15s;}
         .lsn-ta:focus{border-color:var(--gold);}
         .lsn-ta::placeholder{color:var(--text3);}
-        .lsn-cat-inp{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:6px 9px;font-size:10.5px;color:#fff;outline:none;transition:border-color .15s;margin-top:5px;}
+        .lsn-cat-inp{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:6px 9px;font-size:10.5px;color:#fff;outline:none;transition:border-color .15s;}
         .lsn-cat-inp:focus{border-color:var(--gold);}
         .lsn-cat-inp::placeholder{color:var(--text3);}
+        .cat-inp-wrap{position:relative;margin-top:5px;}
+        .cat-sug{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:60;max-height:208px;overflow-y:auto;background:var(--white);border:1px solid var(--border2);border-radius:9px;box-shadow:var(--s3);padding:4px;}
+        .cat-sug-row{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:6px;font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:background .12s,color .12s;}
+        .cat-sug-row:hover{background:var(--gold-bg);color:var(--text);}
+        .cat-sug-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;}
         .lsn-date-btn{width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:11px;color:var(--text);cursor:pointer;margin-top:5px;transition:border-color .15s;font-family:inherit;}
         .lsn-date-btn:hover{border-color:var(--red-border);}
         .lsn-date-ic{font-size:12px;opacity:.65;}
@@ -2038,8 +2073,10 @@ export default function GstPage() {
             </div>
             <div className="lsn-input-area">
               <textarea className="lsn-ta" id="lta" placeholder="Tulis insight atau pelajaran hari ini..."></textarea>
-              <input type="text" className="lsn-cat-inp" id="lta-cat" placeholder="# Kategori? (AI, Bisnis, Coding...)" list="lsn-cats-list" autoComplete="off" onKeyDown={e => { if (e.key === 'Enter') lockLesson() }} />
-              <datalist id="lsn-cats-list"></datalist>
+              <div className="cat-inp-wrap">
+                <input type="text" className="lsn-cat-inp" id="lta-cat" placeholder="# Kategori? (AI, Bisnis, Coding...)" autoComplete="off" onFocus={showCatSug} onInput={showCatSug} onKeyDown={e => { if (e.key === 'Enter') { hideCatSug(); lockLesson() } }} />
+                <div className="cat-sug" id="lta-cat-sug"></div>
+              </div>
               <LessonDatePicker />
               <button className="lock-btn" onClick={lockLesson} style={{ color: 'var(--red)', background: 'var(--red-bg)', borderColor: 'var(--red-border)' }}>Send to my mind</button>
             </div>

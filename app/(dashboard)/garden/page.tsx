@@ -403,13 +403,34 @@ async function reloadGraph() {
     const d = await api('/api/data')
     lessons = (d.lessons || []).filter(l => (l.text || '').trim())
   } catch { return }
+  buildGLsnCats()
   buildGraph(); seed(); renderStats(); renderLegend()
   const empty = document.getElementById('g-empty'); if (empty) empty.style.display = lessons.length ? 'none' : 'flex'
   alpha = 1; if (!running) loop()
 }
+let gLsnCats: string[] = []
+function buildGLsnCats() {
+  const s = new Set<string>()
+  lessons.forEach(l => { const c = (l.category || '').trim(); if (c) s.add(c) })
+  gLsnCats = [...s].sort((a, b) => a.localeCompare(b))
+}
+function gRenderCatSug() {
+  const box = document.getElementById('g-lesson-cat-sug'); const inp = document.getElementById('g-lesson-cat') as HTMLInputElement | null
+  if (!box || !inp) return
+  const q = inp.value.toLowerCase().replace(/^#/, '').trim()
+  const matches = gLsnCats.filter(c => c.toLowerCase().includes(q))
+  if (!matches.length) { box.style.display = 'none'; box.innerHTML = ''; return }
+  const e = (s: string) => s.replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c] as string))
+  box.innerHTML = matches.slice(0, 14).map(c => `<div class="cat-sug-row" data-cat="${e(c)}"><span class="cat-sug-dot"></span>${e(c)}</div>`).join('')
+  box.style.display = 'block'
+}
+function gHideCatSug() { const b = document.getElementById('g-lesson-cat-sug'); if (b) b.style.display = 'none' }
+
 function openLessonModal() {
   const m = document.getElementById('g-modal'); if (!m) return
   m.classList.add('open')
+  const h = document.getElementById('g-modal-h')
+  if (h) h.textContent = `Ada pelajaran apa yang bisa dicatat hari ini, ${userName}?`
   const ta = document.getElementById('g-lesson-ta') as HTMLTextAreaElement | null
   const dt = document.getElementById('g-lesson-date') as HTMLInputElement | null
   if (dt) dt.value = new Date().toISOString().slice(0, 10)
@@ -505,11 +526,27 @@ async function init() {
   document.getElementById('g-lesson-cancel')?.addEventListener('click', closeLessonModal)
   document.getElementById('g-modal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeLessonModal() })
   document.getElementById('g-lesson-ta')?.addEventListener('keydown', e => onLessonKey(e as KeyboardEvent))
+  document.getElementById('g-lesson-cat')?.addEventListener('focus', gRenderCatSug)
+  document.getElementById('g-lesson-cat')?.addEventListener('input', gRenderCatSug)
+  document.getElementById('g-lesson-cat-sug')?.addEventListener('mousedown', e => {
+    const row = (e.target as HTMLElement).closest('.cat-sug-row') as HTMLElement | null
+    if (!row) return
+    e.preventDefault()
+    const inp = document.getElementById('g-lesson-cat') as HTMLInputElement | null
+    if (inp) inp.value = row.dataset.cat || ''
+    gHideCatSug()
+  })
+  document.addEventListener('mousedown', e => {
+    const tg = e.target as HTMLElement
+    if (tg.closest('#g-lesson-cat') || tg.closest('#g-lesson-cat-sug')) return
+    gHideCatSug()
+  })
 
   try {
     const d = await api('/api/data')
     lessons = (d.lessons || []).filter(l => (l.text || '').trim())
   } catch { lessons = [] }
+  buildGLsnCats()
 
   try {
     const me = await fetch('/api/auth/me').then(r => r.ok ? r.json() : null)
@@ -570,11 +607,13 @@ export default function GardenPage() {
           radial-gradient(1px 1px at 150px 42px,rgba(255,255,255,.35),transparent);
           background-size:310px 310px;animation:g-twinkle 7.5s ease-in-out infinite reverse;opacity:.7;}
         @keyframes g-twinkle{0%,100%{opacity:.4}50%{opacity:.85}}
-        .meteor{position:absolute;width:88px;height:1.5px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(185,208,255,.95));transform:rotate(32deg);opacity:0;filter:drop-shadow(0 0 3px rgba(160,190,255,.7));}
-        .meteor.m1{top:9%;left:22%;animation:g-meteor 15s ease-in-out infinite;animation-delay:2s;}
-        .meteor.m2{top:26%;left:58%;animation:g-meteor 19s ease-in-out infinite;animation-delay:8s;}
-        .meteor.m3{top:6%;left:76%;animation:g-meteor 17s ease-in-out infinite;animation-delay:13s;}
-        @keyframes g-meteor{0%{opacity:0;transform:translate(0,0) rotate(32deg)}3%{opacity:.9}15%{opacity:.9}21%{opacity:0;transform:translate(-260px,420px) rotate(32deg)}100%{opacity:0;transform:translate(-260px,420px) rotate(32deg)}}
+        .meteor{position:absolute;width:2.5px;height:2.5px;border-radius:50%;background:rgba(200,218,255,.95);box-shadow:0 0 6px 1px rgba(160,190,255,.6);opacity:0;}
+        .meteor.m1{top:14%;left:16%;--dx:32vw;--dy:40vh;animation:g-wander 17s ease-in-out infinite;animation-delay:1s;}
+        .meteor.m2{top:70%;left:80%;--dx:-30vw;--dy:-34vh;animation:g-wander 22s ease-in-out infinite;animation-delay:6s;}
+        .meteor.m3{top:30%;left:60%;--dx:18vw;--dy:-28vh;animation:g-wander 19s ease-in-out infinite;animation-delay:11s;}
+        .meteor.m4{top:82%;left:30%;--dx:-22vw;--dy:-40vh;animation:g-wander 24s ease-in-out infinite;animation-delay:3s;}
+        .meteor.m5{top:20%;left:74%;--dx:-26vw;--dy:36vh;animation:g-wander 20s ease-in-out infinite;animation-delay:14s;}
+        @keyframes g-wander{0%{opacity:0;transform:translate(0,0)}12%{opacity:.95}50%{opacity:.6}88%{opacity:0;transform:translate(var(--dx),var(--dy))}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
         /* ── Mascot kucing astronot ── */
         .cat-astro{position:absolute;top:15%;left:10%;z-index:6;background:none;border:none;padding:0;cursor:pointer;filter:drop-shadow(0 5px 14px rgba(0,0,0,.5));animation:g-catdrift 52s ease-in-out infinite;}
         .cat-astro svg{display:block;animation:g-catbob 4.6s ease-in-out infinite;}
@@ -589,7 +628,7 @@ export default function GardenPage() {
         /* ── Modal catat pelajaran ── */
         .g-modal{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(6,8,16,.66);backdrop-filter:blur(4px);padding:20px;}
         .g-modal.open{display:flex;}
-        .g-modal-card{width:100%;max-width:420px;background:#0e1324;border:1px solid rgba(122,162,255,.3);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 30px rgba(62,109,240,.15);padding:22px 22px 18px;}
+        .g-modal-card{width:100%;max-width:420px;background:#0e1324;border:1px solid rgba(122,162,255,.3);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 30px rgba(62,109,240,.15);padding:22px 22px 18px;color-scheme:dark;}
         .g-modal-cat{font-size:30px;text-align:center;line-height:1;margin-bottom:6px;}
         .g-modal-h{text-align:center;font-size:13px;font-weight:700;color:var(--pg-text);line-height:1.5;margin-bottom:14px;}
         .g-modal-h span{font-weight:500;color:var(--pg-text2);font-size:12px;}
@@ -599,6 +638,12 @@ export default function GardenPage() {
         .g-modal-inp{flex:1;min-width:0;box-sizing:border-box;background:#080b16;border:1px solid var(--pg-border);border-radius:9px;padding:8px 11px;font-size:12px;color:var(--pg-text);outline:none;}
         .g-modal-inp:focus{border-color:rgba(62,109,240,.6);}
         .g-modal-date{flex:0 0 140px;color-scheme:dark;}
+        .g-cat-wrap{position:relative;flex:1;min-width:0;}
+        .g-cat-wrap .g-modal-inp{flex:none;width:100%;}
+        .cat-sug{display:none;position:absolute;left:0;right:0;bottom:calc(100% + 5px);z-index:40;max-height:170px;overflow-y:auto;background:#0e1324;border:1px solid rgba(122,162,255,.3);border-radius:9px;box-shadow:0 10px 30px rgba(0,0,0,.55);padding:4px;}
+        .cat-sug-row{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:6px;font-size:11px;font-weight:500;color:var(--pg-text2);cursor:pointer;transition:background .12s,color .12s;}
+        .cat-sug-row:hover{background:rgba(62,109,240,.16);color:var(--pg-text);}
+        .cat-sug-dot{width:6px;height:6px;border-radius:50%;background:#6ea0ff;flex-shrink:0;}
         .g-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
         .g-modal-btn{padding:8px 16px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid transparent;transition:all .15s;}
         .g-modal-btn.ghost{background:none;border-color:var(--pg-border);color:var(--pg-text2);}
@@ -665,6 +710,8 @@ export default function GardenPage() {
             <span className="meteor m1" />
             <span className="meteor m2" />
             <span className="meteor m3" />
+            <span className="meteor m4" />
+            <span className="meteor m5" />
           </div>
           <canvas id="g-canvas" />
           <button id="cat-astro" className="cat-astro" title="Ada pelajaran hari ini?" aria-label="Catat pelajaran hari ini">
@@ -698,10 +745,13 @@ export default function GardenPage() {
           <div className="g-modal" id="g-modal">
             <div className="g-modal-card">
               <div className="g-modal-cat">😺</div>
-              <div className="g-modal-h">Eh, kaget! 🐾<br /><span>Ada pelajaran yang bisa dicatat hari ini?</span></div>
+              <div className="g-modal-h" id="g-modal-h"></div>
               <textarea id="g-lesson-ta" className="g-modal-ta" placeholder="Tulis insight atau pelajaran hari ini… (ketik '1. ' buat mulai list, Enter lanjut otomatis)" />
               <div className="g-modal-row">
-                <input id="g-lesson-cat" className="g-modal-inp" placeholder="# Kategori (opsional)" />
+                <div className="g-cat-wrap">
+                  <input id="g-lesson-cat" className="g-modal-inp" placeholder="# Kategori (opsional)" autoComplete="off" />
+                  <div className="cat-sug" id="g-lesson-cat-sug"></div>
+                </div>
                 <input id="g-lesson-date" type="date" className="g-modal-inp g-modal-date" />
               </div>
               <div className="g-modal-actions">
