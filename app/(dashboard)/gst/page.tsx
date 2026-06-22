@@ -76,7 +76,7 @@ const TARGET_QUOTES = [
   { t: "You will never always be motivated. So you must learn to be disciplined.", by: '' },
 ]
 
-const LEARNING_KEYWORDS = ['belajar', 'pelajari', 'learning', 'learn', 'to know', 'pahami', 'memahami', 'riset', 'research', 'deep dive', 'studi', 'study', 'eksplorasi', 'explore', 'cari tau', 'cari tahu', 'ngerti', 'mengerti', 'kenali', 'baca buku', 'baca ', 'read ', 'kursus', 'course', 'modul', 'module', 'dokumentasi', 'documentation', 'tutorial']
+const LEARNING_KEYWORDS = ['belajar', 'pelajari', 'learning', 'learn', 'to know', 'pahami', 'memahami', 'riset', 'research', 'deep dive', 'studi', 'study', 'eksplorasi', 'explore', 'cari tau', 'cari tahu', 'ngerti', 'mengerti', 'kenali', 'baca buku', 'baca ', 'read ', 'kursus', 'course', 'modul', 'module', 'dokumentasi', 'documentation', 'tutorial', 'dalami', 'mendalami', 'dalamin', 'deep in']
 
 function getActCats() { return activityCategories.length ? activityCategories : ACT_CATS_DEFAULT }
 function actScore(date: string, cat: string) { return activities.filter(a => a.date === date && a.category === cat).length }
@@ -142,17 +142,6 @@ async function seedDefaultActCategories() {
   }
 }
 
-async function seedDefaultCategories() {
-  const defaults = [
-    { mode: 'doing', name: 'Market', color: '#15803d', keywords: ['saham', 'market', 'trading', 'btc', 'crypto', 'porto', 'investasi', 'ihsg'], points_to: 'personal' },
-    { mode: 'doing', name: 'AI/Tech', color: '#6d28d9', keywords: ['ai', 'claude', 'n8n', 'automation', 'coding', 'script', 'build', 'deploy', 'api', 'bot'], points_to: 'work' },
-    { mode: 'doing', name: 'Content', color: '#c2410c', keywords: ['konten', 'content', 'reels', 'artikel', 'video', 'caption', 'post', 'nulis'], points_to: 'work' },
-  ]
-  for (const d of defaults) {
-    try { const c = await api('/api/todo-categories', 'POST', d); todoCategories.push(c) } catch (e) { console.warn('seed cat failed', e) }
-  }
-}
-
 // ── INIT ──
 async function init() {
   await refreshTokenIfNeeded()
@@ -175,11 +164,7 @@ async function init() {
     todos = defTodos()
     todos.forEach(t => api('/api/todos', 'POST', { id: t.id, text: t.text, cat: t.cat, done: t.done, done_date: null, mode: 'doing', points_to: 'personal' }).catch(console.error))
   }
-  if (Array.isArray(tc) && tc.length) {
-    todoCategories = tc
-  } else {
-    await seedDefaultCategories()
-  }
+  todoCategories = Array.isArray(tc) ? tc : []
   if (Array.isArray(atc) && atc.length) {
     activityCategories = atc
   }
@@ -248,7 +233,7 @@ function renderStats() {
   const st1 = gid('st1'); if (st1) st1.textContent = String(wishes.length)
   const st2 = gid('st2'); if (st2) st2.textContent = String(lessons.reduce((s, l) => s + (l.items ? l.items.length : 1), 0))
   const now = new Date(); const yr = now.getFullYear(); const eoy = new Date(yr, 11, 31); const daysLeft = Math.ceil((eoy.getTime() - now.getTime()) / 86400000)
-  const st5 = gid('st5'); if (st5) st5.textContent = String(daysLeft)
+  const st5 = gid('st5'); if (st5) { st5.textContent = '-' + daysLeft; st5.style.color = '#ef4444' }
 }
 
 // ── CHAIN ──
@@ -453,40 +438,20 @@ function guessMode(text: string) {
   return 'doing'
 }
 
-function guessCatForMode(text: string, mode: string) {
-  const t = text.toLowerCase()
-  const cats = todoCategories.filter(c => c.mode === mode)
-  for (const c of cats) {
-    const kws = Array.isArray(c.keywords) ? c.keywords : []
-    if (kws.some((w: string) => t.includes(w))) return c
-  }
-  return cats[0] || null
-}
-
 function updateCatHint(val: string) {
   const hint = gid('cat-hint')
   if (!hint) return
   if (!val.trim()) { hint.classList.remove('show'); hint.innerHTML = ''; return }
-  const detMode = guessMode(val)
-  const detCat = guessCatForMode(val, detMode)
-  const actCat = getActCats().find((a: Any) => a.key === (detCat?.points_to || 'personal'))
-  const modeLabel = detMode === 'learning' ? 'Learning' : 'Doing'
-  const catLabel = detCat ? detCat.name : '—'
-  const catColor = detCat ? detCat.color : '#9ca3af'
-  const ptLabel = actCat ? actCat.label : 'Personal Wish'
-  hint.innerHTML = `→ <span style="font-weight:700;color:var(--red)">${modeLabel}</span> · <span style="background:${catColor}22;color:${catColor};font-weight:700;padding:1px 6px;border-radius:8px;font-size:9px;">${catLabel}</span> → <span style="font-size:9px;color:var(--text4)">poin ke ${ptLabel}</span>`
+  const modeLabel = guessMode(val) === 'learning' ? 'Learning' : 'To Do'
+  hint.innerHTML = `→ <span style="font-weight:700;color:var(--red)">${modeLabel}</span>`
   hint.classList.add('show')
 }
 
 function addTodo() {
   const inp = gid<HTMLInputElement>('ti')
   const text = (inp?.value || '').trim(); if (!text) return
-  const detMode = guessMode(text)
-  const detCat = todoCat !== 'Semua' ? todoCategories.find(c => c.name === todoCat && c.mode === todoMode) : guessCatForMode(text, detMode)
-  const mode = todoCat !== 'Semua' ? todoMode : detMode
-  const cat = detCat ? detCat.name : (todoCategories.filter(c => c.mode === mode)[0]?.name || '')
-  const points_to = detCat ? detCat.points_to : 'personal'
-  const t = { id: crypto.randomUUID(), text, cat, mode, done: false, doneDate: null, points_to }
+  const mode = guessMode(text) // belajar/pelajari/dalami/learn → learning, sisanya to-do
+  const t = { id: crypto.randomUUID(), text, cat: null, mode, done: false, doneDate: null, points_to: 'personal' }
   todos.unshift(t); saveTodoDB(t)
   if (inp) inp.value = ''
   const hint = gid('cat-hint'); if (hint) { hint.classList.remove('show'); hint.innerHTML = '' }
@@ -630,7 +595,6 @@ function renderTodos() {
     return `<div class="titem${t.done ? ' done' : ''}" onclick="toggleTodo('${t.id}')">
       <div class="tcb"></div>
       <div class="ttxt">${t.text}</div>
-      ${t.cat ? `<div class="tcat">${t.cat}</div>` : ''}
       ${t.done ? `<div class="tdone-badge">✓ ${t.doneDate ? fmtShort(t.doneDate) : ''}</div>` : ''}
       <button class="tdel" onclick="event.stopPropagation();delTodo('${t.id}')">✕</button>
     </div>`

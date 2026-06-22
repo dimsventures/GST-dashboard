@@ -120,7 +120,7 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'radial-gradient(1100px 520px at 50% -8%, #141b38 0%, #0b0c10 58%)',
+      background: 'radial-gradient(620px 520px at 50% 50%, rgba(62,109,240,.34) 0%, rgba(30,44,92,.42) 34%, rgba(11,12,16,1) 70%), #0b0c10',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
