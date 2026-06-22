@@ -39,6 +39,17 @@ async function api(path: string): Promise<{ lessons?: Lesson[] }> {
   if (!r.ok) throw new Error(await r.text())
   return r.json()
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function postJSON(path: string, body: any) {
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+// Bentuk otak (lucide "brain") — dipake buat node inti. FILL = 2 belahan tertutup, PATH = + lekukan buat outline.
+const BRAIN_FILL = 'M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z'
+const BRAIN_PATH = BRAIN_FILL + ' M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4 M17.599 6.5a3 3 0 0 0 .399-1.375 M6.003 5.125A3 3 0 0 0 6.401 6.5 M3.477 10.896a4 4 0 0 1 .585-.396 M19.938 10.5a4 4 0 0 1 .585.396 M6 18a4 4 0 0 1-1.967-.516 M19.967 17.484A4 4 0 0 1 18 18'
+let brainFill: Path2D | null = null, brainStroke: Path2D | null = null
 
 // Struktur hub radial: inti (nama user) → kategori → pesan/pelajaran. Bukan graph konsep.
 function buildGraph() {
@@ -154,13 +165,25 @@ function dimmed(id: string): boolean {
 function sx(n: GNode) { return n.x * scale + tx }
 function sy(n: GNode) { return n.y * scale + ty }
 
+function drawBrain(px: number, py: number, r: number) {
+  if (!ctx) return
+  if (!brainFill && typeof Path2D !== 'undefined') { brainFill = new Path2D(BRAIN_FILL); brainStroke = new Path2D(BRAIN_PATH) }
+  if (!brainFill || !brainStroke) { ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fillStyle = 'rgba(62,109,240,.85)'; ctx.fill(); return }
+  const s = (r * 2.4) / 24
+  ctx.save()
+  ctx.translate(px, py); ctx.scale(s, s); ctx.translate(-12, -12)
+  ctx.shadowColor = '#3e6df0'; ctx.shadowBlur = 18 / s
+  ctx.fillStyle = 'rgba(62,109,240,.20)'; ctx.fill(brainFill)
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'
+  ctx.lineWidth = 1.5 / s; ctx.strokeStyle = '#7aa2ff'; ctx.stroke(brainStroke)
+  ctx.restore()
+  ctx.shadowBlur = 0
+}
+
 function draw() {
   if (!ctx) return
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-  ctx.clearRect(0, 0, W, H)
-  const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.7)
-  g.addColorStop(0, '#0e1430'); g.addColorStop(1, '#080a14')
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H)
+  ctx.clearRect(0, 0, W, H) // bg transparan — starfield ada di layer CSS di belakang
 
   const f = hover || sel
   // edges
@@ -183,12 +206,15 @@ function draw() {
     const isF = !!f && f.id === n.id
     const px = sx(n), py = sy(n), r = n.r * Math.max(0.7, Math.min(scale, 1.8))
     ctx.globalAlpha = faded ? 0.18 : 1
-    if (!faded && (n.kind !== 'lesson' || isF)) { ctx.shadowColor = n.color; ctx.shadowBlur = n.kind === 'root' ? 26 : isF ? 22 : 10 }
-    else ctx.shadowBlur = 0
-    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2)
-    ctx.fillStyle = n.color; ctx.fill()
-    if (n.kind === 'root') { ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(62,109,240,.9)'; ctx.stroke() }
-    else if (isF) { ctx.shadowBlur = 0; ctx.lineWidth = 2.4; ctx.strokeStyle = '#fff'; ctx.stroke() }
+    if (n.kind === 'root') {
+      drawBrain(px, py, r)
+    } else {
+      if (!faded && (n.kind !== 'lesson' || isF)) { ctx.shadowColor = n.color; ctx.shadowBlur = isF ? 22 : 10 }
+      else ctx.shadowBlur = 0
+      ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2)
+      ctx.fillStyle = n.color; ctx.fill()
+      if (isF) { ctx.shadowBlur = 0; ctx.lineWidth = 2.4; ctx.strokeStyle = '#fff'; ctx.stroke() }
+    }
     ctx.shadowBlur = 0; ctx.globalAlpha = 1
 
     const showLabel = n.kind === 'root' || n.kind === 'cat' || isF || (!!f && nbr[f.id].has(n.id)) ||
@@ -320,7 +346,7 @@ function renderDetail(n: GNode | null) {
         <span class="g-d-pill" style="background:${n.color}22;color:${n.color};border:1px solid ${n.color}55">${n.cat}</span>
         <span class="g-d-date">${n.date || ''}</span>
       </div>
-      <div class="g-d-text">${escapeHtml(n.full || '')}</div>`
+      <div class="g-d-text">${fmtBody(n.full || '')}</div>`
     return
   }
   if (n.kind === 'root') {
@@ -346,6 +372,91 @@ function renderDetail(n: GNode | null) {
 }
 const HTML_ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
 function escapeHtml(s: string) { return s.replace(/[&<>"']/g, c => HTML_ESC[c] || c) }
+
+// Render isi pesan: baris ber-nomor "1. ..." jadi list rapi (hanging indent), sisanya paragraf
+function fmtBody(text: string): string {
+  const lines = (text || '').split('\n')
+  let html = '', inList = false
+  let para: string[] = []
+  const flushPara = () => { if (para.length) { html += `<p class="g-d-p">${para.map(escapeHtml).join('<br>')}</p>`; para = [] } }
+  const closeList = () => { if (inList) { html += '</div>'; inList = false } }
+  for (const raw of lines) {
+    const line = raw.replace(/\s+$/, '')
+    const m = line.match(/^\s*(\d+)\.\s+(.*)$/)
+    if (m) {
+      flushPara()
+      if (!inList) { html += '<div class="g-d-ol">'; inList = true }
+      html += `<div class="g-d-li"><span class="g-d-li-n">${m[1]}.</span><span class="g-d-li-t">${escapeHtml(m[2])}</span></div>`
+    } else if (line.trim() === '') {
+      flushPara(); closeList()
+    } else {
+      closeList(); para.push(line)
+    }
+  }
+  flushPara(); closeList()
+  return html || `<p class="g-d-p">${escapeHtml(text)}</p>`
+}
+
+// ── Mascot kucing astronot + modal "catat pelajaran" ──
+async function reloadGraph() {
+  try {
+    const d = await api('/api/data')
+    lessons = (d.lessons || []).filter(l => (l.text || '').trim())
+  } catch { return }
+  buildGraph(); seed(); renderStats(); renderLegend()
+  const empty = document.getElementById('g-empty'); if (empty) empty.style.display = lessons.length ? 'none' : 'flex'
+  alpha = 1; if (!running) loop()
+}
+function openLessonModal() {
+  const m = document.getElementById('g-modal'); if (!m) return
+  m.classList.add('open')
+  const ta = document.getElementById('g-lesson-ta') as HTMLTextAreaElement | null
+  const dt = document.getElementById('g-lesson-date') as HTMLInputElement | null
+  if (dt) dt.value = new Date().toISOString().slice(0, 10)
+  if (ta) { ta.value = ''; setTimeout(() => ta.focus(), 70) }
+}
+function closeLessonModal() { document.getElementById('g-modal')?.classList.remove('open') }
+async function saveLessonModal() {
+  const ta = document.getElementById('g-lesson-ta') as HTMLTextAreaElement | null
+  const cat = document.getElementById('g-lesson-cat') as HTMLInputElement | null
+  const dt = document.getElementById('g-lesson-date') as HTMLInputElement | null
+  const btn = document.getElementById('g-lesson-save') as HTMLButtonElement | null
+  const text = (ta?.value || '').trim()
+  if (!text) { ta?.focus(); return }
+  const date = dt?.value || new Date().toISOString().slice(0, 10)
+  const category = (cat?.value || '').replace(/^#/, '').trim() || 'Reflection'
+  if (btn) { btn.disabled = true; btn.textContent = 'Nyimpen…' }
+  try {
+    await postJSON('/api/lesson-items', { date, text, category, ts: new Date().toISOString() })
+    closeLessonModal()
+    await reloadGraph()
+  } catch (e) { console.error(e); if (btn) btn.textContent = 'Gagal, coba lagi' }
+  finally { if (btn) { btn.disabled = false; if (btn.textContent === 'Nyimpen…') btn.textContent = 'Catat ke peta' } }
+}
+// Auto-numbering ala Claude: Enter di baris "N. teks" → lanjut "N+1. "; baris nomor kosong → keluar list
+function onLessonKey(e: KeyboardEvent) {
+  const ta = e.target as HTMLTextAreaElement
+  if (e.key !== 'Enter' || e.shiftKey) return
+  const pos = ta.selectionStart
+  const before = ta.value.slice(0, pos)
+  const ls = before.lastIndexOf('\n') + 1
+  const m = before.slice(ls).match(/^(\s*)(\d+)\.\s(.*)$/)
+  if (!m) return
+  e.preventDefault()
+  if (m[3].trim() === '') {
+    ta.value = ta.value.slice(0, ls) + ta.value.slice(pos)
+    ta.selectionStart = ta.selectionEnd = ls
+  } else {
+    const ins = '\n' + (m[1] || '') + (parseInt(m[2], 10) + 1) + '. '
+    ta.value = ta.value.slice(0, pos) + ins + ta.value.slice(pos)
+    ta.selectionStart = ta.selectionEnd = pos + ins.length
+  }
+}
+function startleCat() {
+  const c = document.getElementById('cat-astro')
+  if (c) { c.classList.remove('startled'); void c.offsetWidth; c.classList.add('startled'); setTimeout(() => c.classList.remove('startled'), 650) }
+  openLessonModal()
+}
 
 function focusNodeById(id: string) {
   const n = byId[id]; if (!n) return
@@ -388,6 +499,12 @@ async function init() {
     const item = (e.target as HTMLElement).closest('[data-id]') as HTMLElement | null
     if (item?.dataset.id) focusNodeById(item.dataset.id)
   })
+
+  document.getElementById('cat-astro')?.addEventListener('click', startleCat)
+  document.getElementById('g-lesson-save')?.addEventListener('click', saveLessonModal)
+  document.getElementById('g-lesson-cancel')?.addEventListener('click', closeLessonModal)
+  document.getElementById('g-modal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeLessonModal() })
+  document.getElementById('g-lesson-ta')?.addEventListener('keydown', e => onLessonKey(e as KeyboardEvent))
 
   try {
     const d = await api('/api/data')
@@ -435,7 +552,60 @@ export default function GardenPage() {
         }
         .peta-wrap{display:grid;grid-template-columns:1fr 320px;height:calc(100vh - 52px);overflow:hidden;}
         .peta-canvas-area{position:relative;overflow:hidden;background:#080a14;}
-        #g-canvas{display:block;width:100%;height:100%;cursor:grab;}
+        #g-canvas{display:block;width:100%;height:100%;cursor:grab;position:relative;z-index:1;}
+        /* ── Latar angkasa (layer CSS, GPU — gak bebanin canvas graph) ── */
+        .g-space{position:absolute;inset:0;z-index:0;overflow:hidden;background:radial-gradient(ellipse 72% 62% at 50% 42%,#0e1430 0%,#080a14 72%);}
+        .g-stars,.g-stars2{position:absolute;inset:0;}
+        .g-stars{background-image:
+          radial-gradient(1px 1px at 24px 32px,rgba(255,255,255,.7),transparent),
+          radial-gradient(1px 1px at 88px 120px,rgba(255,255,255,.5),transparent),
+          radial-gradient(1.4px 1.4px at 140px 60px,rgba(180,205,255,.7),transparent),
+          radial-gradient(1px 1px at 182px 158px,rgba(255,255,255,.45),transparent),
+          radial-gradient(1px 1px at 52px 180px,rgba(255,255,255,.5),transparent);
+          background-size:230px 230px;animation:g-twinkle 5.5s ease-in-out infinite;}
+        .g-stars2{background-image:
+          radial-gradient(1px 1px at 60px 20px,rgba(255,255,255,.4),transparent),
+          radial-gradient(1px 1px at 12px 92px,rgba(170,200,255,.5),transparent),
+          radial-gradient(1.6px 1.6px at 124px 142px,rgba(255,255,255,.6),transparent),
+          radial-gradient(1px 1px at 150px 42px,rgba(255,255,255,.35),transparent);
+          background-size:310px 310px;animation:g-twinkle 7.5s ease-in-out infinite reverse;opacity:.7;}
+        @keyframes g-twinkle{0%,100%{opacity:.4}50%{opacity:.85}}
+        .meteor{position:absolute;width:88px;height:1.5px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(185,208,255,.95));transform:rotate(32deg);opacity:0;filter:drop-shadow(0 0 3px rgba(160,190,255,.7));}
+        .meteor.m1{top:9%;left:22%;animation:g-meteor 15s ease-in-out infinite;animation-delay:2s;}
+        .meteor.m2{top:26%;left:58%;animation:g-meteor 19s ease-in-out infinite;animation-delay:8s;}
+        .meteor.m3{top:6%;left:76%;animation:g-meteor 17s ease-in-out infinite;animation-delay:13s;}
+        @keyframes g-meteor{0%{opacity:0;transform:translate(0,0) rotate(32deg)}3%{opacity:.9}15%{opacity:.9}21%{opacity:0;transform:translate(-260px,420px) rotate(32deg)}100%{opacity:0;transform:translate(-260px,420px) rotate(32deg)}}
+        /* ── Mascot kucing astronot ── */
+        .cat-astro{position:absolute;top:15%;left:10%;z-index:6;background:none;border:none;padding:0;cursor:pointer;filter:drop-shadow(0 5px 14px rgba(0,0,0,.5));animation:g-catdrift 52s ease-in-out infinite;}
+        .cat-astro svg{display:block;animation:g-catbob 4.6s ease-in-out infinite;}
+        .cat-astro:hover{filter:drop-shadow(0 0 12px rgba(122,162,255,.65));}
+        .cat-astro.startled{animation:g-catshake .62s ease;}
+        .cat-astro.startled svg{animation:none;}
+        .cat-eye{transition:transform .12s;}
+        .cat-astro.startled .cat-eye{transform:scale(1.45);transform-box:fill-box;transform-origin:center;}
+        @keyframes g-catbob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-7px) rotate(3deg)}}
+        @keyframes g-catdrift{0%{transform:translate(0,0)}20%{transform:translate(48vw,7vh)}40%{transform:translate(52vw,38vh)}60%{transform:translate(15vw,46vh)}80%{transform:translate(34vw,18vh)}100%{transform:translate(0,0)}}
+        @keyframes g-catshake{0%,100%{transform:translateX(0) scale(1)}20%{transform:translateX(-5px) scale(1.12)}40%{transform:translateX(5px) scale(1.12)}60%{transform:translateX(-4px) scale(1.09)}80%{transform:translateX(4px) scale(1.07)}}
+        /* ── Modal catat pelajaran ── */
+        .g-modal{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(6,8,16,.66);backdrop-filter:blur(4px);padding:20px;}
+        .g-modal.open{display:flex;}
+        .g-modal-card{width:100%;max-width:420px;background:#0e1324;border:1px solid rgba(122,162,255,.3);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 30px rgba(62,109,240,.15);padding:22px 22px 18px;}
+        .g-modal-cat{font-size:30px;text-align:center;line-height:1;margin-bottom:6px;}
+        .g-modal-h{text-align:center;font-size:13px;font-weight:700;color:var(--pg-text);line-height:1.5;margin-bottom:14px;}
+        .g-modal-h span{font-weight:500;color:var(--pg-text2);font-size:12px;}
+        .g-modal-ta{width:100%;box-sizing:border-box;min-height:120px;background:#080b16;border:1px solid var(--pg-border);border-radius:10px;padding:11px 12px;font-size:13px;color:var(--pg-text);line-height:1.6;resize:vertical;outline:none;font-family:inherit;}
+        .g-modal-ta:focus{border-color:rgba(62,109,240,.6);}
+        .g-modal-row{display:flex;gap:8px;margin-top:9px;}
+        .g-modal-inp{flex:1;min-width:0;box-sizing:border-box;background:#080b16;border:1px solid var(--pg-border);border-radius:9px;padding:8px 11px;font-size:12px;color:var(--pg-text);outline:none;}
+        .g-modal-inp:focus{border-color:rgba(62,109,240,.6);}
+        .g-modal-date{flex:0 0 140px;color-scheme:dark;}
+        .g-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
+        .g-modal-btn{padding:8px 16px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid transparent;transition:all .15s;}
+        .g-modal-btn.ghost{background:none;border-color:var(--pg-border);color:var(--pg-text2);}
+        .g-modal-btn.ghost:hover{color:var(--pg-text);border-color:rgba(255,255,255,.25);}
+        .g-modal-btn.primary{background:#3e6df0;color:#fff;}
+        .g-modal-btn.primary:hover{background:#3559c8;}
+        .g-modal-btn:disabled{opacity:.6;cursor:default;}
         .g-topbar{position:absolute;top:14px;left:14px;right:14px;display:flex;gap:8px;align-items:center;pointer-events:none;z-index:5;}
         .g-topbar > *{pointer-events:auto;}
         .g-search{flex:1;max-width:380px;position:relative;}
@@ -469,7 +639,13 @@ export default function GardenPage() {
         .g-d-pill{font-size:10px;font-weight:600;padding:3px 10px;border-radius:999px;}
         .g-d-title{font-size:15px;font-weight:700;color:var(--pg-text);}
         .g-d-date{font-size:10px;color:var(--pg-text3);font-weight:600;}
-        .g-d-text{font-size:13.5px;line-height:1.72;color:var(--pg-text);white-space:pre-wrap;word-break:break-word;}
+        .g-d-text{font-size:13.5px;line-height:1.72;color:var(--pg-text);word-break:break-word;}
+        .g-d-p{font-size:13.5px;line-height:1.72;color:var(--pg-text);margin:0 0 10px;white-space:pre-wrap;word-break:break-word;}
+        .g-d-p:last-child{margin-bottom:0;}
+        .g-d-ol{display:flex;flex-direction:column;gap:7px;margin:4px 0 12px;}
+        .g-d-li{display:flex;gap:9px;font-size:13.5px;line-height:1.6;color:var(--pg-text);}
+        .g-d-li-n{flex:0 0 auto;color:#7aa2ff;font-weight:700;min-width:15px;}
+        .g-d-li-t{flex:1;word-break:break-word;}
         .g-d-list{display:flex;flex-direction:column;gap:2px;}
         .g-d-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;font-size:12px;color:var(--pg-text2);cursor:pointer;transition:all .12s;line-height:1.4;}
         .g-d-item:hover{background:rgba(255,255,255,.05);color:var(--pg-text);}
@@ -483,7 +659,57 @@ export default function GardenPage() {
       `}</style>
       <div className="peta-wrap">
         <div className="peta-canvas-area">
+          <div className="g-space" aria-hidden="true">
+            <div className="g-stars" />
+            <div className="g-stars2" />
+            <span className="meteor m1" />
+            <span className="meteor m2" />
+            <span className="meteor m3" />
+          </div>
           <canvas id="g-canvas" />
+          <button id="cat-astro" className="cat-astro" title="Ada pelajaran hari ini?" aria-label="Catat pelajaran hari ini">
+            <svg viewBox="0 0 64 76" width="56" height="66">
+              <defs>
+                <radialGradient id="catGlass" cx="38%" cy="30%" r="72%">
+                  <stop offset="0%" stopColor="rgba(255,255,255,.42)" />
+                  <stop offset="55%" stopColor="rgba(120,160,255,.04)" />
+                  <stop offset="100%" stopColor="rgba(120,160,255,.16)" />
+                </radialGradient>
+              </defs>
+              <path d="M50 36 q12 4 8 22" fill="none" stroke="#8aa0d0" strokeWidth="1.4" />
+              <ellipse cx="32" cy="57" rx="15" ry="13" fill="#e3e9f6" stroke="#9fb0d8" strokeWidth="1.5" />
+              <path d="M17 53 q-8 3 -6 14" fill="none" stroke="#d2dcef" strokeWidth="5.5" strokeLinecap="round" />
+              <path d="M47 53 q8 3 6 14" fill="none" stroke="#d2dcef" strokeWidth="5.5" strokeLinecap="round" />
+              <rect x="26" y="53" width="12" height="9" rx="3" fill="#3e6df0" opacity="0.85" />
+              <circle cx="29" cy="57.5" r="1.3" fill="#7af5d0" />
+              <circle cx="35" cy="57.5" r="1.3" fill="#ffd36e" />
+              <path d="M19 18 L23 7 L30 15 Z" fill="#39435f" />
+              <path d="M45 18 L41 7 L34 15 Z" fill="#39435f" />
+              <circle cx="32" cy="29" r="12.5" fill="#3d4868" />
+              <circle className="cat-eye" cx="27" cy="28" r="2.6" fill="#7af5d0" />
+              <circle className="cat-eye" cx="37" cy="28" r="2.6" fill="#7af5d0" />
+              <path d="M30.5 33 L33.5 33 L32 35 Z" fill="#ff9bb0" />
+              <path d="M20 31 H26 M20 34 H26 M44 31 H38 M44 34 H38" stroke="#aab3cc" strokeWidth="1" opacity="0.6" />
+              <circle cx="32" cy="28" r="21" fill="rgba(120,160,255,.10)" stroke="#9fb0d8" strokeWidth="2" />
+              <circle cx="32" cy="28" r="21" fill="url(#catGlass)" />
+              <ellipse cx="24" cy="19" rx="6" ry="4" fill="rgba(255,255,255,.3)" />
+            </svg>
+          </button>
+          <div className="g-modal" id="g-modal">
+            <div className="g-modal-card">
+              <div className="g-modal-cat">😺</div>
+              <div className="g-modal-h">Eh, kaget! 🐾<br /><span>Ada pelajaran yang bisa dicatat hari ini?</span></div>
+              <textarea id="g-lesson-ta" className="g-modal-ta" placeholder="Tulis insight atau pelajaran hari ini… (ketik '1. ' buat mulai list, Enter lanjut otomatis)" />
+              <div className="g-modal-row">
+                <input id="g-lesson-cat" className="g-modal-inp" placeholder="# Kategori (opsional)" />
+                <input id="g-lesson-date" type="date" className="g-modal-inp g-modal-date" />
+              </div>
+              <div className="g-modal-actions">
+                <button id="g-lesson-cancel" className="g-modal-btn ghost">Nanti aja</button>
+                <button id="g-lesson-save" className="g-modal-btn primary">Catat ke peta</button>
+              </div>
+            </div>
+          </div>
           <div className="g-topbar">
             <div className="g-search"><input id="g-search" placeholder="Cari pesan atau kategori…" /></div>
             <button id="g-tg-freeze" className="g-btn" title="Bekukan gerakan">Freeze</button>
