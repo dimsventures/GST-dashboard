@@ -1068,9 +1068,10 @@ function renderOutlook() {
     const worst = (bear && curPrice) ? mv * (bear / curPrice) : mv * (1 - dd)
     curTotal += mv; bestTotal += best; worstTotal += worst
     // gabung per ticker (sama walau beda broker) — valuasi itu properti ticker
-    const t = byTicker[p.ticker] || (byTicker[p.ticker] = { id: p.id, ticker: p.ticker, tt: p.ticker_type, curPrice, mv: 0, qty: 0, cost: 0, target: 0, vtype: null })
+    const t = byTicker[p.ticker] || (byTicker[p.ticker] = { id: p.id, ticker: p.ticker, tt: p.ticker_type, curPrice, mv: 0, qty: 0, cost: 0, target: 0, bear: 0, vtype: null })
     t.id = p.id; t.mv += mv; t.qty += Number(p.qty); t.cost += Number(p.avg_buy_price) * Number(p.qty)
     if (!t.target && target) t.target = target
+    if (!t.bear && bear) t.bear = bear
     if (!t.vtype && p.valuation_type) t.vtype = p.valuation_type
   })
 
@@ -1083,32 +1084,61 @@ function renderOutlook() {
     box('Base (sekarang)', curTotal, 0, 'base', 'nilai saat ini') +
     box('Best Case', bestTotal, pct(bestTotal), 'best', anyTarget ? 'semua target tesis kena' : 'belum ada target')
 
-  // ── Macro regime tilt: reweight worst/base/best jadi satu "expected" + bias behavioral ──
+  // ── Money management layer: regime tilt + cash band dinamis + caps (soft flags) ──
   const regEl = document.getElementById('outlook-regime')
   if (regEl) {
-    if (!macroRegime) {
-      regEl.innerHTML = `<div class="reg-loading">Memuat bias regime makro…</div>`
-    } else {
-      const score = Number(macroRegime.score) || 0
-      const risk = macroRegime.risk || 'neutral'
-      const t = Math.max(-1, Math.min(1, score / 6))
-      const wWorst = 0.25 - 0.15 * t, wBest = 0.25 + 0.15 * t, wBase = 0.5
-      const expected = wWorst * worstTotal + wBase * curTotal + wBest * bestTotal
-      const ePct = pct(expected)
-      const tone = risk === 'risk-on' ? 'on' : risk === 'risk-off' ? 'off' : 'neu'
-      const rlabel = risk === 'risk-on' ? 'Risk-On' : risk === 'risk-off' ? 'Risk-Off' : 'Netral'
-      const bias = risk === 'risk-on'
-        ? 'Regime mendukung risk asset → outlook condong ke <b>best</b>. Ada ruang lebih agresif, tapi tetap jaga MOS & jangan FOMO.'
-        : risk === 'risk-off'
-          ? 'Regime menekan risk asset → outlook condong ke <b>worst</b>. Pertimbangkan jaga cash, tahan add agresif, prioritas conviction tinggi.'
-          : 'Sinyal makro campur → belum ada tilt kuat. Netral, tunggu konfirmasi arah likuiditas & dollar.'
-      regEl.innerHTML = `
-        <div class="reg-head">
-          <span class="reg-chip reg-${tone}">🌍 ${rlabel}<span class="reg-score">skor ${score >= 0 ? '+' : ''}${score}</span></span>
-          <span class="reg-exp">Expected (regime-tilted): <b>${fmtRp(expected)}</b> <span class="reg-exp-pct ${ePct >= 0 ? 'pos' : 'neg'}">${ePct >= 0 ? '+' : ''}${ePct.toFixed(1)}%</span></span>
+    const score = macroRegime ? (Number(macroRegime.score) || 0) : 0
+    const risk = macroRegime ? (macroRegime.risk || 'neutral') : 'neutral'
+    const t = Math.max(-1, Math.min(1, score / 6))
+    // Expected (regime-tilted): reweight worst/base/best
+    const wWorst = 0.25 - 0.15 * t, wBest = 0.25 + 0.15 * t, wBase = 0.5
+    const expected = wWorst * worstTotal + wBase * curTotal + wBest * bestTotal
+    const ePct = pct(expected)
+    const tone = risk === 'risk-on' ? 'on' : risk === 'risk-off' ? 'off' : 'neu'
+    const rlabel = risk === 'risk-on' ? 'Risk-On' : risk === 'risk-off' ? 'Risk-Off' : 'Netral'
+    const bias = risk === 'risk-on'
+      ? 'Regime mendukung risk asset → outlook condong ke <b>best</b>. Ada ruang lebih agresif, tapi tetap jaga MOS & jangan FOMO.'
+      : risk === 'risk-off'
+        ? 'Regime menekan risk asset → outlook condong ke <b>worst</b>. Pertimbangkan jaga cash, tahan add agresif, prioritas conviction tinggi.'
+        : 'Sinyal makro campur → belum ada tilt kuat. Netral, tunggu konfirmasi arah likuiditas & dollar.'
+
+    // Cash band dinamis: target ≈ 30% − 20%·t → risk-off naik (≤50%), risk-on turun (≥10%)
+    const cashPct = curTotal > 0 ? (totalCash / curTotal * 100) : 0
+    const targetCash = 30 - 20 * t
+    const cashDelta = cashPct - targetCash
+    const cashCls = cashDelta < -6 ? 'warn' : cashDelta > 8 ? 'info' : 'ok'
+    const cashNote = cashDelta < -6
+      ? `${Math.abs(cashDelta).toFixed(0)}% di bawah target${risk === 'risk-off' ? ' — regime risk-off, naikin cash' : ' — pertimbangkan tambah cash'}`
+      : cashDelta > 8
+        ? `${cashDelta.toFixed(0)}% di atas target — peluru nganggur${risk === 'risk-on' ? ', regime risk-on, pertimbangkan deploy' : ''}`
+        : 'sesuai band — disiplin oke 👍'
+
+    // Caps (soft): crypto class + konsentrasi 1 emiten
+    const CRYPTO_CAP = 20, POS_CAP = 25
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tickers = Object.values(byTicker) as any[]
+    const cryptoPct = curTotal > 0 ? tickers.filter(x => x.tt === 'crypto').reduce((s, x) => s + x.mv, 0) / curTotal * 100 : 0
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const topPos = tickers.reduce((mx: any, x: any) => (x.mv > (mx?.mv || 0) ? x : mx), null as any)
+    const topPct = topPos && curTotal > 0 ? topPos.mv / curTotal * 100 : 0
+    const capChip = (label: string, over: boolean) => `<span class="mm-cap ${over ? 'over' : 'ok'}">${label}${over ? ' ⚠' : ''}</span>`
+    const caps = capChip(`Crypto ${cryptoPct.toFixed(0)}% / ${CRYPTO_CAP}%`, cryptoPct > CRYPTO_CAP) +
+      (topPos ? capChip(`Top ${topPos.ticker} ${topPct.toFixed(0)}% / ${POS_CAP}%`, topPct > POS_CAP) : '')
+
+    regEl.innerHTML = `
+      <div class="reg-head">
+        <span class="reg-chip reg-${tone}">🌍 ${rlabel}<span class="reg-score">${macroRegime ? 'skor ' + (score >= 0 ? '+' : '') + score : 'memuat…'}</span></span>
+        <span class="reg-exp">Expected (regime-tilted): <b>${fmtRp(expected)}</b> <span class="reg-exp-pct ${ePct >= 0 ? 'pos' : 'neg'}">${ePct >= 0 ? '+' : ''}${ePct.toFixed(1)}%</span></span>
+      </div>
+      <div class="mm-grid">
+        <div class="mm-cash mm-${cashCls}">
+          <div class="mm-cash-top"><span class="mm-cash-lbl">💵 Cash band</span><span class="mm-cash-num">${cashPct.toFixed(1)}%<span class="mm-cash-tgt"> / target ${targetCash.toFixed(0)}%</span></span></div>
+          <div class="mm-cash-bar"><div class="mm-cash-fill" style="width:${Math.min(100, Math.max(0, cashPct)).toFixed(1)}%"></div><div class="mm-cash-mark" style="left:${Math.min(100, Math.max(0, targetCash)).toFixed(1)}%"></div></div>
+          <div class="mm-cash-note">${cashNote}</div>
         </div>
-        <div class="reg-note">${bias} <a href="/macro" class="reg-link">buka The Macro →</a></div>`
-    }
+        <div class="mm-caps"><div class="mm-caps-lbl">Caps</div>${caps}</div>
+      </div>
+      <div class="reg-note">${bias} <a href="/macro" class="reg-link">buka The Macro →</a></div>`
   }
 
   const rows = Object.values(byTicker).sort((a, b) => b.mv - a.mv)
@@ -1125,8 +1155,12 @@ function renderOutlook() {
     const targetCell = r.target ? f(r.target) + vt : '<span class="vt-set">— set target —</span>'
     const mosCell = mos != null ? `<span class="${mos >= 0 ? 'pos' : 'neg'}">${mos.toFixed(0)}%</span>` : '—'
     const upCell = upside != null ? `<span class="${upside >= 0 ? 'pos' : 'neg'}">${upside >= 0 ? '+' : ''}${upside.toFixed(0)}%</span>` : '—'
+    const sig = (r.curPrice && r.target && r.curPrice >= r.target) ? '<span class="ot-sig fomo" title="Harga di atas target — jangan add (anti-FOMO)">↑ di atas target</span>'
+      : (r.curPrice && r.bear && r.curPrice <= r.bear) ? '<span class="ot-sig panic" title="Di bawah bear case — cek tesis, jangan panic sell">↓ di bawah bear</span>'
+      : (mos != null && mos >= 30 && upside != null && upside > 0) ? '<span class="ot-sig deploy" title="MOS besar — kandidat deploy">MOS gede</span>'
+      : ''
     return `<tr onclick="openValuation('${r.id}')" style="cursor:pointer;">
-      <td class="ot-ticker">${r.ticker}</td>
+      <td class="ot-ticker">${r.ticker}${sig}</td>
       <td>${r.curPrice ? f(r.curPrice) : '—'}</td>
       <td>${targetCell}</td>
       <td>${mosCell}</td>
@@ -1297,6 +1331,30 @@ export default function PortfolioPage() {
         .reg-note{font-size:10.5px;color:var(--text3);line-height:1.6;}
         .reg-link{color:#6ea0ff;text-decoration:none;font-weight:600;white-space:nowrap;}
         .reg-link:hover{text-decoration:underline;}
+        .mm-grid{display:grid;grid-template-columns:1fr .9fr;gap:10px;margin:9px 0 10px;}
+        @media(max-width:768px){.mm-grid{grid-template-columns:1fr;}}
+        .mm-cash{border:1px solid var(--border);border-radius:var(--r2);padding:8px 11px;}
+        .mm-cash.mm-warn{border-color:rgba(246,104,94,.4);background:rgba(246,104,94,.06);}
+        .mm-cash.mm-info{border-color:rgba(240,180,41,.4);background:rgba(240,180,41,.06);}
+        .mm-cash.mm-ok{border-color:rgba(52,211,153,.32);background:rgba(52,211,153,.05);}
+        .mm-cash-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+        .mm-cash-lbl{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);}
+        .mm-cash-num{font-size:13px;font-weight:700;color:var(--text);}
+        .mm-cash-tgt{font-size:9px;font-weight:600;color:var(--text3);}
+        .mm-cash-bar{position:relative;height:6px;border-radius:4px;background:rgba(255,255,255,.07);margin:6px 0 5px;}
+        .mm-cash-fill{position:absolute;top:0;left:0;height:100%;border-radius:4px;background:#34d399;}
+        .mm-cash.mm-warn .mm-cash-fill{background:#f6685e;}
+        .mm-cash.mm-info .mm-cash-fill{background:#f0b429;}
+        .mm-cash-mark{position:absolute;top:-2px;width:2px;height:10px;background:var(--text);border-radius:1px;transform:translateX(-1px);}
+        .mm-cash-note{font-size:9.5px;color:var(--text3);line-height:1.4;}
+        .mm-caps{display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;align-items:center;}
+        .mm-caps-lbl{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);width:100%;}
+        .mm-cap{font-size:10px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid var(--border);color:var(--text2);white-space:nowrap;}
+        .mm-cap.over{border-color:rgba(246,104,94,.45);background:rgba(246,104,94,.08);color:#f6685e;}
+        .ot-sig{display:inline-block;margin-left:6px;font-size:8px;font-weight:700;letter-spacing:.02em;padding:1px 6px;border-radius:6px;vertical-align:middle;}
+        .ot-sig.fomo{background:rgba(240,180,41,.14);color:#f0b429;border:1px solid rgba(240,180,41,.3);}
+        .ot-sig.panic{background:rgba(246,104,94,.12);color:#f6685e;border:1px solid rgba(246,104,94,.3);}
+        .ot-sig.deploy{background:rgba(52,211,153,.12);color:#34d399;border:1px solid rgba(52,211,153,.3);}
         .outlook-tbl{width:100%;border-collapse:collapse;font-size:11px;}
         .outlook-tbl th{text-align:left;padding:5px 8px;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);}
         .outlook-tbl th:nth-child(n+2){text-align:right;}
