@@ -85,6 +85,18 @@ function UserIcon({ className }: IconProps) {
   )
 }
 
+function ScaleIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12 3v18" />
+      <path d="M7 7h10" />
+      <path d="M5 7l-2.5 5.5a3 3 0 0 0 5 0L5 7z" />
+      <path d="M19 7l-2.5 5.5a3 3 0 0 0 5 0L19 7z" />
+      <path d="M7 21h10" />
+    </svg>
+  )
+}
+
 type NavItem = { Icon: (props: IconProps) => ReactElement; label: string; href: string }
 
 const NAV: NavItem[] = [
@@ -93,6 +105,7 @@ const NAV: NavItem[] = [
   { Icon: WalletIcon, label: 'The Budget', href: '/budget' },
   { Icon: DollarIcon, label: 'The Finance', href: '/finance' },
   { Icon: TrendUpIcon, label: 'The Portfolio', href: '/portfolio' },
+  { Icon: ScaleIcon, label: 'The Valuation', href: '/valuation' },
   { Icon: GlobeIcon, label: 'The Macro', href: '/macro' },
   { Icon: GraphIcon, label: 'The Mind', href: '/garden' },
   { Icon: UserIcon, label: 'The Profile', href: '/profile' },

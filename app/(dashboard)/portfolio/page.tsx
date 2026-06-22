@@ -1173,33 +1173,8 @@ function renderOutlook() {
 function openValuation(posId: string) {
   const p = positions.find(x => x.id === posId)
   if (!p) return
-  const isUsd = p.ticker_type === 'crypto' || p.ticker_type === 'stock_usd'
-  const cur = isUsd ? 'USD' : 'IDR'
-  const unit = p.ticker_type === 'stock_idr' ? 'lembar' : 'unit'
-  openModal('Valuasi — ' + p.ticker,
-    `<div style="font-size:10px;color:var(--text3);margin-bottom:12px;line-height:1.5;">Berlaku ke <b style="color:var(--text2)">semua posisi ${p.ticker}</b> di semua broker.</div>
-     <label class="mlbl-f">Target / Nilai Wajar (${cur} per ${unit})</label>
-     <input type="number" class="mini-inp" id="v-target" value="${p.target_price || ''}" placeholder="target jual / intrinsic value">
-     <label class="mlbl-f">Tipe Valuasi</label>
-     <select class="mini-sel" id="v-type">
-       <option value="intrinsic"${p.valuation_type === 'intrinsic' ? ' selected' : ''}>Intrinsic (nilai wajar — saham)</option>
-       <option value="cycle"${p.valuation_type === 'cycle' ? ' selected' : ''}>Cycle / Macro target (crypto, gold)</option>
-     </select>
-     <label class="mlbl-f">Bear / Worst price (opsional — kosong = drawdown kelas)</label>
-     <input type="number" class="mini-inp" id="v-bear" value="${p.bear_price || ''}" placeholder="harga skenario terburuk">
-     <label class="mlbl-f">Conviction</label>
-     <select class="mini-sel" id="v-conv">
-       <option value=""${!p.conviction ? ' selected' : ''}>—</option>
-       <option value="low"${p.conviction === 'low' ? ' selected' : ''}>Low</option>
-       <option value="med"${p.conviction === 'med' ? ' selected' : ''}>Medium</option>
-       <option value="high"${p.conviction === 'high' ? ' selected' : ''}>High</option>
-     </select>
-     <label class="mlbl-f">Tesis (kenapa nilainya segini?)</label>
-     <textarea class="mini-inp" id="v-thesis" rows="3" placeholder="mis. fair P/E 16 × EPS 690 = 11.040" style="resize:vertical;">${p.thesis || ''}</textarea>`,
-    `<button class="btn-cancel" onclick="closeModal()">Batal</button>
-     <button class="btn-primary" onclick="submitValuation('${posId}')">Simpan</button>`
-  )
-  setTimeout(() => (document.getElementById('v-target') as HTMLInputElement)?.focus(), 100)
+  // Force-compute: valuasi dihitung di The Valuation (lewat perhitungan, bukan tebakan)
+  window.location.href = '/valuation?focus=' + encodeURIComponent(p.ticker)
 }
 
 async function submitValuation(posId: string) {
