@@ -20,6 +20,8 @@ let marketPrices: Record<string, any> = {}, usdIdrRate = 0, fetchedAt: Date | nu
 let snapMonth = '', portoChart: import('chart.js').Chart | null = null, allocChart: import('chart.js').Chart | null = null
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let benchmarkData: any[] | null = null, benchChart: import('chart.js').Chart | null = null, benchPeriod = 'all'
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let macroRegime: any = null // { risk, score, liquidity, dollar, curve } dari /api/macro — buat tilt outlook
 
 const TYPE_LABEL: Record<string, string> = { stocks_idr: 'Saham IDR', crypto_idr: 'Crypto IDR', crypto_usd: 'Crypto USD', wallet_usd: 'Wallet USD', stocks_usd: 'Saham USD', other: 'Lainnya' }
 const typeColor: Record<string, string> = { stocks_idr: '#3b82f6', crypto_idr: '#8b5cf6', crypto_usd: '#f59e0b', wallet_usd: '#ec4899', stocks_usd: '#14b8a6', other: '#6b7280' }
@@ -1035,6 +1037,16 @@ function classDrawdown(tt: string) {
   return 0.65 // crypto & lainnya — default agresif
 }
 
+// Tarik regime makro (cached 30 menit) buat nge-tilt outlook. Opsional — gagal = outlook tetap jalan.
+async function loadMacroRegime() {
+  try {
+    const r = await fetch('/api/macro')
+    if (!r.ok) return
+    const d = await r.json()
+    if (d && !d.error) { macroRegime = d.regime || null; renderOutlook() }
+  } catch { /* skip */ }
+}
+
 function renderOutlook() {
   const scnEl = document.getElementById('outlook-scenarios')
   const tblEl = document.getElementById('outlook-table')
@@ -1070,6 +1082,34 @@ function renderOutlook() {
     box('Worst Case', worstTotal, pct(worstTotal), 'worst', 'bear / drawdown kelas') +
     box('Base (sekarang)', curTotal, 0, 'base', 'nilai saat ini') +
     box('Best Case', bestTotal, pct(bestTotal), 'best', anyTarget ? 'semua target tesis kena' : 'belum ada target')
+
+  // ── Macro regime tilt: reweight worst/base/best jadi satu "expected" + bias behavioral ──
+  const regEl = document.getElementById('outlook-regime')
+  if (regEl) {
+    if (!macroRegime) {
+      regEl.innerHTML = `<div class="reg-loading">Memuat bias regime makro…</div>`
+    } else {
+      const score = Number(macroRegime.score) || 0
+      const risk = macroRegime.risk || 'neutral'
+      const t = Math.max(-1, Math.min(1, score / 6))
+      const wWorst = 0.25 - 0.15 * t, wBest = 0.25 + 0.15 * t, wBase = 0.5
+      const expected = wWorst * worstTotal + wBase * curTotal + wBest * bestTotal
+      const ePct = pct(expected)
+      const tone = risk === 'risk-on' ? 'on' : risk === 'risk-off' ? 'off' : 'neu'
+      const rlabel = risk === 'risk-on' ? 'Risk-On' : risk === 'risk-off' ? 'Risk-Off' : 'Netral'
+      const bias = risk === 'risk-on'
+        ? 'Regime mendukung risk asset → outlook condong ke <b>best</b>. Ada ruang lebih agresif, tapi tetap jaga MOS & jangan FOMO.'
+        : risk === 'risk-off'
+          ? 'Regime menekan risk asset → outlook condong ke <b>worst</b>. Pertimbangkan jaga cash, tahan add agresif, prioritas conviction tinggi.'
+          : 'Sinyal makro campur → belum ada tilt kuat. Netral, tunggu konfirmasi arah likuiditas & dollar.'
+      regEl.innerHTML = `
+        <div class="reg-head">
+          <span class="reg-chip reg-${tone}">🌍 ${rlabel}<span class="reg-score">skor ${score >= 0 ? '+' : ''}${score}</span></span>
+          <span class="reg-exp">Expected (regime-tilted): <b>${fmtRp(expected)}</b> <span class="reg-exp-pct ${ePct >= 0 ? 'pos' : 'neg'}">${ePct >= 0 ? '+' : ''}${ePct.toFixed(1)}%</span></span>
+        </div>
+        <div class="reg-note">${bias} <a href="/macro" class="reg-link">buka The Macro →</a></div>`
+    }
+  }
 
   const rows = Object.values(byTicker).sort((a, b) => b.mv - a.mv)
   if (!rows.length) { tblEl.innerHTML = '<div class="outlook-empty">Belum ada posisi. Tambah dulu di tengah.</div>'; return }
@@ -1146,6 +1186,7 @@ async function submitValuation(posId: string) {
 
 async function init() {
   loadMarketOverview()
+  loadMacroRegime()
   const now = new Date()
   const wdDateEl = document.getElementById('wd-date') as HTMLInputElement
   if (wdDateEl) wdDateEl.value = todayStr()
@@ -1242,6 +1283,20 @@ export default function PortfolioPage() {
         .scn-pct{font-size:11px;font-weight:700;margin-top:3px;}
         .scn-pct.worst{color:#f6685e;}.scn-pct.best{color:#34d399;}.scn-pct.base{color:var(--text3);}
         .scn-note{font-size:8.5px;color:var(--text4);margin-top:4px;}
+        .outlook-regime{margin:0 0 14px;padding:11px 13px;border:1px solid var(--border);border-radius:var(--r2);background:var(--bg);}
+        .reg-loading{font-size:10px;color:var(--text4);font-style:italic;}
+        .reg-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:7px;}
+        .reg-chip{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;border:1px solid var(--border);color:var(--text2);}
+        .reg-chip.reg-on{color:#34d399;border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08);}
+        .reg-chip.reg-off{color:#f6685e;border-color:rgba(246,104,94,.4);background:rgba(246,104,94,.08);}
+        .reg-score{font-size:8px;font-weight:700;letter-spacing:.04em;opacity:.8;text-transform:uppercase;}
+        .reg-exp{font-size:11px;color:var(--text2);}
+        .reg-exp b{color:var(--text);font-weight:700;}
+        .reg-exp-pct{font-weight:700;}
+        .reg-exp-pct.pos{color:#34d399;}.reg-exp-pct.neg{color:#f6685e;}
+        .reg-note{font-size:10.5px;color:var(--text3);line-height:1.6;}
+        .reg-link{color:#6ea0ff;text-decoration:none;font-weight:600;white-space:nowrap;}
+        .reg-link:hover{text-decoration:underline;}
         .outlook-tbl{width:100%;border-collapse:collapse;font-size:11px;}
         .outlook-tbl th{text-align:left;padding:5px 8px;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);}
         .outlook-tbl th:nth-child(n+2){text-align:right;}
@@ -1399,6 +1454,7 @@ export default function PortfolioPage() {
             </div>
             <div className="outlook-right">
               <div className="scn-grid" id="outlook-scenarios"></div>
+              <div className="outlook-regime" id="outlook-regime"></div>
               <div id="outlook-table"></div>
             </div>
           </div>
