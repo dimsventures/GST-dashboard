@@ -1037,12 +1037,10 @@ function startClock() {
 function switchView(v: string) {
   currentView = v
   const cp = gid('cp'); if (cp) cp.style.display = v === 'chain' ? 'block' : 'none'
-  const pb = gid('panel-bar'); if (pb) pb.style.display = v === 'bar' ? 'block' : 'none'
-  const pl = gid('panel-line'); if (pl) pl.style.display = v === 'line' ? 'block' : 'none'
+  const pc = gid('panel-chart'); if (pc) pc.style.display = v === 'chart' ? 'block' : 'none'
   document.querySelectorAll('.vtab').forEach(t => t.classList.remove('active'))
   gid('tab-' + v)?.classList.add('active')
-  if (v === 'bar') renderBarChart()
-  if (v === 'line') renderLineChart()
+  if (v === 'chart') { renderBarChart(); renderLineChart() }
 }
 
 function setRange(type: string, el: HTMLElement) {
@@ -1563,7 +1561,7 @@ export default function GstPage() {
         .gitem:hover{border-color:var(--red-border);background:var(--red-bg);}
         .gitem.done{background:var(--green-bg);border-color:var(--green-border);}
         .gitem.done:hover{background:var(--green-bg);}
-        .gcb{width:14px;height:14px;border:2px solid var(--border2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;transition:all .18s;margin-top:1px;}
+        .gcb{width:14px;height:14px;border:2px solid var(--red);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--red-bg);transition:all .18s;margin-top:1px;}
         .gitem.done .gcb{background:var(--green);border-color:var(--green);}
         .gitem.done .gcb::after{content:'✓';color:#fff;font-size:9px;font-weight:700;}
         .gtxt{font-size:11px;color:var(--text);line-height:1.45;flex:1;font-weight:500;}
@@ -1957,13 +1955,12 @@ export default function GstPage() {
         <div id="center-panel">
           <div className="view-toggle">
             <button className="vtab active" id="tab-chain" onClick={() => switchView('chain')}>Weekly Chain</button>
-            <button className="vtab" id="tab-bar" onClick={() => switchView('bar')}>Stacked Bar</button>
-            <button className="vtab" id="tab-line" onClick={() => switchView('line')}>Line Trend</button>
+            <button className="vtab" id="tab-chart" onClick={() => switchView('chart')}>Productivity Chart</button>
           </div>
 
           <div className="cp" id="cp"></div>
 
-          <div className="chart-panel" id="panel-bar">
+          <div className="chart-panel" id="panel-chart">
             <div className="chart-range-bar" id="range-bar">
               <div className="rchip active" data-r="all" onClick={e => setRange('bar', e.currentTarget)}>All</div>
               <div className="rchip" data-r="m01" onClick={e => setRange('bar', e.currentTarget)}>Jan</div>
@@ -1992,10 +1989,7 @@ export default function GstPage() {
               </div>
               <div className="chart-wrap"><canvas id="chart-bar"></canvas></div>
             </div>
-          </div>
-
-          <div className="chart-panel" id="panel-line">
-            <div className="chart-range-bar" id="range-line">
+            <div className="chart-range-bar" id="range-line" style={{ marginTop: 8 }}>
               <div className="rchip active" data-r="all" onClick={e => setRange('line', e.currentTarget)}>All</div>
               <div className="rchip" data-r="m01" onClick={e => setRange('line', e.currentTarget)}>Jan</div>
               <div className="rchip" data-r="m02" onClick={e => setRange('line', e.currentTarget)}>Feb</div>
