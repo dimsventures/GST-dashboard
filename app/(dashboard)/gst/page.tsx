@@ -395,6 +395,7 @@ function updateLsnCatsList() {
 function renderCatSug() {
   const box = gid('lta-cat-sug'); const inp = gid('lta-cat') as HTMLInputElement | null
   if (!box || !inp) return
+  if (document.activeElement !== inp) { box.style.display = 'none'; return } // cuma muncul pas input lagi difokus
   const q = inp.value.toLowerCase().replace(/^#/, '').trim()
   const matches = lsnCats.filter(c => c.toLowerCase().includes(q))
   if (!matches.length) { box.style.display = 'none'; box.innerHTML = ''; return }

@@ -987,50 +987,6 @@ async function fetchBenchmarks() {
   }
 }
 
-function sparkSvg(vals: number[], color: string) {
-  const w = 54, h = 22, n = vals.length
-  if (n < 2) return ''
-  const min = Math.min(...vals), max = Math.max(...vals), rng = (max - min) || 1
-  const pts = vals.map((v, i) => `${(i / (n - 1) * w).toFixed(1)},${(h - 2 - ((v - min) / rng) * (h - 4)).toFixed(1)}`).join(' ')
-  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="mkt-spark"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`
-}
-
-type MktItem = { key: string; label: string; sub?: string; value: string; changePct: number | null; period: string; spark: number[] | null }
-function renderMarket(items: MktItem[]) {
-  const el = document.getElementById('mkt-strip')
-  if (!el) return
-  if (!items.length) { el.innerHTML = '<div class="loading">Data market tidak tersedia.</div>'; return }
-  el.innerHTML = items.map(it => {
-    const has = it.changePct != null
-    const up = (it.changePct ?? 0) >= 0
-    const col = !has ? 'var(--text3)' : up ? '#34d399' : '#f6685e'
-    const chg = !has ? '—' : (up ? '▲ ' : '▼ ') + Math.abs(it.changePct as number).toFixed(2) + '%'
-    const right = it.spark && it.spark.length > 1 ? sparkSvg(it.spark, has ? col : '#687087') : ''
-    return `<div class="mkt-cell">
-      <div class="mkt-cell-l">
-        <div class="mkt-name">${it.label}${it.sub ? ` <span class="mkt-sub">${it.sub}</span>` : ''}</div>
-        <div class="mkt-val">${it.value}</div>
-      </div>
-      <div class="mkt-cell-r">
-        ${right}
-        <div class="mkt-chg" style="color:${col}">${chg}<span class="mkt-chgp">${it.period}</span></div>
-      </div>
-    </div>`
-  }).join('')
-}
-
-async function loadMarketOverview() {
-  try {
-    const r = await fetch('/api/market-overview')
-    if (!r.ok) throw new Error('fetch failed')
-    const d = await r.json()
-    renderMarket(d.items || [])
-  } catch {
-    const el = document.getElementById('mkt-strip')
-    if (el) el.innerHTML = '<div class="loading">Gagal memuat data market.</div>'
-  }
-}
-
 function classDrawdown(tt: string) {
   if (tt === 'stock_idr') return 0.30
   if (tt === 'stock_usd') return 0.25
@@ -1194,7 +1150,6 @@ async function submitValuation(posId: string) {
 }
 
 async function init() {
-  loadMarketOverview()
   loadMacroRegime()
   const now = new Date()
   const wdDateEl = document.getElementById('wd-date') as HTMLInputElement
@@ -1465,15 +1420,6 @@ export default function PortfolioPage() {
       `}</style>
 
       <div className="porto-main">
-        {/* Market Card */}
-        <div className="card" style={{ gridColumn: '1 / -1', marginBottom: 0 }}>
-          <div className="card-hdr">
-            <div className="card-title">Kondisi Market</div>
-            <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: 'var(--green-bg)', color: 'var(--green)', border: '1px solid var(--green-border)' }}>● Live</span>
-          </div>
-          <div className="mkt-strip" id="mkt-strip"><div className="loading">Memuat data market…</div></div>
-        </div>
-
         {/* Portfolio Outlook */}
         <div className="card" style={{ gridColumn: '1 / -1', marginBottom: 0 }}>
           <div className="card-hdr">

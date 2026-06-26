@@ -125,8 +125,8 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
   const pathname = usePathname()
   const [username, setUsername] = useState('')
   const [rem, setRem] = useState<Reminders>({ dreams: [], yGoals: [], mGoals: [], todos: [], learning: [] })
-  const [catOpen, setCatOpen] = useState(false)
   const [nudge, setNudge] = useState<{ tag: string; color: string; text: string } | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -158,24 +158,36 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
       .catch(() => {})
   }, [])
 
+  // Bubble auto-rotate: ganti random tiap 5 detik dari to-do/learning/bulanan/tahunan/big dream
+  useEffect(() => {
+    const pool = [
+      ...rem.todos.map(t => ({ tag: 'To-Do', color: '#34d399', text: t.text })),
+      ...rem.learning.map(t => ({ tag: 'Learning', color: '#a3e635', text: t.text })),
+      ...rem.mGoals.map(g => ({ tag: 'Bulanan', color: '#3e6df0', text: g.text })),
+      ...rem.yGoals.map(g => ({ tag: 'Tahunan', color: '#f0b429', text: g.text })),
+      ...rem.dreams.map(w => ({ tag: 'Big Dream', color: '#ec4899', text: w.text })),
+    ]
+    const roll = () => setNudge(pool.length ? pool[Math.floor(Math.random() * pool.length)] : { tag: '', color: '#34d399', text: 'Semua udah kelar! 🎉' })
+    roll()
+    const iv = setInterval(roll, 5000)
+    return () => clearInterval(iv)
+  }, [rem])
+
   async function logout() {
     await fetch('/api/auth', { method: 'DELETE' })
     window.location.href = '/login'
   }
 
-  function rollNudge() {
-    const pool = [
-      ...rem.todos.map(t => ({ tag: 'To-Do', color: '#34d399', text: t.text })),
-      ...rem.learning.map(t => ({ tag: 'Learning', color: '#a3e635', text: t.text })),
-      ...rem.mGoals.map(g => ({ tag: 'Goal Bulanan', color: '#3e6df0', text: g.text })),
-      ...rem.yGoals.map(g => ({ tag: 'Goal Tahunan', color: '#f0b429', text: g.text })),
-    ]
-    setNudge(pool.length ? pool[Math.floor(Math.random() * pool.length)] : { tag: '', color: '#34d399', text: 'Semua kelar! 🎉' })
-  }
-  function toggleCat() {
-    if (catOpen) setCatOpen(false)
-    else { rollNudge(); setCatOpen(true) }
-  }
+  const col = (title: string, color: string, items: RItem[], empty: string) => (
+    <div className="sb-pop-col">
+      <div className="sb-pop-ct" style={{ color }}>{title} <span className="sb-pop-cn">{items.length}</span></div>
+      <div className="sb-pop-list">
+        {items.length
+          ? items.map((it, i) => <div className="sb-pop-it" key={it.id || i}><span className="sb-pop-dot" style={{ background: color }} />{it.text}</div>)
+          : <div className="sb-pop-empty">{empty}</div>}
+      </div>
+    </div>
+  )
 
   return (
     <>
@@ -229,14 +241,14 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
       {/* Bottom: cat agent + user + logout */}
       {!collapsed && (
         <div className="sb-bottom">
-          {catOpen && (
-            <div className="sb-nudge" onClick={rollNudge} title="Klik buat ganti">
+          {nudge && (
+            <div className="sb-nudge" key={nudge.text} onClick={() => setModalOpen(true)} title="Klik buat rincian lengkap">
               <div className="sb-nudge-q">psst… mau ngerjain ini? 🐾</div>
-              {nudge?.tag && <span className="sb-nudge-tag" style={{ color: nudge.color, borderColor: nudge.color + '66', background: nudge.color + '1f' }}>{nudge.tag}</span>}
-              <div className="sb-nudge-t">{nudge?.text || '—'}</div>
+              {nudge.tag && <span className="sb-nudge-tag" style={{ color: nudge.color, borderColor: nudge.color + '66', background: nudge.color + '1f' }}>{nudge.tag}</span>}
+              <div className="sb-nudge-t">{nudge.text}</div>
             </div>
           )}
-          <button className="sb-cat" onClick={toggleCat} title="Pengingat: yang belum kelar" aria-label="Pengingat">
+          <button className="sb-cat" onClick={() => setModalOpen(true)} title="Lihat semua yang belum kelar" aria-label="Pengingat">
             <svg viewBox="0 0 60 42" width="52" height="36">
               <path d="M11 30 L15 9 L26 22 Z" fill="#3d4868" />
               <path d="M49 30 L45 9 L34 22 Z" fill="#3d4868" />
@@ -266,17 +278,53 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
       )}
     </aside>
 
+    {modalOpen && (
+      <div className="sb-pop-ov" onClick={e => { if (e.target === e.currentTarget) setModalOpen(false) }}>
+        <div className="sb-pop">
+          <div className="sb-pop-hd"><span>🐱 Yang masih nungguin lu{username ? ', ' + username : ''}…</span><button className="sb-pop-x" onClick={() => setModalOpen(false)}>✕</button></div>
+          <div className="sb-pop-grid">
+            {col('✦ Big Dream', '#ec4899', rem.dreams, 'Semua dream ke-realize 🎉')}
+            {col('◎ Goal Tahunan', '#f0b429', rem.yGoals, 'Goal tahun ini kelar 🎉')}
+            {col('◉ Goal Bulanan', '#3e6df0', rem.mGoals, 'Goal bulan ini kelar 🎉')}
+            <div className="sb-pop-col">
+              <div className="sb-pop-ct" style={{ color: '#34d399' }}>✓ To-Do + Learning <span className="sb-pop-cn">{rem.todos.length + rem.learning.length}</span></div>
+              <div className="sb-pop-list">
+                {rem.todos.map((it, i) => <div className="sb-pop-it" key={'t' + (it.id || i)}><span className="sb-pop-dot" style={{ background: '#34d399' }} />{it.text}</div>)}
+                {rem.learning.map((it, i) => <div className="sb-pop-it" key={'l' + (it.id || i)}><span className="sb-pop-tag">learn</span>{it.text}</div>)}
+                {!rem.todos.length && !rem.learning.length && <div className="sb-pop-empty">Semua task kelar 🎉</div>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
     <style>{`
       .sb-bottom{position:relative;}
       .sb-cat{position:absolute;top:-26px;left:50%;transform:translateX(-50%);z-index:1;background:none;border:none;padding:0;cursor:pointer;filter:drop-shadow(0 3px 7px rgba(0,0,0,.55));transition:transform .15s;}
       .sb-cat:hover{transform:translateX(-50%) translateY(-3px);}
       .sb-bottom-box{position:relative;z-index:2;background:#0c1428;box-shadow:0 -7px 20px rgba(0,0,0,.5);}
-      .sb-nudge{position:absolute;bottom:calc(100% + 30px);left:50%;transform:translateX(-50%);width:calc(100% - 16px);z-index:5;background:#163457;border:1px solid rgba(122,162,255,.42);border-radius:12px;padding:9px 11px;box-shadow:0 8px 24px rgba(0,0,0,.5);cursor:pointer;animation:sb-pop-in .18s ease;}
+      .sb-nudge{position:absolute;bottom:calc(100% + 30px);left:50%;transform:translateX(-50%);width:calc(100% - 16px);z-index:5;background:#163457;border:1px solid rgba(122,162,255,.42);border-radius:12px;padding:9px 11px;box-shadow:0 8px 24px rgba(0,0,0,.5);cursor:pointer;animation:sb-pop-in .22s ease;}
       .sb-nudge::after{content:'';position:absolute;top:100%;left:50%;width:13px;height:13px;background:#163457;border-right:1px solid rgba(122,162,255,.42);border-bottom:1px solid rgba(122,162,255,.42);transform:translate(-50%,-50%) rotate(45deg);}
       @keyframes sb-pop-in{from{opacity:0;transform:translateX(-50%) translateY(6px) scale(.96)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
       .sb-nudge-q{font-size:9px;font-weight:600;color:#9fb4e8;letter-spacing:.02em;margin-bottom:5px;}
       .sb-nudge-tag{display:inline-block;font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:6px;border:1px solid;margin-bottom:4px;}
       .sb-nudge-t{font-size:11px;font-weight:500;color:#eef0f5;line-height:1.4;word-break:break-word;}
+      .sb-pop-ov{position:fixed;inset:0;z-index:600;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);padding:24px;}
+      .sb-pop{width:100%;max-width:860px;max-height:80vh;display:flex;flex-direction:column;background:#0e1324;border:1px solid rgba(122,162,255,.28);border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;}
+      .sb-pop-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px;font-weight:700;color:#eef0f5;}
+      .sb-pop-x{background:none;border:none;color:#687087;font-size:16px;cursor:pointer;line-height:1;}
+      .sb-pop-grid{display:grid;grid-template-columns:repeat(4,1fr);overflow:hidden;flex:1;min-height:0;}
+      .sb-pop-col{display:flex;flex-direction:column;min-height:0;border-right:1px solid rgba(255,255,255,.06);padding:12px 12px 14px;overflow:hidden;}
+      .sb-pop-col:last-child{border-right:none;}
+      .sb-pop-ct{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+      .sb-pop-cn{font-size:9px;font-weight:700;color:#687087;background:rgba(255,255,255,.06);padding:1px 6px;border-radius:8px;}
+      .sb-pop-list{display:flex;flex-direction:column;gap:7px;overflow-y:auto;min-height:0;}
+      .sb-pop-it{display:flex;align-items:flex-start;gap:7px;font-size:11.5px;color:#cbd2e0;line-height:1.45;}
+      .sb-pop-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+      .sb-pop-tag{font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#a3e635;background:rgba(163,230,53,.12);border:1px solid rgba(163,230,53,.3);padding:1px 5px;border-radius:5px;flex-shrink:0;margin-top:1px;}
+      .sb-pop-empty{font-size:10.5px;color:#687087;font-style:italic;line-height:1.5;}
+      @media(max-width:768px){.sb-pop-grid{grid-template-columns:1fr 1fr;}}
     `}</style>
     </>
   )
