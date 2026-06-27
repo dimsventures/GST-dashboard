@@ -58,43 +58,58 @@ function currentSlot() {
   return `${date}-${win}`
 }
 
-const SYSTEM = `Kamu analis berita buat investor Indonesia yang fokus tiga hal: AI, ekonomi makro & investasi, dan behavioral finance. Dari daftar artikel kandidat (tiap artikel punya index [n]), pilih 4 yang PALING urgent & berdampak signifikan. Balas HANYA JSON valid (tanpa markdown fence), format:
-{"picks":[{"i":<index artikel>,"summary":"ringkasan 1-2 kalimat Bahasa Indonesia, naratif","tag":"AI|Macro|Behavioral"}],"interpretation":"2-3 paragraf Bahasa Indonesia informal (gua/lu): benang merah ke-4 berita dan artinya buat investor. Ini bias/konteks, bukan ajakan beli/jual. Jujur soal ketidakpastian."}`
+const SYSTEM = `Kamu analis berita buat investor Indonesia. Artikel kandidat dikelompokin jadi 3 kategori (tiap artikel punya index [n]):
+1) Makro / Investment / Ekonomi / Trading, 2) AI & Tech, 3) Behavioral Finance.
+Dari TIAP kategori, pilih maksimal 4 artikel yang PALING urgent & berdampak. Kalau di satu kategori artikelnya kurang dari 4, pilih seadanya. Balas HANYA JSON valid (tanpa markdown fence), format:
+{"groups":{"Macro":[{"i":<index>,"summary":"ringkasan 1-2 kalimat Bahasa Indonesia, naratif"}],"AI":[...],"Behavioral":[...]},"interpretation":"3-4 paragraf Bahasa Indonesia informal (gua/lu): (a) benang merah tiap kategori, (b) artinya buat investor, (c) SARAN KONKRET yang bisa dicoba buat ngikutin/manfaatin perkembangan berita ini. Ini bias/konteks, bukan ajakan beli-jual. Jujur soal ketidakpastian."}`
+
+const TOPIC_LABEL: Record<string, string> = { Macro: 'Makro · Investment · Ekonomi · Trading', AI: 'AI & Tech', Behavioral: 'Behavioral Finance' }
 
 const getNews = (slot: string) => unstable_cache(
   async () => {
     const all = (await Promise.all(FEEDS.map(fetchFeed))).flat()
-    // dedupe by title, ambil terbaru
+    // dedupe by title, kelompokin per topik (terbaru dulu)
     const seen = new Set<string>()
-    const uniq: Article[] = []
+    const byTopic: Record<string, Article[]> = { Macro: [], AI: [], Behavioral: [] }
     for (const a of all.sort((x, y) => new Date(y.pubDate).getTime() - new Date(x.pubDate).getTime())) {
       const k = a.title.toLowerCase().trim()
-      if (seen.has(k) || !a.title) continue
-      seen.add(k); uniq.push(a)
-      if (uniq.length >= 28) break
+      if (!a.title || seen.has(k)) continue
+      seen.add(k)
+      const arr = byTopic[a.topic]; if (arr && arr.length < 10) arr.push(a)
     }
-    if (!uniq.length) return { items: [], interpretation: 'Belum ada berita yang bisa ditarik dari sumber saat ini. Coba lagi nanti.', generatedAt: new Date().toISOString() }
+    const ORDER: [string, string][] = [['Macro', 'MAKRO / INVESTMENT / EKONOMI / TRADING'], ['AI', 'AI & TECH'], ['Behavioral', 'BEHAVIORAL FINANCE']]
+    const pool: Article[] = []
+    let text = ''
+    for (const [t, label] of ORDER) {
+      text += `\n=== ${label} ===\n`
+      const arts = byTopic[t] || []
+      if (!arts.length) { text += '(tidak ada artikel)\n'; continue }
+      for (const a of arts) { pool.push(a); text += `[${pool.length - 1}] ${a.title} — ${a.desc} (sumber: ${a.source})\n` }
+    }
+    if (!pool.length) return { groups: [], interpretation: 'Belum ada berita yang bisa ditarik dari sumber saat ini. Coba lagi nanti.', generatedAt: new Date().toISOString() }
 
-    const candidates = uniq.map((a, i) => `[${i}] (${a.topic}) ${a.title} — ${a.desc} (sumber: ${a.source})`).join('\n')
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const resp = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1600,
+      max_tokens: 2000,
       system: SYSTEM,
-      messages: [{ role: 'user', content: candidates }],
+      messages: [{ role: 'user', content: text }],
     })
     const raw = resp.content.filter(b => b.type === 'text').map(b => b.type === 'text' ? b.text : '').join('').trim()
     const json = raw.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```$/, '').trim()
-    let parsed: { picks?: { i: number; summary: string; tag: string }[]; interpretation?: string } = {}
+    let parsed: { groups?: Record<string, { i: number; summary: string }[]>; interpretation?: string } = {}
     try { parsed = JSON.parse(json) } catch { parsed = { interpretation: raw } }
 
-    const items = (parsed.picks || []).map(p => {
-      const a = uniq[p.i]
-      if (!a) return null
-      return { title: a.title, summary: p.summary, tag: p.tag || a.topic, source: a.source, url: a.link, date: a.pubDate }
-    }).filter(Boolean).slice(0, 4)
-
-    return { items, interpretation: parsed.interpretation || raw, generatedAt: new Date().toISOString() }
+    const buildGroup = (key: string) => ({
+      topic: key,
+      label: TOPIC_LABEL[key],
+      items: ((parsed.groups?.[key]) || []).map(p => {
+        const a = pool[p.i]
+        return a ? { title: a.title, summary: p.summary, tag: key, source: a.source, url: a.link } : null
+      }).filter(Boolean).slice(0, 4),
+    })
+    const groups = [buildGroup('Macro'), buildGroup('AI'), buildGroup('Behavioral')]
+    return { groups, interpretation: parsed.interpretation || raw, generatedAt: new Date().toISOString() }
   },
   ['news', slot],
   { revalidate: 6 * 3600, tags: ['news'] },

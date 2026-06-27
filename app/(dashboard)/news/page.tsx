@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 
-type NewsItem = { title: string; summary: string; tag: string; source: string; url: string; date: string }
-type NewsData = { items: NewsItem[]; interpretation: string; generatedAt: string }
+type NewsItem = { title: string; summary: string; tag: string; source: string; url: string }
+type NewsGroup = { topic: string; label: string; items: NewsItem[] }
+type NewsData = { groups: NewsGroup[]; interpretation: string; generatedAt: string }
 
 const TAG_COLOR: Record<string, string> = { AI: '#60a5fa', Macro: '#f0b429', Behavioral: '#ec4899' }
 
@@ -31,9 +32,13 @@ export default function NewsPage() {
         .news-hd-l{font-size:11.5px;color:var(--nt3);line-height:1.6;}
         .news-hd-l b{color:var(--nt2);}
         .news-upd{font-size:9.5px;color:var(--nt3);white-space:nowrap;}
-        .news-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+        .news-layer{margin-bottom:18px;}
+        .news-layer-lbl{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--nt3);margin:0 2px 8px;display:flex;align-items:center;gap:8px;}
+        .news-layer-cnt{font-size:8.5px;font-weight:700;color:var(--nt3);background:rgba(255,255,255,.06);padding:1px 6px;border-radius:8px;}
+        .news-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
         @media(max-width:980px){.news-grid{grid-template-columns:repeat(2,1fr);}}
         @media(max-width:560px){.news-grid{grid-template-columns:1fr;}}
+        .news-skel-lbl{width:180px;height:12px;border-radius:4px;background:rgba(255,255,255,.06);margin:0 2px 8px;}
         .news-card{background:rgba(21,22,28,.82);backdrop-filter:blur(6px);border:1px solid var(--nborder);border-radius:13px;padding:14px 15px;display:flex;flex-direction:column;min-height:150px;transition:border-color .15s,transform .15s;}
         .news-card:hover{border-color:var(--nb2);transform:translateY(-1px);}
         .news-tag{align-self:flex-start;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:6px;border:1px solid;margin-bottom:9px;}
@@ -61,24 +66,35 @@ export default function NewsPage() {
 
         {!err && (
           <>
-            <div className="news-grid">
-              {!data && [0, 1, 2, 3].map(i => <div key={i} className="news-skel" />)}
-              {data && data.items.length === 0 && <div className="news-empty">Belum ada berita yang ketarik dari sumber saat ini.</div>}
-              {data && data.items.map((it, i) => {
-                const c = TAG_COLOR[it.tag] || '#9ca3af'
-                return (
-                  <div className="news-card" key={i}>
-                    <span className="news-tag" style={{ color: c, borderColor: c + '66', background: c + '1a' }}>{it.tag}</span>
-                    <div className="news-title">{it.title}</div>
-                    <div className="news-sum">{it.summary}</div>
-                    <div className="news-foot">
-                      <span className="news-src">{it.source}</span>
-                      {it.url && <a className="news-link" href={it.url} target="_blank" rel="noopener noreferrer">baca →</a>}
-                    </div>
+            {!data && [0, 1, 2].map(r => (
+              <div className="news-layer" key={r}>
+                <div className="news-skel-lbl" />
+                <div className="news-grid">{[0, 1, 2, 3].map(i => <div key={i} className="news-skel" />)}</div>
+              </div>
+            ))}
+            {data && data.groups.map((g, gi) => (
+              <div className="news-layer" key={gi}>
+                <div className="news-layer-lbl">{g.label}<span className="news-layer-cnt">{g.items.length}</span></div>
+                {g.items.length ? (
+                  <div className="news-grid">
+                    {g.items.map((it, i) => {
+                      const c = TAG_COLOR[it.tag] || '#9ca3af'
+                      return (
+                        <div className="news-card" key={i}>
+                          <span className="news-tag" style={{ color: c, borderColor: c + '66', background: c + '1a' }}>{it.tag}</span>
+                          <div className="news-title">{it.title}</div>
+                          <div className="news-sum">{it.summary}</div>
+                          <div className="news-foot">
+                            <span className="news-src">{it.source}</span>
+                            {it.url && <a className="news-link" href={it.url} target="_blank" rel="noopener noreferrer">baca →</a>}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
-            </div>
+                ) : <div className="news-empty" style={{ padding: '16px' }}>Belum ada berita kategori ini saat ini.</div>}
+              </div>
+            ))}
 
             <div className="agent-card">
               <div className="agent-hd">🐱 Agent Interpretation</div>
