@@ -11,6 +11,10 @@ export default function ProfilePage() {
   const [deleting, setDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [toast, setToast] = useState({ msg: '', err: false, show: false })
+  const [tgConnected, setTgConnected] = useState(false)
+  const [tgChatId, setTgChatId] = useState('')
+  const [tgInput, setTgInput] = useState('')
+  const [tgBusy, setTgBusy] = useState(false)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function showToast(msg: string, err = false) {
@@ -29,8 +33,46 @@ export default function ProfilePage() {
       })
       .catch(() => { window.location.href = '/login' })
 
+    fetch('/api/telegram/connect')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.connected) { setTgConnected(true); setTgChatId(d.chat_id || '') } })
+      .catch(() => {})
+
     return () => { if (toastTimer.current) clearTimeout(toastTimer.current) }
   }, [])
+
+  async function connectTg() {
+    const cid = tgInput.trim()
+    if (!cid) return
+    setTgBusy(true)
+    try {
+      const res = await fetch('/api/telegram/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: cid }) })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Gagal')
+      setTgConnected(true); setTgChatId(cid); setTgInput('')
+      showToast('Telegram tersimpan — klik Test buat mastiin.')
+    } catch (e) { showToast(String((e as Error).message), true) }
+    finally { setTgBusy(false) }
+  }
+  async function testTg() {
+    setTgBusy(true)
+    try {
+      const res = await fetch('/api/telegram/test', { method: 'POST' })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Gagal')
+      showToast('Pesan tes terkirim — cek Telegram lu! 🐱')
+    } catch (e) { showToast(String((e as Error).message), true) }
+    finally { setTgBusy(false) }
+  }
+  async function disconnectTg() {
+    setTgBusy(true)
+    try {
+      await fetch('/api/telegram/connect', { method: 'DELETE' })
+      setTgConnected(false); setTgChatId(''); setTgInput('')
+      showToast('Telegram di-disconnect.')
+    } catch (e) { showToast(String((e as Error).message), true) }
+    finally { setTgBusy(false) }
+  }
 
   async function saveName() {
     if (!name.trim()) { showToast('Nama tidak boleh kosong', true); return }
@@ -146,6 +188,38 @@ export default function ProfilePage() {
                 </a>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Telegram */}
+        <div className="bg-[#15161c] border border-white/8 rounded-lg mb-4 overflow-hidden">
+          <div className="px-[18px] py-3.5 border-b border-white/8 flex items-center justify-between">
+            <div className="text-[10px] font-bold tracking-[.1em] uppercase text-white/40">Telegram</div>
+            {tgConnected
+              ? <span className="inline-flex items-center gap-1.5 bg-green-950/60 text-green-400 border border-green-800/40 rounded-full px-3 py-1 text-[10px] font-bold">● Connected</span>
+              : <span className="inline-flex items-center gap-1.5 bg-white/5 text-white/40 border border-white/10 rounded-full px-3 py-1 text-[10px] font-bold">○ Belum</span>}
+          </div>
+          <div className="p-[18px]">
+            <p className="text-[11px] text-white/45 leading-relaxed mb-2.5">Digest berita &amp; pengingat bisa dikirim ke Telegram. Cara connect:</p>
+            <ol className="text-[11px] text-white/55 leading-relaxed mb-3.5 list-decimal pl-4 space-y-1">
+              <li>Buka <a href="https://t.me/GST101_bot" target="_blank" rel="noopener noreferrer" className="text-blue-400 font-semibold no-underline hover:underline">@GST101_bot</a> → pencet <b>Start</b>.</li>
+              <li>Ambil chat ID dari <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-blue-400 font-semibold no-underline hover:underline">@userinfobot</a> (dia bales angka ID lu).</li>
+              <li>Paste ID-nya di bawah → Simpan → Test.</li>
+            </ol>
+            {tgConnected ? (
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="text-[11px] text-white/55">chat_id: <span className="text-white font-semibold">{tgChatId}</span></div>
+                <div className="flex gap-2">
+                  <button onClick={testTg} disabled={tgBusy} className="bg-blue-950/50 text-blue-400 border border-blue-800/40 rounded-[5px] px-4 py-2 text-[11px] font-bold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all disabled:opacity-50">Test</button>
+                  <button onClick={disconnectTg} disabled={tgBusy} className="bg-white/5 text-white/55 border border-white/10 rounded-[5px] px-4 py-2 text-[11px] font-bold hover:bg-white/10 hover:text-white transition-all disabled:opacity-50">Disconnect</button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input value={tgInput} onChange={e => setTgInput(e.target.value)} placeholder="chat ID (angka)" className="flex-1 bg-white/5 border border-white/10 rounded-[5px] px-3 py-2 text-[12px] text-white outline-none focus:border-white/25 transition-colors" />
+                <button onClick={connectTg} disabled={tgBusy || !tgInput.trim()} className="bg-white text-[#0a0a0a] border-none rounded-[5px] px-5 py-2 text-[11px] font-bold cursor-pointer hover:bg-white/90 disabled:opacity-50 transition-colors shrink-0">Simpan</button>
+              </div>
+            )}
           </div>
         </div>
 
