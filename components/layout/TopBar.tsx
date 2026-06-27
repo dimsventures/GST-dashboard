@@ -130,6 +130,13 @@ export function TopBar({ title, onHamburgerClick }: TopBarProps) {
           {dark ? '☀️' : '🌙'}
         </button>
         <span className="text-[11px] text-white/35 hidden sm:block">{date}</span>
+        <a
+          href="/profile"
+          title="Profile"
+          className="bg-transparent border border-white/10 w-[30px] h-[30px] rounded-[6px] flex items-center justify-center cursor-pointer transition-all duration-150 hover:border-[#3e6df0] shrink-0 text-white/55 hover:text-white no-underline"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c0-3.5 3.1-6.5 7-6.5s7 3 7 6.5" /></svg>
+        </a>
       </div>
     </header>
   )

@@ -76,15 +76,6 @@ function GraphIcon({ className }: IconProps) {
   )
 }
 
-function UserIcon({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M5 20c0-3.5 3.1-6.5 7-6.5s7 3 7 6.5" />
-    </svg>
-  )
-}
-
 function ScaleIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -98,17 +89,25 @@ function ScaleIcon({ className }: IconProps) {
 }
 
 type NavItem = { Icon: (props: IconProps) => ReactElement; label: string; href: string }
+type NavSection = { title: string | null; items: NavItem[] }
 
-const NAV: NavItem[] = [
-  { Icon: HomeIcon, label: 'The Dashboard', href: '/dashboard' },
-  { Icon: DumbbellIcon, label: 'The Sh*t Things', href: '/gst' },
-  { Icon: WalletIcon, label: 'The Budget', href: '/budget' },
-  { Icon: DollarIcon, label: 'The Finance', href: '/finance' },
-  { Icon: TrendUpIcon, label: 'The Portfolio', href: '/portfolio' },
-  { Icon: ScaleIcon, label: 'The Valuation', href: '/valuation' },
-  { Icon: GlobeIcon, label: 'The Macro', href: '/macro' },
-  { Icon: GraphIcon, label: 'The Mind', href: '/garden' },
-  { Icon: UserIcon, label: 'The Profile', href: '/profile' },
+const SECTIONS: NavSection[] = [
+  { title: null, items: [{ Icon: HomeIcon, label: 'Dashboard', href: '/dashboard' }] },
+  { title: 'Productivity', items: [{ Icon: DumbbellIcon, label: 'Sh*t Things', href: '/gst' }] },
+  {
+    title: 'Finance', items: [
+      { Icon: WalletIcon, label: 'Budget', href: '/budget' },
+      { Icon: DollarIcon, label: 'Finance', href: '/finance' },
+      { Icon: TrendUpIcon, label: 'Portfolio', href: '/portfolio' },
+    ],
+  },
+  {
+    title: 'Investment', items: [
+      { Icon: GlobeIcon, label: 'Macro', href: '/macro' },
+      { Icon: ScaleIcon, label: 'Valuation', href: '/valuation' },
+    ],
+  },
+  { title: 'Agent', items: [{ Icon: GraphIcon, label: 'Mind', href: '/garden' }] },
 ]
 
 interface SidebarProps {
@@ -214,28 +213,38 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
       </div>
 
       {/* Nav */}
-      <nav className="py-2.5 flex-1 px-2.5 space-y-1">
-        {NAV.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <a
-              key={item.href}
-              href={item.href}
-              className={[
-                'flex items-center gap-3 py-2.5 text-[13px] font-semibold tracking-[.03em] rounded-xl transition-all duration-150 no-underline',
-                collapsed ? 'justify-center px-0' : 'px-3.5',
-                isActive
-                  ? 'text-white bg-[#3e6df0] shadow-[0_2px_10px_rgba(62,109,240,.35)]'
-                  : 'text-white/55 hover:text-white hover:bg-white/5',
-              ].join(' ')}
-            >
-              <span className="w-5 shrink-0 flex items-center justify-center">
-                <item.Icon className="w-[18px] h-[18px]" />
-              </span>
-              {!collapsed && <span>{item.label}</span>}
-            </a>
-          )
-        })}
+      <nav className="py-2.5 flex-1 px-2.5 overflow-y-auto">
+        {SECTIONS.map((sec, si) => (
+          <div key={si} className={si > 0 ? 'mt-3.5' : ''}>
+            {!collapsed && sec.title && (
+              <div className="px-3.5 mb-1.5 text-[8.5px] font-bold tracking-[.14em] uppercase text-white/30 select-none">{sec.title}</div>
+            )}
+            {collapsed && si > 0 && <div className="mx-3 mb-2 border-t border-white/8" />}
+            <div className="space-y-1">
+              {sec.items.map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className={[
+                      'flex items-center gap-3 py-2.5 text-[13px] font-semibold tracking-[.03em] rounded-xl transition-all duration-150 no-underline',
+                      collapsed ? 'justify-center px-0' : 'px-3.5',
+                      isActive
+                        ? 'text-white bg-[#3e6df0] shadow-[0_2px_10px_rgba(62,109,240,.35)]'
+                        : 'text-white/55 hover:text-white hover:bg-white/5',
+                    ].join(' ')}
+                  >
+                    <span className="w-5 shrink-0 flex items-center justify-center">
+                      <item.Icon className="w-[18px] h-[18px]" />
+                    </span>
+                    {!collapsed && <span>{item.label}</span>}
+                  </a>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Bottom: cat agent + user + logout */}

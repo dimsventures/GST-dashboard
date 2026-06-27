@@ -86,7 +86,14 @@ export function JarvisChat() {
           open ? 'bg-[#3e6df0] scale-110' : 'bg-[#111] hover:bg-[#3e6df0] hover:scale-110',
         ].join(' ')}
       >
-        🤖
+        <svg viewBox="0 0 40 40" width="28" height="28" aria-hidden="true">
+          <path d="M7 16 L11 4 L18 13 Z" fill="#dfe6f5" />
+          <path d="M33 16 L29 4 L22 13 Z" fill="#dfe6f5" />
+          <circle cx="20" cy="22" r="13" fill="#dfe6f5" />
+          <circle cx="15.5" cy="20.5" r="2.5" fill="#1b2942" />
+          <circle cx="24.5" cy="20.5" r="2.5" fill="#1b2942" />
+          <path d="M18 25 L22 25 L20 27.5 Z" fill="#ff9bb0" />
+        </svg>
       </button>
 
       {/* Panel */}
@@ -100,7 +107,7 @@ export function JarvisChat() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-[#111] text-white rounded-t-xl shrink-0">
           <div className="flex items-center gap-2 font-bold text-[13px] tracking-[.04em]">
-            <span className="text-base">🤖</span>
+            <span className="text-base">🐱</span>
             JARVIS
             <span className="text-[10px] font-normal text-white/50">AI Assistant</span>
           </div>
