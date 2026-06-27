@@ -88,6 +88,16 @@ function ScaleIcon({ className }: IconProps) {
   )
 }
 
+function NewsIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M4 5h13v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5z" />
+      <path d="M17 8h2.5A1.5 1.5 0 0 1 21 9.5V18a2 2 0 0 1-2 2" />
+      <path d="M7 8.5h6M7 12h6M7 15.5h4" />
+    </svg>
+  )
+}
+
 type NavItem = { Icon: (props: IconProps) => ReactElement; label: string; href: string }
 type NavSection = { title: string | null; items: NavItem[] }
 
@@ -105,6 +115,7 @@ const SECTIONS: NavSection[] = [
     title: 'Investment', items: [
       { Icon: GlobeIcon, label: 'Macro', href: '/macro' },
       { Icon: ScaleIcon, label: 'Valuation', href: '/valuation' },
+      { Icon: NewsIcon, label: 'News', href: '/news' },
     ],
   },
   { title: 'Agent', items: [{ Icon: GraphIcon, label: 'Mind', href: '/garden' }] },
