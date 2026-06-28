@@ -72,7 +72,6 @@ function LessonTicker() {
 
 export function TopBar({ title, onHamburgerClick }: TopBarProps) {
   const [date, setDate] = useState('')
-  const [dark, setDark] = useState(true)
 
   useEffect(() => {
     setDate(
@@ -83,18 +82,7 @@ export function TopBar({ title, onHamburgerClick }: TopBarProps) {
         day: 'numeric',
       })
     )
-    const saved = localStorage.getItem('gst_theme')
-    if (saved === 'light') {
-      document.body.classList.remove('dark')
-      setDark(false)
-    }
   }, [])
-
-  function toggleDark() {
-    const isDark = document.body.classList.toggle('dark')
-    setDark(isDark)
-    localStorage.setItem('gst_theme', isDark ? 'dark' : 'light')
-  }
 
   return (
     <header className="bg-[#111111] h-[52px] px-6 flex items-center justify-between sticky top-0 z-[100]">
@@ -122,13 +110,6 @@ export function TopBar({ title, onHamburgerClick }: TopBarProps) {
       </div>
 
       <div className="flex items-center gap-2.5 shrink-0">
-        <button
-          className="bg-transparent border border-white/10 w-[30px] h-[30px] rounded-[6px] flex items-center justify-center cursor-pointer text-sm transition-all duration-150 hover:border-[#3e6df0] shrink-0"
-          onClick={toggleDark}
-          title="Toggle dark mode"
-        >
-          {dark ? '☀️' : '🌙'}
-        </button>
         <span className="text-[11px] text-white/35 hidden sm:block">{date}</span>
         <a
           href="/profile"

@@ -99,7 +99,7 @@ export function JarvisChat() {
       {/* Panel */}
       <div
         className={[
-          'fixed bottom-[84px] right-6 z-[998] w-[360px] max-h-[540px] bg-white border border-[#e4e2de] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,.15)] flex flex-col overflow-hidden transition-all duration-[220ms]',
+          'fixed bottom-[84px] right-6 z-[998] w-[360px] max-h-[540px] bg-[#15161c] border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,.5)] flex flex-col overflow-hidden transition-all duration-[220ms]',
           open ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 translate-y-5 scale-[.97] pointer-events-none',
           'max-sm:w-[calc(100vw-48px)] max-sm:right-6',
         ].join(' ')}
@@ -130,22 +130,22 @@ export function JarvisChat() {
               className={[
                 'max-w-[85%] px-3 py-2 rounded-xl text-[12px] leading-[1.5] whitespace-pre-wrap',
                 m.role === 'user'
-                  ? 'self-end bg-[#111] text-white rounded-br-sm'
-                  : 'self-start bg-[#f5f4f2] text-[#1a1a1a] rounded-bl-sm border border-[#e4e2de]',
+                  ? 'self-end bg-[#3e6df0] text-white rounded-br-sm'
+                  : 'self-start bg-[#1c1e27] text-[#eef0f5] rounded-bl-sm border border-white/8',
               ].join(' ')}
             >
               {m.content}
             </div>
           ))}
           {loading && (
-            <div className="self-start bg-[#f5f4f2] text-[#888] border border-[#e4e2de] px-3 py-2 rounded-xl rounded-bl-sm text-[12px]">
+            <div className="self-start bg-[#1c1e27] text-white/45 border border-white/8 px-3 py-2 rounded-xl rounded-bl-sm text-[12px]">
               ···
             </div>
           )}
         </div>
 
         {/* Input */}
-        <div className="flex items-end gap-2 px-3 py-2.5 border-t border-[#e4e2de] bg-white shrink-0">
+        <div className="flex items-end gap-2 px-3 py-2.5 border-t border-white/8 bg-[#15161c] shrink-0">
           <textarea
             ref={inputRef}
             value={input}
@@ -153,7 +153,7 @@ export function JarvisChat() {
             onKeyDown={handleKey}
             placeholder="Tanya Jarvis..."
             rows={1}
-            className="flex-1 border border-[#e4e2de] rounded-lg px-2.5 py-2 text-[12px] text-[#1a1a1a] bg-[#f5f4f2] resize-none max-h-[90px] outline-none transition-colors duration-150 focus:border-[#d0cdc8] leading-[1.45] font-[inherit]"
+            className="flex-1 border border-white/10 rounded-lg px-2.5 py-2 text-[12px] text-[#eef0f5] bg-[#1c1e27] placeholder-white/30 resize-none max-h-[90px] outline-none transition-colors duration-150 focus:border-[#3e6df0] leading-[1.45] font-[inherit]"
           />
           <button
             onClick={() => { setMessages([]); setInput('') }}
