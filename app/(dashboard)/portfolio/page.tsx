@@ -160,7 +160,7 @@ function renderPositions() {
   const activePositions = positions.filter(p => p.is_active)
 
   if (!activeAssets.length) {
-    container.innerHTML = '<div class="pos-empty">Tambahkan broker dulu di panel kiri.</div>'
+    container.innerHTML = '<div class="pos-empty">📈 Belum ada broker.<br>Tambahkan broker dulu di panel kiri buat mulai tracking aset lo.</div>'
     return
   }
 
@@ -1299,7 +1299,7 @@ export default function PortfolioPage() {
         .vt-set{color:var(--blue);font-size:10px;}
         .ot-edit{background:none;border:none;cursor:pointer;font-size:12px;padding:0;opacity:.6;}
         .ot-edit:hover{opacity:1;}
-        .outlook-empty{padding:18px;text-align:center;font-size:10px;color:var(--text4);}
+        .outlook-empty{padding:22px;text-align:center;font-size:12px;line-height:1.6;color:var(--text2);}
         .card-hdr{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
         .card-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text);}
         .card-body{padding:14px 16px;}
@@ -1340,7 +1340,7 @@ export default function PortfolioPage() {
         .pos-add-row{padding:8px 16px;}
         .pos-add-btn{background:none;border:1px dashed var(--border);border-radius:var(--r2);padding:6px;font-size:10px;color:var(--text3);cursor:pointer;width:100%;transition:all .15s;font-weight:600;}
         .pos-add-btn:hover{border-color:var(--green);color:var(--green);}
-        .pos-empty{padding:20px 16px;text-align:center;font-size:10px;color:var(--text4);}
+        .pos-empty{padding:28px 16px;text-align:center;font-size:12px;line-height:1.6;color:var(--text2);}
         .pos-gl{font-weight:600;font-size:10px;}
         .pos-gl.pos{color:var(--green);}
         .pos-gl.neg{color:var(--loss);}

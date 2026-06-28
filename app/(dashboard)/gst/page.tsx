@@ -591,7 +591,16 @@ function renderTodos() {
   if (todoStatus === 'todo') all = fil.filter(t => !t.done)
   else if (todoStatus === 'done') all = fil.filter(t => t.done)
   else { const pend = fil.filter(t => !t.done); const done = fil.filter(t => t.done); all = [...pend, ...done] }
-  if (!all.length) { list.innerHTML = '<div class="empty-note">' + (todoStatus === 'done' ? 'Belum ada task selesai.' : todoStatus === 'todo' ? 'Semua task selesai. 🎉' : 'Kosong. Tambah task baru.') + '</div>'; return }
+  if (!all.length) {
+    const pernahAda = fil.length > 0
+    const msg = todoStatus === 'done'
+      ? 'Belum ada task yang selesai.'
+      : todoStatus === 'todo'
+        ? (pernahAda ? 'Semua task selesai. 🎉' : '✍️ Belum ada task. Tulis task pertama lo di kolom atas.')
+        : '✍️ Kosong. Tambah task baru lewat kolom di atas.'
+    list.innerHTML = '<div class="empty-note">' + msg + '</div>'
+    return
+  }
   list.innerHTML = all.map(t => {
     return `<div class="titem${t.done ? ' done' : ''}" onclick="toggleTodo('${t.id}')">
       <div class="tcb"></div>
@@ -1577,7 +1586,7 @@ export default function GstPage() {
         .goal-inp::placeholder{color:var(--text4);}
         .goal-addbtn{background:var(--red);color:#fff;border:none;border-radius:var(--r2);width:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:300;flex-shrink:0;}
         .goal-addbtn:hover{background:var(--red2);}
-        .goals-empty{text-align:center;padding:18px 10px;color:var(--text4);font-size:10px;font-style:italic;}
+        .goals-empty{text-align:center;padding:22px 12px;color:var(--text2);font-size:12px;line-height:1.6;}
 
         .tag.tg{background:#fef2f8;color:#be185d;border:1px solid #fbcfe8;}
         .dgoal-card{background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--r2);padding:10px 12px;margin-top:6px;}
@@ -1728,7 +1737,7 @@ export default function GstPage() {
         .lock-btn{margin-top:6px;width:100%;background:var(--gold-bg);border:1px solid var(--gold-border);color:var(--gold);border-radius:var(--r2);padding:6px;font-size:10px;font-weight:600;letter-spacing:.02em;cursor:pointer;}
         .lock-btn:hover{filter:brightness(.9);}
         .lsn-list{overflow-y:auto;padding:10px 16px;max-height:200px;display:flex;flex-direction:column;gap:7px;}
-        .empty-note{text-align:center;padding:14px;color:var(--text4);font-size:10px;font-style:italic;}
+        .empty-note{text-align:center;padding:24px 16px;color:var(--text2);font-size:12px;line-height:1.6;}
 
         .todo-sec{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);}
         .mode-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}

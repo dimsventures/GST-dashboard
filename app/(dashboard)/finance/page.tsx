@@ -431,7 +431,7 @@ function renderTrxList() {
   const list = document.getElementById('trx-list')
   if (!list) return
   const items = transactions.filter(t => t.date.startsWith(mo)).sort((a, b) => b.date.localeCompare(a.date) || (new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
-  if (!items.length) { list.innerHTML = '<div class="trx-empty">Belum ada transaksi bulan ini.</div>'; return }
+  if (!items.length) { list.innerHTML = '<div class="trx-empty">💸 Belum ada transaksi bulan ini.<br>Catat pemasukan / pengeluaran pertama lo lewat form di atas.</div>'; return }
   let lastDate = ''
   list.innerHTML = items.map(t => {
     const dayLabel = t.date !== lastDate
@@ -944,7 +944,7 @@ export default function FinancePage() {
         .trx-amount{font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;}
         .trx-del{background:none;border:none;color:var(--text4);cursor:pointer;font-size:11px;padding:0 2px;flex-shrink:0;transition:color .15s;}
         .trx-del:hover{color:var(--red);}
-        .trx-empty{padding:20px 14px;text-align:center;font-size:10px;color:var(--text4);}
+        .trx-empty{padding:28px 16px;text-align:center;font-size:12px;line-height:1.6;color:var(--text2);}
         .sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
         .sum-box{padding:12px 14px;background:var(--white);}
         .sum-lbl{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:3px;}

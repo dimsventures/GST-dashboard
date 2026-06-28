@@ -103,7 +103,7 @@ type NavSection = { title: string | null; items: NavItem[] }
 
 const SECTIONS: NavSection[] = [
   { title: null, items: [{ Icon: HomeIcon, label: 'Dashboard', href: '/dashboard' }] },
-  { title: 'Productivity', items: [{ Icon: DumbbellIcon, label: 'Daily Tracker', href: '/gst' }] },
+  { title: 'Productivity', items: [{ Icon: DumbbellIcon, label: 'Habit', href: '/gst' }] },
   {
     title: 'Finance', items: [
       { Icon: WalletIcon, label: 'Budget', href: '/budget' },
