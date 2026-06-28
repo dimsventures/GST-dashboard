@@ -17,8 +17,8 @@ const STEPS: Step[] = [
   },
   {
     emoji: '🚀',
-    title: 'Mulai dari mana?',
-    body: 'Saran gua: isi dulu satu hal kecil. Catat goal hari ini, tambah satu akun keuangan, atau masukin satu aset. Begitu ada data, semua chart-nya langsung hidup.',
+    title: 'Mulai dari Habit lo',
+    body: 'Langkah pertama: buka Habit, lalu bikin kategori versi lo sendiri — misal Deep Work, Gym, Reading, Family. Dari situ tracking harian & chart-nya baru jalan. Gak ada template paksaan; semua punya lo.',
   },
 ]
 

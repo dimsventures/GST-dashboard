@@ -78,7 +78,8 @@ const TARGET_QUOTES = [
 
 const LEARNING_KEYWORDS = ['belajar', 'pelajari', 'learning', 'learn', 'to know', 'pahami', 'memahami', 'riset', 'research', 'deep dive', 'studi', 'study', 'eksplorasi', 'explore', 'cari tau', 'cari tahu', 'ngerti', 'mengerti', 'kenali', 'baca buku', 'baca ', 'read ', 'kursus', 'course', 'modul', 'module', 'dokumentasi', 'documentation', 'tutorial', 'dalami', 'mendalami', 'dalamin', 'deep in']
 
-function getActCats() { return activityCategories.length ? activityCategories : ACT_CATS_DEFAULT }
+// Tiap user bikin kategori habit-nya sendiri; gak ada default. ACT_CATS_DEFAULT cuma dipakai buat contoh inspirasi di onboarding.
+function getActCats() { return activityCategories }
 function actScore(date: string, cat: string) { return activities.filter(a => a.date === date && a.category === cat).length }
 function actScoreTotal(date: string) { return activities.filter(a => a.date === date).length }
 
@@ -731,6 +732,18 @@ function renderLogModal() {
   const body = gid('mo-body')
   if (!body) return
   const cats = getActCats()
+  if (!cats.length) {
+    const examples = ACT_CATS_DEFAULT.map(c => c.label).join(', ')
+    body.innerHTML = `
+      <div style="text-align:center;padding:30px 18px;">
+        <div style="font-size:30px;margin-bottom:10px;">🧩</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">Bikin kategori habit versi lo</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:4px;">Belum ada kategori. Tentuin sendiri area hidup yang mau lo track tiap hari.</div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:18px;">Contoh: ${examples} — atau apa pun versi lo (Deep Work, Gym, Reading, Family…).</div>
+        <button onclick="openAddActCatModal()" style="background:var(--red);border:none;color:#fff;border-radius:var(--r2);padding:9px 20px;font-size:12px;font-weight:700;cursor:pointer;">+ Bikin Kategori Pertama</button>
+      </div>`
+    return
+  }
   body.innerHTML = cats.map((c: Any, i: number) => `
     <div class="fsec" style="${i === 0 ? 'margin-top:0;padding-top:0;border-top:none;' : ''}">
       <span style="color:${c.color}">${c.label}</span>
@@ -889,7 +902,7 @@ function openLogDate(dstr: string) {
     renderActList(c.key)
   })
   gid('mo')?.classList.add('open')
-  setTimeout(() => gid('act-inp-religion')?.focus(), 100)
+  setTimeout(() => gid('act-inp-' + (getActCats()[0]?.key || ''))?.focus(), 100)
 }
 function closeModal() { gid('mo')?.classList.remove('open'); render() }
 
@@ -1061,21 +1074,18 @@ function setRange(type: string, el: HTMLElement) {
 }
 
 function buildDayData(date: string) {
+  const cats = getActCats()
+  const row: Any = { date }
   const dayActs = activities.filter(a => a.date === date)
   if (dayActs.length) {
-    return {
-      date,
-      religion: dayActs.filter((a: Any) => a.category === 'religion').length,
-      work: dayActs.filter((a: Any) => a.category === 'work').length,
-      personal: dayActs.filter((a: Any) => a.category === 'personal').length,
-      exercise: dayActs.filter((a: Any) => a.category === 'exercise').length,
-      habit: dayActs.filter((a: Any) => a.category === 'habit').length,
-      humanity: dayActs.filter((a: Any) => a.category === 'humanity').length,
-    }
+    cats.forEach((c: Any) => { row[c.key] = dayActs.filter((a: Any) => a.category === c.key).length })
+    return row
   }
+  // Fallback gst_entries lama: skor rs/ws/ms/ps dipetakan ke key asli kalau kategorinya masih ada
   const e = entries.find(x => x.date === date)
-  if (e) return { date, religion: e.rs || 0, work: e.ws || 0, personal: e.ms || 0, exercise: e.ps || 0, habit: 0, humanity: 0 }
-  return { date, religion: 0, work: 0, personal: 0, exercise: 0, habit: 0, humanity: 0 }
+  const legacy: Record<string, number> = e ? { religion: e.rs || 0, work: e.ws || 0, personal: e.ms || 0, exercise: e.ps || 0 } : {}
+  cats.forEach((c: Any) => { row[c.key] = legacy[c.key] || 0 })
+  return row
 }
 
 function fillDateGaps(range: string) {
@@ -1112,7 +1122,28 @@ function toggleDataset(chartId: string, idx: number, el: HTMLElement) {
   el.classList.toggle('off', meta.hidden)
 }
 
+function hexA(hex: string, a: number) {
+  if (typeof hex !== 'string' || hex[0] !== '#') return hex
+  let h = hex.slice(1)
+  if (h.length === 3) h = h.split('').map(x => x + x).join('')
+  const n = parseInt(h, 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`
+}
+
+// Legend chart dibangun dinamis dari kategori user (bukan hardcoded)
+function renderChartLegend(containerId: string, chartId: string) {
+  const el = gid(containerId); if (!el) return
+  const escL = (s: string) => (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string))
+  el.innerHTML = getActCats().map((c: Any, i: number) =>
+    `<div class="cl-item" data-idx="${i}"><div class="cl-dot" style="background:${c.color}"></div>${escL(c.label)}</div>`
+  ).join('')
+  el.querySelectorAll<HTMLElement>('.cl-item').forEach(item => {
+    item.onclick = () => toggleDataset(chartId, Number(item.dataset.idx || 0), item)
+  })
+}
+
 async function renderBarChart() {
+  renderChartLegend('bar-legend', 'bar')
   const data = fillDateGaps(barRange)
   if (!data.length) return
   const mn = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
@@ -1126,14 +1157,9 @@ async function renderBarChart() {
   chartBarInstance = new Chart(canvas, {
     type: 'bar',
     data: {
-      labels, datasets: [
-        { label: 'Religion', data: data.map(e => e.religion), backgroundColor: '#4f7cf0', stack: 's' },
-        { label: 'Working Stage', data: data.map(e => e.work), backgroundColor: '#f0a93e', stack: 's' },
-        { label: 'Personal Wish', data: data.map(e => e.personal), backgroundColor: '#e879a8', stack: 's' },
-        { label: 'Exercise', data: data.map(e => e.exercise), backgroundColor: '#3fc98a', stack: 's' },
-        { label: 'Habit', data: data.map(e => e.habit), backgroundColor: '#9b6ef0', stack: 's' },
-        { label: 'Humanity', data: data.map(e => e.humanity), backgroundColor: '#34c2d4', stack: 's' },
-      ],
+      labels, datasets: getActCats().map((c: Any) => ({
+        label: c.label, data: data.map((e: Any) => e[c.key] || 0), backgroundColor: c.color, stack: 's',
+      })),
     },
     options: {
       responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
@@ -1148,6 +1174,7 @@ async function renderBarChart() {
 }
 
 async function renderLineChart() {
+  renderChartLegend('line-legend', 'line')
   const data = fillDateGaps(lineRange)
   if (!data.length) return
   const mn = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
@@ -1161,14 +1188,9 @@ async function renderLineChart() {
   chartLineInstance = new Chart(canvasLine, {
     type: 'line',
     data: {
-      labels, datasets: [
-        { label: 'Religion', data: rolling(data, 'religion'), borderColor: '#4f7cf0', backgroundColor: 'rgba(79,124,240,0.06)', ...lineOpts },
-        { label: 'Working Stage', data: rolling(data, 'work'), borderColor: '#f0a93e', backgroundColor: 'rgba(240,169,62,0.06)', ...lineOpts },
-        { label: 'Personal Wish', data: rolling(data, 'personal'), borderColor: '#e879a8', backgroundColor: 'rgba(232,121,168,0.06)', ...lineOpts },
-        { label: 'Exercise', data: rolling(data, 'exercise'), borderColor: '#3fc98a', backgroundColor: 'rgba(63,201,138,0.06)', ...lineOpts },
-        { label: 'Habit', data: rolling(data, 'habit'), borderColor: '#9b6ef0', backgroundColor: 'rgba(155,110,240,0.06)', ...lineOpts },
-        { label: 'Humanity', data: rolling(data, 'humanity'), borderColor: '#34c2d4', backgroundColor: 'rgba(52,194,212,0.06)', ...lineOpts },
-      ],
+      labels, datasets: getActCats().map((c: Any) => ({
+        label: c.label, data: rolling(data, c.key), borderColor: c.color, backgroundColor: hexA(c.color, 0.06), ...lineOpts,
+      })),
     },
     options: {
       responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
@@ -1182,7 +1204,8 @@ async function renderLineChart() {
     },
   })
 
-  const totalData = data.map(e => e.religion + e.work + e.personal + e.exercise + e.habit + e.humanity)
+  const totalKeys = getActCats().map((c: Any) => c.key)
+  const totalData = data.map((e: Any) => totalKeys.reduce((s: number, k: string) => s + (e[k] || 0), 0))
   const rollingTotal = rolling(totalData.map(v => ({ v })), 'v', 7)
   const canvasTotal = gid<HTMLCanvasElement>('chart-total')
   if (!canvasTotal) return
@@ -1988,14 +2011,7 @@ export default function GstPage() {
             <div className="chart-section">
               <div className="chart-title">Your Productivity Graph</div>
               <div className="chart-sub">STACKED BAR — DAILY SCORE DISTRIBUTION</div>
-              <div className="chart-legend">
-                <div className="cl-item" onClick={e => toggleDataset('bar', 0, e.currentTarget)}><div className="cl-dot" style={{ background: '#4f7cf0' }}></div>Religion</div>
-                <div className="cl-item" onClick={e => toggleDataset('bar', 1, e.currentTarget)}><div className="cl-dot" style={{ background: '#f0a93e' }}></div>Working Stage</div>
-                <div className="cl-item" onClick={e => toggleDataset('bar', 2, e.currentTarget)}><div className="cl-dot" style={{ background: '#e879a8' }}></div>Personal Wish</div>
-                <div className="cl-item" onClick={e => toggleDataset('bar', 3, e.currentTarget)}><div className="cl-dot" style={{ background: '#3fc98a' }}></div>Exercise</div>
-                <div className="cl-item" onClick={e => toggleDataset('bar', 4, e.currentTarget)}><div className="cl-dot" style={{ background: '#9b6ef0' }}></div>Habit</div>
-                <div className="cl-item" onClick={e => toggleDataset('bar', 5, e.currentTarget)}><div className="cl-dot" style={{ background: '#34c2d4' }}></div>Humanity</div>
-              </div>
+              <div className="chart-legend" id="bar-legend"></div>
               <div className="chart-wrap"><canvas id="chart-bar"></canvas></div>
             </div>
             <div className="chart-range-bar" id="range-line" style={{ marginTop: 8 }}>
@@ -2016,14 +2032,7 @@ export default function GstPage() {
             <div className="chart-section">
               <div className="chart-title">Trend Line — Semua Kategori</div>
               <div className="chart-sub">7-DAY ROLLING AVERAGE PER KATEGORI</div>
-              <div className="chart-legend">
-                <div className="cl-item" onClick={e => toggleDataset('line', 0, e.currentTarget)}><div className="cl-dot" style={{ background: '#4f7cf0' }}></div>Religion</div>
-                <div className="cl-item" onClick={e => toggleDataset('line', 1, e.currentTarget)}><div className="cl-dot" style={{ background: '#f0a93e' }}></div>Working Stage</div>
-                <div className="cl-item" onClick={e => toggleDataset('line', 2, e.currentTarget)}><div className="cl-dot" style={{ background: '#e879a8' }}></div>Personal Wish</div>
-                <div className="cl-item" onClick={e => toggleDataset('line', 3, e.currentTarget)}><div className="cl-dot" style={{ background: '#3fc98a' }}></div>Exercise</div>
-                <div className="cl-item" onClick={e => toggleDataset('line', 4, e.currentTarget)}><div className="cl-dot" style={{ background: '#9b6ef0' }}></div>Habit</div>
-                <div className="cl-item" onClick={e => toggleDataset('line', 5, e.currentTarget)}><div className="cl-dot" style={{ background: '#34c2d4' }}></div>Humanity</div>
-              </div>
+              <div className="chart-legend" id="line-legend"></div>
               <div className="chart-wrap"><canvas id="chart-line"></canvas></div>
             </div>
             <div className="chart-section">
