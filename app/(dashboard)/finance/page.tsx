@@ -134,7 +134,65 @@ function render() {
   renderReconHistory()
   renderCalendar()
   calcRecon()
+  renderFinanceOnboarding()
   setTimeout(renderFinChart, 50)
+}
+
+// Panduan setup buat user baru: pocket -> rekening+cash -> batas akhir.
+// Di-gate (gst_fin_onboard_started) biar user lama yang udah ada data gak keganggu.
+function renderFinanceOnboarding() {
+  const host = document.getElementById('fin-onboard')
+  if (!host) return
+  const hasCats = TYPES.every(t => (finCats[t] || []).length > 0)
+  const hasAccounts = finAccounts.length > 0
+  const hasAudit = reconciliations.length > 0
+  const hasEnd = !!localStorage.getItem('gst_budget_end')
+  const setupDone = hasCats && hasAccounts && hasAudit && hasEnd
+  const dismissed = !!localStorage.getItem('gst_fin_onboarded')
+  const fresh = !hasAccounts && !TYPES.some(t => (finCats[t] || []).length) && !transactions.length
+  if (fresh && !dismissed) localStorage.setItem('gst_fin_onboard_started', '1')
+  const started = !!localStorage.getItem('gst_fin_onboard_started')
+  if (dismissed || setupDone || !started) { host.style.display = 'none'; host.innerHTML = ''; return }
+  host.style.display = 'block'
+
+  const dot = (done: boolean) => done
+    ? '<span style="flex-shrink:0;width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;">✓</span>'
+    : '<span style="flex-shrink:0;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--text3);color:var(--text3);display:inline-flex;align-items:center;justify-content:center;font-size:10px;">○</span>'
+  const step = (done: boolean, ttl: string, desc: string, act: string, btn: string) => `
+    <div style="display:flex;gap:9px;padding:10px 0;border-top:1px solid var(--border);">
+      ${dot(done)}
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11.5px;font-weight:700;color:var(--text);">${ttl}</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.5;margin:2px 0 6px;">${desc}</div>
+        ${done
+          ? '<span style="font-size:9.5px;font-weight:700;color:var(--green);">✓ Beres</span>'
+          : `<button data-act="${act}" style="background:var(--blue);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:10px;font-weight:700;cursor:pointer;">${btn}</button>`}
+      </div>
+    </div>`
+  host.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div style="padding:12px 14px 6px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+        <div>
+          <div style="font-size:12.5px;font-weight:800;color:var(--text);">🚀 Set up Finance lo</div>
+          <div style="font-size:10px;color:var(--text2);line-height:1.5;margin-top:2px;">3 langkah biar jatah harian lo kelihatan.</div>
+        </div>
+        <button data-act="skip" style="background:none;border:none;color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;padding:2px;">Lewati</button>
+      </div>
+      <div style="padding:0 14px 12px;">
+        ${step(hasCats, '1. Bikin "pocket" tiap tipe', 'Klik tab Income / Expense / Invest (Deposit / Self Improvement) / Buffer, lalu tambah pocket versi lo lewat ✏ di kartu input.', 'cats', 'Kelola Pocket')}
+        ${step(hasAccounts && hasAudit, '2. Rekening + cash', 'Tambah rekening yang lo punya, terus isi saldo cash tiap rekening di kartu Audit Saldo (kanan) lalu Simpan.', 'accts', 'Kelola Rekening')}
+        ${step(hasEnd, '3. Set "Batas Akhir"', 'Sampai kapan uang ini harus cukup? Dari sini estimasi jatah harian (sisa ÷ hari tersisa) otomatis muncul.', 'end', 'Set Tanggal')}
+      </div>
+    </div>`
+  host.querySelector('[data-act="skip"]')?.addEventListener('click', () => { localStorage.setItem('gst_fin_onboarded', '1'); host.style.display = 'none'; host.innerHTML = '' })
+  host.querySelector('[data-act="cats"]')?.addEventListener('click', () => openCatManager())
+  host.querySelector('[data-act="accts"]')?.addEventListener('click', () => openAcctManager())
+  host.querySelector('[data-act="end"]')?.addEventListener('click', () => {
+    const d = document.getElementById('budget-end-date') as HTMLInputElement | null
+    d?.scrollIntoView({ behavior: 'smooth', block: 'center' }); d?.focus()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    try { (d as unknown as { showPicker?: () => void })?.showPicker?.() } catch {}
+  })
 }
 
 function renderMonthLabel() {
@@ -317,6 +375,7 @@ function changeMonth(d: number) {
 function saveBudgetEndDate(val: string) {
   localStorage.setItem('gst_budget_end', val || '')
   renderSummary()
+  renderFinanceOnboarding()
 }
 
 function renderDailyBudget(sisa: number) {
@@ -577,7 +636,7 @@ async function saveRecon() {
   const body = { date: todayStr(), account_balances, total_actual, total_system, difference: total_actual - total_system }
   try {
     const rc = await api('/api/reconciliations', 'POST', body)
-    reconciliations.unshift(rc); renderReconHistory(); fillReconFromLast(); showToast('Audit tersimpan!', 'success')
+    reconciliations.unshift(rc); renderReconHistory(); fillReconFromLast(); renderFinanceOnboarding(); showToast('Audit tersimpan!', 'success')
   } catch (e) { showToast('Gagal: ' + (e as Error).message, 'error') }
 }
 
@@ -748,7 +807,7 @@ async function addCatFromManager() {
     const c = await api('/api/finance-categories', 'POST', { type, name, sort_order: order })
     finCats[type].push(c)
     if (inp) inp.value = ''
-    renderCatManagerList(type); renderCatChips(type)
+    renderCatManagerList(type); renderCatChips(type); renderFinanceOnboarding()
   } catch (e) { showToast('Gagal: ' + (e as Error).message, 'error') }
 }
 
@@ -817,7 +876,7 @@ async function addAcct() {
     const a = await api('/api/finance-accounts', 'POST', { name, sort_order: finAccounts.length })
     finAccounts.push(a)
     if (inp) inp.value = ''
-    renderAcctManagerList(); renderAuditInputs()
+    renderAcctManagerList(); renderAuditInputs(); renderFinanceOnboarding()
   } catch (e) { showToast('Gagal: ' + (e as Error).message, 'error') }
 }
 
@@ -1004,6 +1063,7 @@ export default function FinancePage() {
       <div className="fin-main">
         {/* LEFT */}
         <div className="fin-col">
+          <div id="fin-onboard"></div>
           <div className="card">
             <div className="fin-cal">
               <div className="fin-cal-nav">
