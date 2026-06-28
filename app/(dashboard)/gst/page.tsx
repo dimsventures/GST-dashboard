@@ -1127,12 +1127,12 @@ async function renderBarChart() {
     type: 'bar',
     data: {
       labels, datasets: [
-        { label: 'Religion', data: data.map(e => e.religion), backgroundColor: '#3b82f6', stack: 's' },
-        { label: 'Working Stage', data: data.map(e => e.work), backgroundColor: '#ef4444', stack: 's' },
-        { label: 'Personal Wish', data: data.map(e => e.personal), backgroundColor: '#f59e0b', stack: 's' },
-        { label: 'Exercise', data: data.map(e => e.exercise), backgroundColor: '#22c55e', stack: 's' },
-        { label: 'Habit', data: data.map(e => e.habit), backgroundColor: '#8b5cf6', stack: 's' },
-        { label: 'Humanity', data: data.map(e => e.humanity), backgroundColor: '#14b8a6', stack: 's' },
+        { label: 'Religion', data: data.map(e => e.religion), backgroundColor: '#4f7cf0', stack: 's' },
+        { label: 'Working Stage', data: data.map(e => e.work), backgroundColor: '#f0a93e', stack: 's' },
+        { label: 'Personal Wish', data: data.map(e => e.personal), backgroundColor: '#e879a8', stack: 's' },
+        { label: 'Exercise', data: data.map(e => e.exercise), backgroundColor: '#3fc98a', stack: 's' },
+        { label: 'Habit', data: data.map(e => e.habit), backgroundColor: '#9b6ef0', stack: 's' },
+        { label: 'Humanity', data: data.map(e => e.humanity), backgroundColor: '#34c2d4', stack: 's' },
       ],
     },
     options: {
@@ -1242,8 +1242,6 @@ async function toggleGoal(id: string) {
     const textEl = gid('goal-achieve-text'); if (textEl) textEl.textContent = g.text
     const ptsEl = gid('goal-achieve-pts'); if (ptsEl) ptsEl.textContent = g.scope === 'year' ? '+7 poin aktivitas' : '+3 poin aktivitas'
     renderActCatButtons('#goal-cat-btns', 'selectGoalCat', null)
-    const btn = gid<HTMLButtonElement>('goal-achieve-confirm')
-    if (btn) { btn.disabled = true; btn.style.opacity = '.4'; btn.style.cursor = 'not-allowed' }
     gid('goal-achieve-modal')?.classList.add('open')
   } else {
     showConfirm((g.scope === 'year' ? '7' : '3') + ' poin aktivitas yang ditambahkan akan dihapus.', async () => {
@@ -1275,7 +1273,8 @@ function selectGoalCat(cat: string) {
 }
 
 async function confirmGoalAchieve() {
-  if (!goalAchieveId || !goalAchieveCat) return
+  if (!goalAchieveId) return
+  if (!goalAchieveCat) { showToast('Pilih kategori dulu buat poin aktivitasnya 🎯'); return }
   const g = goals.find(x => x.id === goalAchieveId); if (!g) return
   const n = g.scope === 'year' ? 7 : 3; const today = todayStr()
   g.done = true; g.doneDate = today; g.achieveCategory = goalAchieveCat; saveGoalDB(g)
@@ -1649,7 +1648,7 @@ export default function GstPage() {
 
         .chart-range-bar{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;}
         .rchip{font-size:9px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--bg);color:var(--text2);letter-spacing:.04em;}
-        .rchip.active{background:var(--blk);color:#fff;border-color:var(--blk);}
+        .rchip.active{background:var(--red);color:#fff;border-color:var(--red);}
         .rchip:not(.active):hover{border-color:var(--red);color:var(--red);}
 
         .chart-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
@@ -2161,7 +2160,7 @@ export default function GstPage() {
           </div>
           <div className="mfooter">
             <button className="btn-cancel" onClick={closeDoingModal}>Lewati</button>
-            <button className="btn-save" onClick={confirmDoing} style={{ background: 'var(--blk)', borderColor: 'var(--blk)' }}>✓ Selesai</button>
+            <button className="btn-save" onClick={confirmDoing} style={{ background: 'var(--red)', borderColor: 'var(--red)' }}>✓ Selesai</button>
           </div>
         </div>
       </div>
@@ -2221,7 +2220,7 @@ export default function GstPage() {
           </div>
           <div className="mfooter">
             <button className="btn-cancel" onClick={closeGoalAchieveModal}>Batal</button>
-            <button className="btn-save" id="goal-achieve-confirm" onClick={confirmGoalAchieve} disabled style={{ opacity: .4, cursor: 'not-allowed' }}>Konfirmasi</button>
+            <button className="btn-save" id="goal-achieve-confirm" onClick={confirmGoalAchieve}>Konfirmasi</button>
           </div>
         </div>
       </div>
