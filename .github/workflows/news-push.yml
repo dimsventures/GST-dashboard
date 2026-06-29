@@ -13,5 +13,11 @@ jobs:
     steps:
       - name: Trigger /api/news/push
         run: |
-          curl -fsS -X GET "https://gst-hq.vercel.app/api/news/push" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+          code=$(curl -sS -o /tmp/resp.json -w "%{http_code}" -X GET \
+            "https://gst-hq.vercel.app/api/news/push" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "HTTP $code"
+          cat /tmp/resp.json 2>/dev/null || true
+          echo
+          # gagal (merah) kalau bukan 200 — biar redirect/error ketauan, bukan false-positive
+          test "$code" = "200"
