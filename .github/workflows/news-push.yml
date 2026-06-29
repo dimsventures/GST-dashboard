@@ -1,0 +1,17 @@
+name: Daily News Push
+
+on:
+  schedule:
+    # 23:00 UTC = 06:00 WIB tiap hari
+    - cron: '0 23 * * *'
+  # Tombol "Run workflow" di tab Actions buat trigger manual (test / push paksa)
+  workflow_dispatch:
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger /api/news/push
+        run: |
+          curl -fsS -X GET "https://gst-hq.vercel.app/api/news/push" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
