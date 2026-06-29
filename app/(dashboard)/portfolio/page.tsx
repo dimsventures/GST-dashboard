@@ -1206,7 +1206,7 @@ export default function PortfolioPage() {
     <DashboardShell title="Portfolio">
       <style>{`
         :root{
-          --bg:#0b0c10;--bg2:#1c1e27;--white:#15161c;
+          --bg:#070d18;--bg2:#101a30;--white:#0b1322;
           --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
           --text:#eef0f5;--text2:#97a0b3;--text3:#687087;--text4:rgba(255,255,255,.14);
           --blk:#eef0f5;

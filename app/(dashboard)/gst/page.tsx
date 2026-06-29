@@ -1532,7 +1532,7 @@ export default function GstPage() {
     <DashboardShell title="GST">
       <style>{`
         :root{
-          --bg:#0b0c10;--bg2:#1c1e27;--white:#15161c;
+          --bg:#070d18;--bg2:#101a30;--white:#0b1322;
           --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
           --text:#eef0f5;--text2:#97a0b3;--text3:#687087;--text4:rgba(255,255,255,.14);
           --blk:#eef0f5;
@@ -1555,7 +1555,7 @@ export default function GstPage() {
 
 
         .gst-app{display:grid;grid-template-columns:342px 1fr 318px;height:calc(100vh - 52px);overflow:hidden;}
-        .lp{background:var(--bg);display:flex;flex-direction:column;overflow:hidden;min-height:0;padding:16px;gap:16px;}
+        .lp{background:transparent;display:flex;flex-direction:column;overflow:hidden;min-height:0;padding:16px;gap:16px;}
 
         .cal-wrap{padding:12px 14px;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sb);}
         .sec-lbl{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
@@ -1724,7 +1724,7 @@ export default function GstPage() {
         .done-in-chain{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--green);padding:2px 0;font-weight:500;}
         .done-in-chain::before{content:'✓';font-weight:700;}
 
-        .rp{background:var(--bg);display:flex;flex-direction:column;overflow:hidden;padding:16px;gap:16px;}
+        .rp{background:transparent;display:flex;flex-direction:column;overflow:hidden;padding:16px;gap:16px;}
 
         .lsn-sec{flex:0 0 auto;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);overflow:visible;}
         .ph{padding:11px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px;}

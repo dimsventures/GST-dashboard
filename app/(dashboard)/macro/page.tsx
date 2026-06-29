@@ -339,7 +339,7 @@ export default function MacroPage() {
     <DashboardShell title="The Macro">
       <style>{`
         :root{
-          --bg:#0b0c10;--white:#15161c;--bg2:#1c1e27;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
+          --bg:#070d18;--white:#0b1322;--bg2:#101a30;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
           --text:#eef0f5;--text2:#97a0b3;--text3:#687087;--text4:rgba(255,255,255,.14);
           --blue:#3e6df0;--green:#34d399;--loss:#f6685e;
           --sb:0 2px 8px rgba(0,0,0,.30),0 3px 11px rgba(62,109,240,.18);

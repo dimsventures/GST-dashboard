@@ -25,7 +25,7 @@ export default function NewsPage() {
   return (
     <DashboardShell title="News">
       <style>{`
-        :root{ --nbg:#15161c;--nborder:rgba(255,255,255,.08);--nb2:rgba(255,255,255,.16);
+        :root{ --nbg:#0b1322;--nborder:rgba(255,255,255,.08);--nb2:rgba(255,255,255,.16);
           --nt:#eef0f5;--nt2:#97a0b3;--nt3:#687087;--nblue:#3e6df0; }
         .news-wrap{max-width:1120px;margin:0 auto;padding:18px 16px 60px;}
         .news-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
@@ -39,7 +39,7 @@ export default function NewsPage() {
         @media(max-width:980px){.news-grid{grid-template-columns:repeat(2,1fr);}}
         @media(max-width:560px){.news-grid{grid-template-columns:1fr;}}
         .news-skel-lbl{width:180px;height:12px;border-radius:4px;background:rgba(255,255,255,.06);margin:0 2px 8px;}
-        .news-card{background:rgba(21,22,28,.82);backdrop-filter:blur(6px);border:1px solid var(--nborder);border-radius:13px;padding:14px 15px;display:flex;flex-direction:column;min-height:150px;transition:border-color .15s,transform .15s;}
+        .news-card{background:rgba(11,19,34,.82);backdrop-filter:blur(6px);border:1px solid var(--nborder);border-radius:13px;padding:14px 15px;display:flex;flex-direction:column;min-height:150px;transition:border-color .15s,transform .15s;}
         .news-card:hover{border-color:var(--nb2);transform:translateY(-1px);}
         .news-tag{align-self:flex-start;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:6px;border:1px solid;margin-bottom:9px;}
         .news-title{font-size:12.5px;font-weight:700;color:var(--nt);line-height:1.4;margin-bottom:7px;}

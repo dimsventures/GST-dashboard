@@ -3,9 +3,9 @@
 @theme {
   --color-gst-red: #d12b2b;
   --color-gst-red-dark: #b32222;
-  --color-bg-base: #0a0a0a;
-  --color-surface: #111111;
-  --color-elevated: #1a1a1a;
+  --color-bg-base: #070d18;
+  --color-surface: #0b1322;
+  --color-elevated: #101a30;
   --color-border: rgba(255,255,255,0.08);
   --color-green: #22c55e;
   --color-gold: #f59e0b;
@@ -19,9 +19,9 @@
 
 /* Dark CSS variables for innerHTML-generated HTML across all React pages */
 :root {
-  --bg: #0f0f0f;
-  --bg2: #1a1a1a;
-  --white: #111;
+  --bg: #070d18;
+  --bg2: #101a30;
+  --white: #0b1322;
   --border: rgba(255,255,255,0.08);
   --border2: rgba(255,255,255,0.15);
   --text: #f0eeec;
@@ -50,7 +50,7 @@
 
 body {
   font-family: var(--font-inter), Inter, system-ui, sans-serif;
-  background: #0a0a0a;
+  background: #070b16;
   color: #f0eeec;
   min-height: 100vh;
   font-size: 14px;

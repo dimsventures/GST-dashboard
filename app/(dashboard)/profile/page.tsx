@@ -119,7 +119,7 @@ export default function ProfilePage() {
       <div className="p-7 max-w-[560px]">
 
         {/* Name */}
-        <div className="bg-[#15161c] border border-white/8 rounded-lg mb-4 overflow-hidden">
+        <div className="bg-[#0b1322] border border-white/8 rounded-lg mb-4 overflow-hidden">
           <div className="px-[18px] py-3.5 border-b border-white/8">
             <div className="text-[10px] font-bold tracking-[.1em] uppercase text-white/40">Nama Pengguna</div>
           </div>
@@ -146,7 +146,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Email */}
-        <div className="bg-[#15161c] border border-white/8 rounded-lg mb-4 overflow-hidden">
+        <div className="bg-[#0b1322] border border-white/8 rounded-lg mb-4 overflow-hidden">
           <div className="px-[18px] py-3.5 border-b border-white/8">
             <div className="text-[10px] font-bold tracking-[.1em] uppercase text-white/40">Info Akun</div>
           </div>
@@ -162,7 +162,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Google */}
-        <div className="bg-[#15161c] border border-white/8 rounded-lg mb-4 overflow-hidden">
+        <div className="bg-[#0b1322] border border-white/8 rounded-lg mb-4 overflow-hidden">
           <div className="px-[18px] py-3.5 border-b border-white/8">
             <div className="text-[10px] font-bold tracking-[.1em] uppercase text-white/40">Akun Terhubung</div>
           </div>
@@ -192,7 +192,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Telegram */}
-        <div className="bg-[#15161c] border border-white/8 rounded-lg mb-4 overflow-hidden">
+        <div className="bg-[#0b1322] border border-white/8 rounded-lg mb-4 overflow-hidden">
           <div className="px-[18px] py-3.5 border-b border-white/8 flex items-center justify-between">
             <div className="text-[10px] font-bold tracking-[.1em] uppercase text-white/40">Telegram</div>
             {tgConnected
@@ -224,7 +224,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Danger Zone */}
-        <div className="bg-[#15161c] border border-[#d12b2b]/30 rounded-lg overflow-hidden">
+        <div className="bg-[#0b1322] border border-[#d12b2b]/30 rounded-lg overflow-hidden">
           <div className="px-[18px] py-3.5 border-b border-[#d12b2b]/20 bg-[#d12b2b]/8">
             <div className="text-[10px] font-bold tracking-[.1em] uppercase text-[#d12b2b]">Danger Zone</div>
           </div>

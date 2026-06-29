@@ -85,7 +85,7 @@ export function TopBar({ title, onHamburgerClick }: TopBarProps) {
   }, [])
 
   return (
-    <header className="bg-[#111111] h-[52px] px-6 flex items-center justify-between sticky top-0 z-[100]">
+    <header className="bg-[#0c1428] h-[52px] px-6 flex items-center justify-between sticky top-0 z-[100]">
       <style>{`
         .hdr-lessons{flex:1;min-width:0;display:flex;align-items:center;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent);}
         @keyframes lsn-scroll{from{transform:translateX(80vw)}to{transform:translateX(-80vw)}}

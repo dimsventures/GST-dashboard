@@ -295,7 +295,7 @@ export default function BudgetPage() {
     <DashboardShell title="The Budget">
       <style>{`
         :root{
-          --bg:#0b0c10;--card:#15161c;--bg2:#1c1e27;
+          --bg:#070d18;--card:#0b1322;--bg2:#101a30;
           --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
           --text:#eef0f5;--text2:#97a0b3;--text3:#687087;
           --blue:#3e6df0;--green:#34d399;--gold:#f0b429;--over:#ef4444;
