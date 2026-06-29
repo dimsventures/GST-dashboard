@@ -335,10 +335,33 @@ function renderLegend() {
   }).join('')
 }
 
+let detailQuery = ''
+// Default panel kanan: semua pesan kronologis (terbaru dulu) + search by kata/kalimat
+function renderMsgList() {
+  const box = document.getElementById('g-d-msglist'); if (!box) return
+  const hd = document.getElementById('g-d-msghd')
+  const q = detailQuery.trim().toLowerCase()
+  const all = nodes.filter(x => x.kind === 'lesson').sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  const arr = q ? all.filter(x => (x.full || '').toLowerCase().includes(q) || (x.cat || '').toLowerCase().includes(q)) : all
+  if (hd) hd.textContent = arr.length + ' pesan' + (q ? ' cocok' : '')
+  if (!arr.length) { box.innerHTML = `<div class="g-d-empty" style="margin-top:20px;">Gak ada pesan yang cocok.</div>`; return }
+  const trunc = (s: string, n2: number) => s.length > n2 ? s.slice(0, n2).trim() + '…' : s
+  box.innerHTML = arr.map(k => `
+    <div class="g-d-msg" data-id="${k.id}">
+      <div class="g-d-msg-top">${k.cat ? `<span class="g-d-pill" style="background:${k.color}22;color:${k.color};border:1px solid ${k.color}55">${escapeHtml(k.cat)}</span>` : ''}<span class="g-d-date">${k.date || ''}</span></div>
+      <div class="g-d-msg-text">${escapeHtml(trunc(k.full || '', 150))}</div>
+    </div>`).join('')
+}
 function renderDetail(n: GNode | null) {
   const el = document.getElementById('g-detail'); if (!el) return
   if (!n) {
-    el.innerHTML = `<div class="g-d-empty"><div class="g-d-empty-ic">◓</div>Klik inti, kategori, atau pesan buat baca detailnya. Hover buat lihat jaringannya.</div>`
+    el.innerHTML = `
+      <div class="g-d-search-wrap"><input id="g-d-search" class="g-d-search" placeholder="Cari pesan yang pernah lo tulis…" autocomplete="off" /></div>
+      <div class="g-d-msghd" id="g-d-msghd"></div>
+      <div class="g-d-msglist" id="g-d-msglist"></div>`
+    const inp = document.getElementById('g-d-search') as HTMLInputElement | null
+    if (inp) { inp.value = detailQuery; inp.oninput = () => { detailQuery = inp.value; renderMsgList() } }
+    renderMsgList()
     return
   }
   if (n.kind === 'lesson') {
@@ -695,6 +718,16 @@ export default function GardenPage() {
         .g-d-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;font-size:12px;color:var(--pg-text2);cursor:pointer;transition:all .12s;line-height:1.4;}
         .g-d-item:hover{background:rgba(255,255,255,.05);color:var(--pg-text);}
         .g-d-item-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+        .g-d-search-wrap{margin-bottom:10px;}
+        .g-d-search{width:100%;box-sizing:border-box;background:#080b16;border:1px solid var(--pg-border);border-radius:9px;padding:9px 11px;font-size:12px;color:var(--pg-text);outline:none;}
+        .g-d-search:focus{border-color:rgba(62,109,240,.6);}
+        .g-d-search::placeholder{color:var(--pg-text3);}
+        .g-d-msghd{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pg-text3);margin-bottom:8px;}
+        .g-d-msglist{display:flex;flex-direction:column;gap:7px;}
+        .g-d-msg{padding:9px 10px;border:1px solid var(--pg-border);border-radius:8px;cursor:pointer;transition:all .12s;}
+        .g-d-msg:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.18);}
+        .g-d-msg-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px;}
+        .g-d-msg-text{font-size:12px;line-height:1.55;color:var(--pg-text2);}
         @media(max-width:768px){
           .peta-wrap{grid-template-columns:1fr;grid-template-rows:1fr auto;}
           .g-detail{border-left:none;border-top:1px solid var(--pg-border);max-height:38vh;}

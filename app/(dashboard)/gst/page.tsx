@@ -418,7 +418,20 @@ function delLessonFromModal(id: string) {
 }
 function renderLessons() {
   const el = gid('lsn-list')
-  if (el) el.style.display = 'none'
+  if (!el) return
+  const items: Any[] = []
+  lessons.forEach(l => (l.items || []).forEach((it: Any) => items.push({ ...it, _d: it.ts || (l.date + 'T00:00:00') })))
+  items.sort((a, b) => new Date(b._d).getTime() - new Date(a._d).getTime())
+  const hd = gid('lsn-recent-hd')
+  if (!items.length) { el.innerHTML = ''; if (hd) hd.style.display = 'none'; return }
+  if (hd) hd.style.display = 'block'
+  const esc = (s: string) => (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string))
+  const fmtD = (d: string) => { const dt = new Date(d); return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }
+  el.innerHTML = items.slice(0, 10).map(it => `
+    <div class="lsn-item">
+      <div class="lsn-item-top">${it.category ? `<span class="lsn-item-cat">${esc(it.category)}</span>` : ''}<span class="lsn-item-date">${fmtD(it._d)}</span></div>
+      <div class="lsn-item-text">${esc(it.text)}</div>
+    </div>`).join('') + `<a href="/garden" class="lsn-more">Lihat semua di Mind →</a>`
 }
 
 // ── TODOS ──
@@ -1726,7 +1739,7 @@ export default function GstPage() {
 
         .rp{background:transparent;display:flex;flex-direction:column;overflow:hidden;padding:16px;gap:16px;}
 
-        .lsn-sec{flex:0 0 auto;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);overflow:visible;}
+        .lsn-sec{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);overflow:hidden;}
         .ph{padding:11px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px;}
         .ph-title{font-size:12px;font-weight:700;color:var(--text);}
         .lsn-input-area{padding:11px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
@@ -1758,7 +1771,15 @@ export default function GstPage() {
         .lsn-cat-tag{display:inline-flex;align-items:center;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:10px;background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border);margin-right:4px;}
         .lock-btn{margin-top:6px;width:100%;background:var(--gold-bg);border:1px solid var(--gold-border);color:var(--gold);border-radius:var(--r2);padding:6px;font-size:10px;font-weight:600;letter-spacing:.02em;cursor:pointer;}
         .lock-btn:hover{filter:brightness(.9);}
-        .lsn-list{overflow-y:auto;padding:10px 16px;max-height:200px;display:flex;flex-direction:column;gap:7px;}
+        .lsn-list{flex:1;min-height:0;overflow-y:auto;padding:10px 16px;display:flex;flex-direction:column;gap:7px;}
+        .lsn-recent-hd{flex-shrink:0;padding:9px 16px 4px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);}
+        .lsn-item{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:8px 10px;}
+        .lsn-item-top{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+        .lsn-item-cat{font-size:7.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#f0b429;background:rgba(240,180,41,.12);border:1px solid rgba(240,180,41,.3);border-radius:6px;padding:1px 6px;}
+        .lsn-item-date{font-size:9px;color:var(--text3);}
+        .lsn-item-text{font-size:11px;line-height:1.5;color:var(--text);}
+        .lsn-more{display:block;text-align:center;padding:9px;font-size:10px;font-weight:700;color:var(--red);text-decoration:none;flex-shrink:0;}
+        .lsn-more:hover{text-decoration:underline;}
         .empty-note{text-align:center;padding:24px 16px;color:var(--text2);font-size:12px;line-height:1.6;}
 
         .todo-sec{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sb);}
@@ -1950,38 +1971,21 @@ export default function GstPage() {
             </div>
           </div>
 
-          <div className="wish-compact-wrap">
-            <div className="sec-lbl" style={{ fontSize: 14, color: 'var(--blk)', marginBottom: 8 }}>Make your wish</div>
-            <div className="wish-compact-row">
-              <input type="text" className="wish-compact-inp" id="wish-inp" placeholder="Whats really u want?" onKeyDown={e => { if (e.key === 'Enter') addWish() }} />
-              <button className="wish-compact-btn" onClick={addWish}>Make it</button>
+          <div className="lsn-sec">
+            <div className="ph">
+              <div className="ph-title">What i&apos;ve got today?</div>
             </div>
-          </div>
-
-          <div className="goals-wrap">
-            <div style={{ padding: '12px 14px 4px' }}>
-              <div className="sec-lbl" style={{ fontSize: 14, color: 'var(--blk)' }}>Target</div>
-              <div className="target-quote" id="target-quote" onClick={rotateQuote} title="Klik untuk quote berikutnya">&ldquo;<span id="tq-text">—</span>&rdquo; <span className="tq-by" id="tq-by"></span></div>
+            <div className="lsn-input-area">
+              <textarea className="lsn-ta" id="lta" placeholder="Tulis insight atau pelajaran hari ini..."></textarea>
+              <div className="cat-inp-wrap">
+                <input type="text" className="lsn-cat-inp" id="lta-cat" placeholder="# Kategori? (AI, Bisnis, Coding...)" autoComplete="off" onFocus={showCatSug} onInput={showCatSug} onKeyDown={e => { if (e.key === 'Enter') { hideCatSug(); lockLesson() } }} />
+                <div className="cat-sug" id="lta-cat-sug"></div>
+              </div>
+              <LessonDatePicker />
+              <button className="lock-btn" onClick={lockLesson} style={{ color: 'var(--red)', background: 'var(--red-bg)', borderColor: 'var(--red-border)' }}>Send to my mind</button>
             </div>
-            <div className="goals-tabs">
-              <button className="gtab active" data-tab="year" onClick={() => switchGoalTab('year')}><span className="gtab-lbl" id="year-tab-lbl" style={{ fontSize: 10 }}>2026</span><span className="gtab-count" id="gc-year">0/0</span></button>
-              <button className="gtab" data-tab="month" onClick={() => switchGoalTab('month')}><span className="gtab-lbl" id="month-tab-lbl" style={{ fontSize: 10 }}>JANUARI</span><span className="gtab-count" id="gc-month">0/0</span></button>
-            </div>
-            <div className="goals-nav">
-              <button className="gnav-btn" onClick={() => goalNav(-1)}>‹</button>
-              <div className="gnav-lbl" id="gnav-lbl">—</div>
-              <button className="gnav-btn" onClick={() => goalNav(1)}>›</button>
-              <button className="gnav-now" onClick={goalNow}>NOW</button>
-            </div>
-            <div className="goals-progress">
-              <div className="gp-bar"><div className="gp-fill" id="gp-fill"></div></div>
-              <div className="gp-pct" id="gp-pct">0%</div>
-            </div>
-            <div className="goals-list" id="goals-list"></div>
-            <div className="goal-add">
-              <input type="text" className="goal-inp" id="gi" placeholder="+ Tambah goal baru..." onKeyDown={e => { if (e.key === 'Enter') addGoal() }} />
-              <button className="goal-addbtn" onClick={addGoal}>+</button>
-            </div>
+            <div className="lsn-recent-hd" id="lsn-recent-hd">Pesan terakhir</div>
+            <div className="lsn-list" id="lsn-list"></div>
           </div>
         </div>
         <div id="center-panel">
@@ -2043,20 +2047,38 @@ export default function GstPage() {
           </div>
         </div>
         <div className="rp">
-          <div className="lsn-sec">
-            <div className="ph">
-              <div className="ph-title">What i&apos;ve got today?</div>
+          <div className="wish-compact-wrap">
+            <div className="sec-lbl" style={{ fontSize: 14, color: 'var(--blk)', marginBottom: 8 }}>Make your wish</div>
+            <div className="wish-compact-row">
+              <input type="text" className="wish-compact-inp" id="wish-inp" placeholder="Whats really u want?" onKeyDown={e => { if (e.key === 'Enter') addWish() }} />
+              <button className="wish-compact-btn" onClick={addWish}>Make it</button>
             </div>
-            <div className="lsn-input-area">
-              <textarea className="lsn-ta" id="lta" placeholder="Tulis insight atau pelajaran hari ini..."></textarea>
-              <div className="cat-inp-wrap">
-                <input type="text" className="lsn-cat-inp" id="lta-cat" placeholder="# Kategori? (AI, Bisnis, Coding...)" autoComplete="off" onFocus={showCatSug} onInput={showCatSug} onKeyDown={e => { if (e.key === 'Enter') { hideCatSug(); lockLesson() } }} />
-                <div className="cat-sug" id="lta-cat-sug"></div>
-              </div>
-              <LessonDatePicker />
-              <button className="lock-btn" onClick={lockLesson} style={{ color: 'var(--red)', background: 'var(--red-bg)', borderColor: 'var(--red-border)' }}>Send to my mind</button>
+          </div>
+
+          <div className="goals-wrap">
+            <div style={{ padding: '12px 14px 4px' }}>
+              <div className="sec-lbl" style={{ fontSize: 14, color: 'var(--blk)' }}>Target</div>
+              <div className="target-quote" id="target-quote" onClick={rotateQuote} title="Klik untuk quote berikutnya">&ldquo;<span id="tq-text">—</span>&rdquo; <span className="tq-by" id="tq-by"></span></div>
             </div>
-            <div className="lsn-list" id="lsn-list" style={{ display: 'none' }}></div>
+            <div className="goals-tabs">
+              <button className="gtab active" data-tab="year" onClick={() => switchGoalTab('year')}><span className="gtab-lbl" id="year-tab-lbl" style={{ fontSize: 10 }}>2026</span><span className="gtab-count" id="gc-year">0/0</span></button>
+              <button className="gtab" data-tab="month" onClick={() => switchGoalTab('month')}><span className="gtab-lbl" id="month-tab-lbl" style={{ fontSize: 10 }}>JANUARI</span><span className="gtab-count" id="gc-month">0/0</span></button>
+            </div>
+            <div className="goals-nav">
+              <button className="gnav-btn" onClick={() => goalNav(-1)}>‹</button>
+              <div className="gnav-lbl" id="gnav-lbl">—</div>
+              <button className="gnav-btn" onClick={() => goalNav(1)}>›</button>
+              <button className="gnav-now" onClick={goalNow}>NOW</button>
+            </div>
+            <div className="goals-progress">
+              <div className="gp-bar"><div className="gp-fill" id="gp-fill"></div></div>
+              <div className="gp-pct" id="gp-pct">0%</div>
+            </div>
+            <div className="goals-list" id="goals-list"></div>
+            <div className="goal-add">
+              <input type="text" className="goal-inp" id="gi" placeholder="+ Tambah goal baru..." onKeyDown={e => { if (e.key === 'Enter') addGoal() }} />
+              <button className="goal-addbtn" onClick={addGoal}>+</button>
+            </div>
           </div>
 
           <div className="todo-sec">
