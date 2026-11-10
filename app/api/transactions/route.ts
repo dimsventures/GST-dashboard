@@ -9,19 +9,29 @@ export async function GET(req: Request) {
   const month = url.searchParams.get('month')
   const year  = url.searchParams.get('year')
   const PAGE  = 500
-  const all: any[] = []
-  let from = 0
-  while (true) {
-    let q = ctx.db.from('finance_transactions').select('*').order('date').range(from, from + PAGE - 1)
+  const page = (from: number, withCount = false) => {
+    let q = ctx.db
+      .from('finance_transactions')
+      .select('*', withCount ? { count: 'exact' } : undefined)
+      .order('date')
+      .order('id')
+      .range(from, from + PAGE - 1)
     if (date)  q = q.eq('date', date)
     if (month) q = q.like('date', `${month}%`)
     if (year)  q = q.like('date', `${year}-%`)
-    const { data, error } = await q
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    if (!data?.length) break
-    all.push(...data)
-    if (data.length < PAGE) break
-    from += PAGE
+    return q
+  }
+  const first = await page(0, true)
+  if (first.error) return NextResponse.json({ error: first.error.message }, { status: 500 })
+  const all: any[] = first.data ?? []
+  const total = first.count ?? all.length
+  if (all.length === PAGE && total > PAGE) {
+    const pages = Math.ceil(total / PAGE)
+    const rest = await Promise.all(Array.from({ length: pages - 1 }, (_, i) => page((i + 1) * PAGE)))
+    for (const r of rest) {
+      if (r.error) return NextResponse.json({ error: r.error.message }, { status: 500 })
+      all.push(...(r.data ?? []))
+    }
   }
   return NextResponse.json(all)
 }
