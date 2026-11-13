@@ -9,6 +9,21 @@ interface Props {
   supabaseKey: string
 }
 
+// Pendaftaran akun baru ditutup (di Supabase juga dimatikan: "Signups not allowed").
+// Ubah ke true hanya setelah signup dibuka lagi di Supabase.
+const SIGNUP_OPEN = false
+const WRONG_CREDENTIALS = 'Email atau password salah.'
+
+function friendlyAuthError(code: string | null, err: string | null): string {
+  if (code === 'signup_disabled' || err === 'access_denied') {
+    return 'Akun Google ini belum terdaftar, jadi belum bisa masuk.'
+  }
+  if (err === 'no_code' || err === 'oauth_failed') {
+    return 'Login dengan Google gagal. Coba lagi, atau pakai email dan password.'
+  }
+  return ''
+}
+
 export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
@@ -25,6 +40,17 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
 
   useEffect(() => {
     const hash = window.location.hash
+    const query = new URLSearchParams(window.location.search)
+    const hashParams = new URLSearchParams(hash.slice(1))
+    const msg = friendlyAuthError(
+      hashParams.get('error_code') || query.get('error_code'),
+      hashParams.get('error') || query.get('error'),
+    )
+    if (msg) {
+      setError(msg)
+      window.history.replaceState(null, '', '/login')
+      return
+    }
     if (!hash) return
     const params = new URLSearchParams(hash.slice(1))
     const accessToken = params.get('access_token')
@@ -89,7 +115,7 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
       })
 
       if (err) {
-        setError(err.message === 'Invalid login credentials' ? 'Email atau password salah.' : err.message)
+        setError(err.message === 'Invalid login credentials' ? WRONG_CREDENTIALS : err.message)
         setLoading(false)
         return
       }
@@ -114,7 +140,7 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
     }
   }
 
-  const isLogin = mode === 'login'
+  const isLogin = !SIGNUP_OPEN || mode === 'login'
   const disabled = loading || !email || !password
 
   return (
@@ -154,7 +180,18 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
           </div>
         </div>
 
-        <div style={{
+        {!SIGNUP_OPEN && (
+          <div role="note" style={{
+            fontSize: 11, lineHeight: 1.55, color: '#f0b429', marginBottom: 18,
+            background: 'rgba(240,180,41,.09)', padding: '10px 12px', borderRadius: 8,
+            border: '1px solid rgba(240,180,41,.3)',
+          }}>
+            <strong style={{ display: 'block', marginBottom: 2 }}>Akses tertutup</strong>
+            Dashboard ini privat dan pendaftaran akun baru sedang ditutup. Hanya akun yang sudah terdaftar yang bisa masuk.
+          </div>
+        )}
+
+        {SIGNUP_OPEN && <div style={{
           display: 'flex',
           gap: 0,
           marginBottom: 20,
@@ -186,7 +223,7 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
               transition: 'all .15s',
             }}
           >Daftar</button>
-        </div>
+        </div>}
 
         {success && (
           <div style={{
@@ -231,12 +268,12 @@ export default function LoginForm({ supabaseUrl, supabaseKey }: Props) {
             onChange={e => setPassword(e.target.value)}
             placeholder={isLogin ? 'Password' : 'Min. 6 karakter'}
             required
-            style={inputStyle(!!error)}
+            style={inputStyle(error === WRONG_CREDENTIALS)}
           />
 
           {error && (
-            <div style={{
-              fontSize: 11, color: '#f6685e', marginBottom: 12, fontWeight: 500,
+            <div role="alert" style={{
+              fontSize: 11, color: '#f6685e', marginBottom: 12, fontWeight: 500, lineHeight: 1.5,
             }}>{error}</div>
           )}
 
