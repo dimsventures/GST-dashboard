@@ -20,6 +20,7 @@ Semua nama tabel GST Dashboard pakai prefix (`gst_`, `finance_`, `portfolio_`) �
 - `gst_lessons` — field `text` berisi JSON array items `[{id, text, ts}]`
 - `gst_lesson_items` — item lesson individual (kolom: date, text, category, ts, user_id)
 - `POST /api/ingest` — masukin lesson tanpa cookie, auth `Authorization: Bearer <INGEST_SECRET>`, body `{text, date?}`, insert via service role ke `gst_lesson_items`
+- `/api/ingest` field `kind` (lesson default|activity|goal|todo|wish); activity wajib `category` (key dari `gst_activity_categories`), goal wajib `scope` year|month. `GET /api/ingest?list=categories` (Bearer sama) buat daftar kategori.
 - Env ingest: `INGEST_SECRET`, `GST_OWNER_ID` (user_id pemilik), plus `SUPABASE_SERVICE_ROLE_KEY`
 - `gst_todos` — task harian (id, text, cat, done, done_date)
 - `gst_todo_categories`, `gst_activity_categories` — kategori todo/activity
