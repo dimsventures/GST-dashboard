@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { DashboardShell } from '@/components/layout/DashboardShell'
+import { fetchAppData, sharedFetch } from '@/lib/client-cache'
 
 const ACT_CATS = [
   { key: 'religion',  label: 'Religion',      color: 'rgba(59,130,246,.85)' },
@@ -115,9 +115,17 @@ async function renderGSTChart(filter: string) {
     if (tagEl) tagEl.textContent = 'YTD ' + yr
   }
 
+  // Pre-aggregate sekali (O(n)) daripada filter seluruh activities
+  // untuk setiap hari × kategori (O(days × categories × n)).
+  const counts = new Map<string, number>()
+  activities.forEach(a => {
+    const key = a.date + '|' + a.category
+    counts.set(key, (counts.get(key) || 0) + 1)
+  })
+
   const datasets = ACT_CATS.map(c => ({
     label: c.label,
-    data: dates.map(d => activities.filter(a => a.date === d && a.category === c.key).length),
+    data: dates.map(d => counts.get(d + '|' + c.key) || 0),
     backgroundColor: c.color, borderRadius: 2, stack: 's'
   }))
 
@@ -134,7 +142,7 @@ async function renderGSTChart(filter: string) {
         tooltip: { mode: 'index', intersect: false, callbacks: { title: ctx => dates[(ctx[0] as {dataIndex:number}).dataIndex] || '' } }
       },
       scales: {
-        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 8 }, color: '#666', maxRotation: 0, autoSkip: false } },
+        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 8 }, color: '#666', maxRotation: 0, autoSkip: filter === 'month' && window.innerWidth < 768, maxTicksLimit: 10 } },
         y: { stacked: true, grid: { color: 'rgba(255,255,255,.06)' }, ticks: { font: { size: 8 }, color: '#666' }, min: 0 },
       }
     }
@@ -275,8 +283,7 @@ async function renderPortfolio(
   assets: Array<{is_active:boolean;currency:string;cash_idle:number}>,
   activePos: Array<{ticker:string;ticker_type:string;qty:number}>,
   prices: Record<string, {price:number}>,
-  usdRate: number,
-  _investTxs: unknown[]
+  usdRate: number
 ) {
   function mktVal(p: typeof activePos[0]) {
     const pr = prices[p.ticker]?.price || 0
@@ -362,10 +369,9 @@ function togglePortoHide() {
 }
 
 async function init() {
-  const [gst, txs, allTxs, assets, positions] = await Promise.all([
-    fetch('/api/data').then(r => r.json()).catch(() => ({})),
+  const [gst, txs, assets, positions] = await Promise.all([
+    fetchAppData().catch(() => ({})),
     fetch('/api/transactions?month=' + currentMonth()).then(r => r.json()).catch(() => []),
-    fetch('/api/transactions').then(r => r.json()).catch(() => []),
     fetch('/api/portfolio/assets').then(r => r.json()).catch(() => []),
     fetch('/api/portfolio/positions').then(r => r.json()).catch(() => []),
   ])
@@ -373,7 +379,6 @@ async function init() {
   renderGST(gst)
   renderFinance(txs)
 
-  const investTxs = (allTxs || []).filter((t: {type:string;category?:string;asset_id?:unknown}) => t.type === 'investment' && t.category === 'Deposit' && t.asset_id)
   const activePos = (positions || []).filter((p: {is_active:boolean;qty:number}) => p.is_active && Number(p.qty) > 0)
 
   const symbols: string[] = []
@@ -387,8 +392,8 @@ async function init() {
   if (needsUsd) symbols.push('USDIDR=X')
 
   if (symbols.filter((s: string) => s !== 'USDIDR=X').length) {
-    fetch('/api/portfolio/market-price?tickers=' + [...new Set(symbols)].join(','))
-      .then(r => r.json())
+    const priceUrl = '/api/portfolio/market-price?tickers=' + [...new Set(symbols)].join(',')
+    sharedFetch(priceUrl, r => r.json())
       .then((data: {prices:Array<{symbol:string;ticker:string;price:number}>}) => {
         const prices: Record<string, {price:number}> = {}
         let usdRate = 0
@@ -396,11 +401,11 @@ async function init() {
           if (p.symbol === 'USDIDR=X') usdRate = p.price
           else prices[p.ticker] = p
         })
-        renderPortfolio(assets, activePos, prices, usdRate, investTxs)
+        renderPortfolio(assets, activePos, prices, usdRate)
       })
-      .catch(() => renderPortfolio(assets, activePos, {}, 0, investTxs))
+      .catch(() => renderPortfolio(assets, activePos, {}, 0))
   } else {
-    renderPortfolio(assets, activePos, {}, 0, investTxs)
+    renderPortfolio(assets, activePos, {}, 0)
   }
 }
 
@@ -433,7 +438,7 @@ export default function DashboardPage() {
   }, [])
 
   return (
-    <DashboardShell title="Dashboard">
+    <>
       <style>{`
         :root{
           --bg:#070d18;--bg2:#101a30;--white:#0b1322;
@@ -589,6 +594,6 @@ export default function DashboardPage() {
           <div className="gst-mbody" id="gst-mbody"></div>
         </div>
       </div>
-    </DashboardShell>
+    </>
   )
 }

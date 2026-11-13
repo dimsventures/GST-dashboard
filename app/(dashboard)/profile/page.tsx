@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { DashboardShell } from '@/components/layout/DashboardShell'
 
 export default function ProfilePage() {
   const [name, setName] = useState('')
@@ -115,7 +114,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <DashboardShell title="Profil">
+    <>
       <div className="p-7 max-w-[560px]">
 
         {/* Name */}
@@ -278,6 +277,6 @@ export default function ProfilePage() {
       >
         {toast.msg}
       </div>
-    </DashboardShell>
+    </>
   )
 }

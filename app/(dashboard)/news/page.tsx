@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { DashboardShell } from '@/components/layout/DashboardShell'
 
 type NewsItem = { title: string; summary: string; tag: string; source: string; url: string }
 type NewsGroup = { topic: string; label: string; items: NewsItem[] }
@@ -23,7 +22,7 @@ export default function NewsPage() {
   const updated = data?.generatedAt ? new Date(data.generatedAt).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''
 
   return (
-    <DashboardShell title="News">
+    <>
       <style>{`
         :root{ --nbg:#0b1322;--nborder:rgba(255,255,255,.08);--nb2:rgba(255,255,255,.16);
           --nt:#eef0f5;--nt2:#97a0b3;--nt3:#687087;--nblue:#3e6df0; }
@@ -106,6 +105,6 @@ export default function NewsPage() {
           </>
         )}
       </div>
-    </DashboardShell>
+    </>
   )
 }

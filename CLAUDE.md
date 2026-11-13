@@ -18,7 +18,9 @@ Semua nama tabel GST Dashboard pakai prefix (`gst_`, `finance_`, `portfolio_`) �
 
 - `gst_entries` — log harian (date, rel/rs, work/ws, mkt/ms, phy/ps, soc, extra)
 - `gst_lessons` — field `text` berisi JSON array items `[{id, text, ts}]`
-- `gst_lesson_items` — item lesson individual
+- `gst_lesson_items` — item lesson individual (kolom: date, text, category, ts, user_id)
+- `POST /api/ingest` — masukin lesson tanpa cookie, auth `Authorization: Bearer <INGEST_SECRET>`, body `{text, date?}`, insert via service role ke `gst_lesson_items`
+- Env ingest: `INGEST_SECRET`, `GST_OWNER_ID` (user_id pemilik), plus `SUPABASE_SERVICE_ROLE_KEY`
 - `gst_todos` — task harian (id, text, cat, done, done_date)
 - `gst_todo_categories`, `gst_activity_categories` — kategori todo/activity
 - `gst_activities` — log aktivitas
@@ -35,3 +37,9 @@ Semua nama tabel GST Dashboard pakai prefix (`gst_`, `finance_`, `portfolio_`) �
 
 ## Next.js
 Versi ini mungkin berbeda dari training data — cek `node_modules/next/dist/docs/` jika ragu.
+
+## Alur kerja dengan Orchestrator
+Hub pemilik: ~/dims (konteks: ~/dims/profil.md, read-only).
+1. Awal sesi: cek `.handoff/from-orchestrator/` untuk plan/review terbaru, kerjakan yang ada.
+2. Selesai / blocker: tulis laporan singkat ke `.handoff/to-orchestrator/YYYY-MM-DD-<topik>.md`.
+3. Jangan ubah isi `from-orchestrator/`.

@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState, useRef, type CSSProperties } from 'react'
+import Link from 'next/link'
+import { fetchAppData } from '@/lib/client-cache'
 
 interface TopBarProps {
   title: string
@@ -28,8 +30,7 @@ function LessonTicker() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    fetch('/api/data')
-      .then(r => r.ok ? r.json() : null)
+    fetchAppData<{ lessons?: LessonItem[] }>()
       .then(d => {
         const raw = Array.isArray(d?.lessons) ? d.lessons : []
         const today = todayStr()
@@ -85,9 +86,10 @@ export function TopBar({ title, onHamburgerClick }: TopBarProps) {
   }, [])
 
   return (
-    <header className="bg-[#0c1428] h-[52px] px-6 flex items-center justify-between sticky top-0 z-[100]">
+    <header className="bg-[#0c1428] h-[52px] px-3 md:px-6 flex items-center justify-between sticky top-0 z-[100]">
       <style>{`
-        .hdr-lessons{flex:1;min-width:0;display:flex;align-items:center;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent);}
+        .hdr-lessons{flex:1;min-width:0;display:none;align-items:center;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent);}
+        @media(min-width:768px){.hdr-lessons{display:flex;}}
         @keyframes lsn-scroll{from{transform:translateX(80vw)}to{transform:translateX(-80vw)}}
         .hdr-lesson-item{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;background:rgba(62,109,240,.14);border:1px solid rgba(62,109,240,.35);border-radius:6px;font-size:11px;color:var(--text);white-space:nowrap;flex-shrink:0;animation:lsn-scroll var(--lsn-dur,22s) linear forwards;}
         .hdr-lesson-item .hdr-lesson-date{font-weight:700;color:#3e6df0;font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
@@ -105,19 +107,19 @@ export function TopBar({ title, onHamburgerClick }: TopBarProps) {
         <span className="text-base font-bold text-white">{title}</span>
       </div>
 
-      <div className="hdr-lessons hidden md:flex mx-4">
+      <div className="hdr-lessons mx-4">
         <LessonTicker />
       </div>
 
       <div className="flex items-center gap-2.5 shrink-0">
         <span className="text-[11px] text-white/35 hidden sm:block">{date}</span>
-        <a
+        <Link
           href="/profile"
           title="Profile"
           className="bg-transparent border border-white/10 w-[30px] h-[30px] rounded-[6px] flex items-center justify-center cursor-pointer transition-all duration-150 hover:border-[#3e6df0] shrink-0 text-white/55 hover:text-white no-underline"
         >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c0-3.5 3.1-6.5 7-6.5s7 3 7 6.5" /></svg>
-        </a>
+        </Link>
       </div>
     </header>
   )

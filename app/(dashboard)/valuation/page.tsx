@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { DashboardShell } from '@/components/layout/DashboardShell'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any
@@ -270,7 +269,7 @@ export default function ValuationPage() {
   }, [])
 
   return (
-    <DashboardShell title="The Valuation">
+    <>
       <style>{`
         :root{ --vbg:#0b0c10;--vcard:#15161c;--vborder:rgba(255,255,255,.08);--vb2:rgba(255,255,255,.16);
           --vt:#eef0f5;--vt2:#97a0b3;--vt3:#687087;--vblue:#3e6df0;--vgreen:#34d399;--vred:#f6685e;--vgold:#f0b429;}
@@ -331,6 +330,6 @@ export default function ValuationPage() {
         <div className="val-grid" id="val-grid"></div>
       </div>
       <div className="val-modal" id="val-modal"><div className="vm-card"><div id="vm-body"></div></div></div>
-    </DashboardShell>
+    </>
   )
 }

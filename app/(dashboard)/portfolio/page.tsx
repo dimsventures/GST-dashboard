@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { DashboardShell } from '@/components/layout/DashboardShell'
 
 let ChartLib: typeof import('chart.js') | null = null
 async function getChart() {
@@ -1203,7 +1202,7 @@ export default function PortfolioPage() {
   }, [])
 
   return (
-    <DashboardShell title="Portfolio">
+    <>
       <style>{`
         :root{
           --bg:#070d18;--bg2:#101a30;--white:#0b1322;
@@ -1574,6 +1573,6 @@ export default function PortfolioPage() {
           <div className="mfooter" id="modal-footer"></div>
         </div>
       </div>
-    </DashboardShell>
+    </>
   )
 }

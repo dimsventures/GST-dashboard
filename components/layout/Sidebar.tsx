@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, type ReactElement } from 'react'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { fetchAppData, fetchMe } from '@/lib/client-cache'
 
 type IconProps = { className?: string }
 
@@ -139,30 +141,27 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
   const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then(r => r.ok ? r.json() : null)
-      .then(u => { if (u?.name) setUsername(u.name) })
-      .catch(() => {})
+    fetchMe().then(u => { if (u?.name) setUsername(u.name) })
   }, [])
 
   useEffect(() => {
-    fetch('/api/data')
-      .then(r => r.ok ? r.json() : null)
+    type Goal = { id?: string; text: string; scope?: string; done: boolean; yr?: number; ym?: string }
+    type Todo = { id?: string; text: string; done: boolean; mode?: string }
+    type Wish = { id?: string; text: string; done: boolean }
+    type SidebarData = { goals?: Goal[]; wishes?: Wish[]; todos?: Todo[] }
+
+    fetchAppData<SidebarData>()
       .then(d => {
         if (!d) return
         const now = new Date(); const yr = now.getFullYear()
         const ym = `${yr}-${String(now.getMonth() + 1).padStart(2, '0')}`
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const g = (d.goals || []) as any[]
+        const g = d.goals || []
         setRem({
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          dreams: (d.wishes || []).filter((w: any) => !w.done),
+          dreams: (d.wishes || []).filter(w => !w.done),
           yGoals: g.filter(x => x.scope === 'year' && !x.done && (!x.yr || x.yr === yr)),
           mGoals: g.filter(x => x.scope === 'month' && !x.done && (!x.ym || x.ym === ym)),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          todos: (d.todos || []).filter((t: any) => !t.done && (t.mode || 'doing') === 'doing'),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          learning: (d.todos || []).filter((t: any) => !t.done && t.mode === 'learning'),
+          todos: (d.todos || []).filter(t => !t.done && (t.mode || 'doing') === 'doing'),
+          learning: (d.todos || []).filter(t => !t.done && t.mode === 'learning'),
         })
       })
       .catch(() => {})
@@ -235,7 +234,7 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
               {sec.items.map((item) => {
                 const isActive = pathname === item.href
                 return (
-                  <a
+                  <Link
                     key={item.href}
                     href={item.href}
                     className={[
@@ -250,7 +249,7 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
                       <item.Icon className="w-[18px] h-[18px]" />
                     </span>
                     {!collapsed && <span>{item.label}</span>}
-                  </a>
+                  </Link>
                 )
               })}
             </div>
@@ -280,12 +279,12 @@ export function Sidebar({ mobileOpen, onClose, collapsed, onToggleCollapse }: Si
           </button>
           <div className="sb-bottom-box p-3 border-t border-white/8">
             {username && (
-              <div
-                className="text-[10px] text-white/35 mb-2 truncate cursor-pointer hover:text-white/60 transition-colors"
-                onClick={() => { window.location.href = '/profile' }}
+              <Link
+                href="/profile"
+                className="block text-[10px] text-white/35 mb-2 truncate no-underline cursor-pointer hover:text-white/60 transition-colors"
               >
                 {username}
-              </div>
+              </Link>
             )}
             <button
               onClick={logout}

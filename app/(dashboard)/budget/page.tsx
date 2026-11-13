@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { DashboardShell } from '@/components/layout/DashboardShell'
 
 // ── Model & state (pola sama kayak finance/portfolio page) ─────────────
 type Cat = { id: string; type: string; name: string; sort_order?: number }
@@ -292,7 +291,7 @@ export default function BudgetPage() {
   }, [])
 
   return (
-    <DashboardShell title="The Budget">
+    <>
       <style>{`
         :root{
           --bg:#070d18;--card:#0b1322;--bg2:#101a30;
@@ -397,6 +396,6 @@ export default function BudgetPage() {
           <div id="bud-savings" />
         </div>
       </div>
-    </DashboardShell>
+    </>
   )
 }

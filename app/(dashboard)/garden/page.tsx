@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { DashboardShell } from '@/components/layout/DashboardShell'
 
 type Lesson = { id: string; date: string; text: string; category?: string | null; ts?: string }
 type Kind = 'root' | 'cat' | 'lesson'
@@ -604,7 +603,7 @@ export default function GardenPage() {
   }, [])
 
   return (
-    <DashboardShell title="Peta">
+    <>
       <style>{`
         :root{
           --pg-text:#eef0f5;--pg-text2:#97a0b3;--pg-text3:#687087;
@@ -729,10 +728,31 @@ export default function GardenPage() {
         .g-d-msg-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px;}
         .g-d-msg-text{font-size:12px;line-height:1.55;color:var(--pg-text2);}
         @media(max-width:768px){
-          .peta-wrap{grid-template-columns:1fr;grid-template-rows:1fr auto;}
-          .g-detail{border-left:none;border-top:1px solid var(--pg-border);max-height:38vh;}
-          .g-legend{max-height:30%;}
-          .g-stats{max-width:90%;}
+          .peta-wrap{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(0,42%);height:calc(100dvh - 52px);}
+          .g-detail{border-left:none;border-top:1px solid var(--pg-border);padding:14px 14px calc(14px + env(safe-area-inset-bottom));}
+          .g-topbar{top:10px;left:10px;right:10px;}
+          .g-search{max-width:none;}
+          .g-search input,.g-d-search,.g-modal-inp,.g-modal-ta{font-size:16px;}
+          .g-btn{padding:9px 12px;flex-shrink:0;}
+          .g-legend{top:56px;left:10px;right:10px;width:auto;max-height:none;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:6px;border-radius:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+          .g-legend::-webkit-scrollbar{display:none;}
+          .g-legend-ttl{display:none;}
+          .g-leg-row{flex:0 0 auto;gap:6px;padding:5px 10px;border:1px solid var(--pg-border);border-radius:999px;}
+          .g-leg-name{max-width:110px;flex:none;}
+          .g-stats{left:10px;bottom:10px;gap:5px;max-width:calc(100% - 64px);}
+          .g-stat{padding:5px 9px;min-width:0;border-radius:8px;}
+          .g-stat-n{font-size:14px;}
+          .g-stat-l{font-size:8px;}
+          .g-stat-wide{display:none;}
+          .g-zoom{right:10px;bottom:10px;}
+          .g-zoom button{width:38px;height:38px;}
+          .cat-astro{top:22%;left:6%;transform-origin:center;}
+          .cat-astro svg{width:44px;height:auto;}
+          .g-modal{padding:14px;}
+          .g-modal-card{padding:18px 16px 14px;}
+          .g-modal-row{flex-direction:column;}
+          .g-modal-date{flex:none;width:100%;}
+          .g-d-title{font-size:14px;}
         }
       `}</style>
       <div className="peta-wrap">
@@ -811,6 +831,6 @@ export default function GardenPage() {
         </div>
         <aside className="g-detail" id="g-detail" />
       </div>
-    </DashboardShell>
+    </>
   )
 }

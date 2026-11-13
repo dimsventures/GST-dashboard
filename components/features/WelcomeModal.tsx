@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { fetchMe } from '@/lib/client-cache'
 
 type Step = { title: string; body: string; emoji: string }
 
@@ -36,10 +38,7 @@ export function WelcomeModal() {
   useEffect(() => {
     if (localStorage.getItem('gst_onboarded')) return
     setShow(true)
-    fetch('/api/auth/me')
-      .then(r => r.ok ? r.json() : null)
-      .then(u => { if (u?.name) setName(u.name) })
-      .catch(() => {})
+    fetchMe().then(u => { if (u?.name) setName(u.name) })
   }, [])
 
   function close() {
@@ -67,7 +66,7 @@ export function WelcomeModal() {
           {last && (
             <div className="grid grid-cols-3 gap-2 mt-5">
               {LINKS.map(l => (
-                <a
+                <Link
                   key={l.href}
                   href={l.href}
                   onClick={() => localStorage.setItem('gst_onboarded', '1')}
@@ -75,7 +74,7 @@ export function WelcomeModal() {
                 >
                   <span className="text-xl">{l.emoji}</span>
                   <span className="text-[10px] font-semibold text-[#cbd2e0]">{l.label}</span>
-                </a>
+                </Link>
               ))}
             </div>
           )}

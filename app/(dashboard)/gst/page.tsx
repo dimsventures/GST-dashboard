@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { DashboardShell } from '@/components/layout/DashboardShell'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any
@@ -1542,7 +1541,7 @@ export default function GstPage() {
   }, [])
 
   return (
-    <DashboardShell title="GST">
+    <>
       <style>{`
         :root{
           --bg:#070d18;--bg2:#101a30;--white:#0b1322;
@@ -2283,6 +2282,6 @@ export default function GstPage() {
           </div>
         </div>
       </div>
-    </DashboardShell>
+    </>
   )
 }

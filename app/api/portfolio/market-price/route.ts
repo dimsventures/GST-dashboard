@@ -108,6 +108,21 @@ async function fetchOneChart(symbol: string, yahooSymbol?: string): Promise<Mark
   }
 }
 
+// Cache harga di memori server supaya buka dashboard/portfolio berulang
+// tidak selalu memukul Yahoo. Harga publik, jadi aman di-share antar request.
+const PRICE_TTL_MS = 60_000
+const priceCache = new Map<string, { result: MarketPriceResult | null; ts: number }>()
+
+async function getQuote(symbol: string): Promise<MarketPriceResult | null> {
+  const now = Date.now()
+  const hit = priceCache.get(symbol)
+  if (hit && now - hit.ts < PRICE_TTL_MS) return hit.result
+
+  const result = await fetchOneChart(symbol)
+  priceCache.set(symbol, { result, ts: Date.now() })
+  return result
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const tickers = url.searchParams.get('tickers')
@@ -128,7 +143,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const results = await Promise.all(symbols.map(s => fetchOneChart(s)))
+    const results = await Promise.all(symbols.map(s => getQuote(s)))
 
     const prices = results.filter((r): r is MarketPriceResult => r !== null)
     const notFound = symbols.filter(s => !prices.some(p => p.symbol === s))
@@ -137,6 +152,8 @@ export async function GET(req: Request) {
       prices,
       ...(notFound.length > 0 && { notFound }),
       fetchedAt: new Date().toISOString(),
+    }, {
+      headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=120' },
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'

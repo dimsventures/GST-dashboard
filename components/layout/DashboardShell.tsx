@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { JarvisChat } from '@/components/features/JarvisChat'
@@ -11,9 +12,24 @@ interface DashboardShellProps {
   title?: string
 }
 
-export function DashboardShell({ children, title = 'Dashboard' }: DashboardShellProps) {
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/gst': 'GST',
+  '/garden': 'Peta',
+  '/news': 'News',
+  '/finance': 'Finance',
+  '/budget': 'The Budget',
+  '/macro': 'The Macro',
+  '/profile': 'Profil',
+  '/valuation': 'The Valuation',
+  '/portfolio': 'Portfolio',
+}
+
+export function DashboardShell({ children, title }: DashboardShellProps) {
+  const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const resolvedTitle = title ?? PAGE_TITLES[pathname] ?? 'Dashboard'
 
   return (
     <div className="relative min-h-screen bg-[#080a14]">
@@ -70,7 +86,7 @@ export function DashboardShell({ children, title = 'Dashboard' }: DashboardShell
         className="max-md:!pl-0 min-h-screen relative z-10"
       >
         <TopBar
-          title={title}
+          title={resolvedTitle}
           onHamburgerClick={() => setMobileOpen(o => !o)}
         />
         {children}

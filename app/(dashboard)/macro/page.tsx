@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { DashboardShell } from '@/components/layout/DashboardShell'
 
 type Pt = { d: string; v: number }
 type Packed = { value: number | null; prev: number | null; series: Pt[] }
@@ -336,7 +335,7 @@ export default function MacroPage() {
   }, [])
 
   return (
-    <DashboardShell title="The Macro">
+    <>
       <style>{`
         :root{
           --bg:#070d18;--white:#0b1322;--bg2:#101a30;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
@@ -398,7 +397,7 @@ export default function MacroPage() {
         .m-cl-item{display:flex;gap:8px;align-items:flex-start;font-size:10.5px;color:var(--text2);line-height:1.5;}
         .m-cl-dot{flex:0 0 9px;width:9px;height:9px;border-radius:50%;margin-top:3px;}
         .m-cl-or{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.02em;}
-        @media(max-width:768px){.macro-grid{grid-template-columns:1fr;}}
+        @media(max-width:768px){.macro-grid{grid-template-columns:1fr;}.m-chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.m-chip{min-width:0;}.m-comb-legend{grid-template-columns:1fr;}}
       `}</style>
       <div className="macro-wrap">
         <div className="macro-banner" id="macro-banner"><div className="m-err" style={{ color: 'var(--text3)' }}>Memuat data makro…</div></div>
@@ -469,6 +468,6 @@ export default function MacroPage() {
           <div className="mc-desc" id="mc-desc"></div>
         </div>
       </div>
-    </DashboardShell>
+    </>
   )
 }
