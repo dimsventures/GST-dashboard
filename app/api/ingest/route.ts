@@ -3,7 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 import { timingSafeEqual, createHash, randomUUID } from 'crypto'
 
 const MAX_LEN = 2000
-const KINDS = ['lesson', 'activity', 'goal', 'todo', 'wish'] as const
+const KINDS = ['lesson', 'activity', 'goal', 'todo', 'wish', 'transaction'] as const
+const TX_TYPES = ['income', 'expense', 'investment', 'buffer']
+const MAX_AMOUNT = 2_000_000_000
 type Kind = typeof KINDS[number]
 
 function safeEqual(a: string, b: string) {
@@ -44,7 +46,7 @@ export async function GET(req: Request) {
     .order('sort_order')
     .order('created_at')
   if (error) return NextResponse.json({ error: 'Gagal membaca kategori.' }, { status: 500 })
-  return NextResponse.json({ categories: data || [], v: 2 })
+  return NextResponse.json({ categories: data || [], v: 3 })
 }
 
 export async function POST(req: Request) {
@@ -52,7 +54,7 @@ export async function POST(req: Request) {
   if (!cfg) return NextResponse.json({ error: 'Ingest belum dikonfigurasi.' }, { status: 503 })
   if (!authorized(req, cfg.secret)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  let body: { kind?: unknown; text?: unknown; date?: unknown; category?: unknown; scope?: unknown; mode?: unknown }
+  let body: { kind?: unknown; text?: unknown; date?: unknown; category?: unknown; scope?: unknown; mode?: unknown; type?: unknown; amount?: unknown }
   try {
     body = await req.json()
   } catch {
@@ -65,7 +67,7 @@ export async function POST(req: Request) {
   const kind: Kind = (body.kind as Kind | undefined) ?? 'lesson'
 
   const text = typeof body.text === 'string' ? body.text.trim() : ''
-  if (!text) return bad('text wajib diisi.')
+  if (!text && kind !== 'transaction') return bad('text wajib diisi.')
   if (text.length > MAX_LEN) return bad(`text maks ${MAX_LEN} karakter.`)
 
   let date: string
@@ -80,6 +82,33 @@ export async function POST(req: Request) {
   const admin = createClient(cfg.url, cfg.serviceKey)
   const nowIso = new Date().toISOString()
   const fail = () => NextResponse.json({ error: 'Gagal menyimpan.' }, { status: 500 })
+
+  if (kind === 'transaction') {
+    const type = typeof body.type === 'string' ? body.type : ''
+    const category = typeof body.category === 'string' ? body.category.trim() : ''
+    if (!TX_TYPES.includes(type)) return bad(`type harus salah satu dari: ${TX_TYPES.join(', ')}.`)
+    if (!category) return bad('category wajib diisi untuk transaction.')
+    if (typeof body.amount !== 'number' || !Number.isFinite(body.amount)) return bad('amount harus angka.')
+    const amount = Math.round(body.amount)
+    if (amount < 1 || amount > MAX_AMOUNT) return bad(`amount harus 1..${MAX_AMOUNT}.`)
+    const { data: cat, error: catErr } = await admin
+      .from('finance_categories')
+      .select('name')
+      .eq('user_id', cfg.ownerId)
+      .eq('type', type)
+      .eq('name', category)
+      .limit(1)
+      .maybeSingle()
+    if (catErr) return fail()
+    if (!cat) return bad('kategori keuangan tidak dikenal')
+    const { data, error } = await admin
+      .from('finance_transactions')
+      .insert({ date, type, category, amount, note: text || null, asset_id: null, user_id: cfg.ownerId })
+      .select('id')
+      .single()
+    if (error) return fail()
+    return NextResponse.json({ ok: true, kind, id: data.id })
+  }
 
   if (kind === 'lesson') {
     const { data, error } = await admin
