@@ -44,7 +44,7 @@ export async function GET(req: Request) {
     .order('sort_order')
     .order('created_at')
   if (error) return NextResponse.json({ error: 'Gagal membaca kategori.' }, { status: 500 })
-  return NextResponse.json({ categories: data || [] })
+  return NextResponse.json({ categories: data || [], v: 2 })
 }
 
 export async function POST(req: Request) {
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
   if (!cfg) return NextResponse.json({ error: 'Ingest belum dikonfigurasi.' }, { status: 503 })
   if (!authorized(req, cfg.secret)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  let body: { kind?: unknown; text?: unknown; date?: unknown; category?: unknown; scope?: unknown }
+  let body: { kind?: unknown; text?: unknown; date?: unknown; category?: unknown; scope?: unknown; mode?: unknown }
   try {
     body = await req.json()
   } catch {
@@ -127,7 +127,9 @@ export async function POST(req: Request) {
   }
 
   if (kind === 'todo') {
-    const row = { id: randomUUID(), text, cat: null, done: false, done_date: null, mode: 'doing', points_to: 'personal', created_at: nowIso, user_id: cfg.ownerId }
+    const mode = body.mode === undefined ? 'doing' : body.mode
+    if (mode !== 'doing' && mode !== 'learning') return bad('mode harus doing atau learning')
+    const row = { id: randomUUID(), text, cat: null, done: false, done_date: null, mode, points_to: 'personal', created_at: nowIso, user_id: cfg.ownerId }
     const { error } = await admin.from('gst_todos').insert(row)
     if (error) return fail()
     return NextResponse.json({ ok: true, kind, id: row.id })
