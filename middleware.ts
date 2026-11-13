@@ -13,9 +13,9 @@ function decodeJwt(token: string): { sub: string; exp: number } | null {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // /api/news/push dipanggil cron/GitHub Actions tanpa cookie login;
-  // route-nya udah dijaga sendiri pakai CRON_SECRET, jadi skip auth-cookie di sini.
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth') || pathname === '/api/news/push') {
+  // /api/news/push dan /api/ingest dipanggil tanpa cookie login;
+  // route-nya dijaga sendiri pakai CRON_SECRET / INGEST_SECRET, jadi skip auth-cookie di sini.
+  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth') || pathname === '/api/news/push' || pathname === '/api/ingest') {
     return NextResponse.next()
   }
 
