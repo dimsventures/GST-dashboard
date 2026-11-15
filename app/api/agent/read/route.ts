@@ -16,7 +16,7 @@ const TABLES = {
   portfolio_positions: { order: 'created_at' },
   portfolio_assets: { order: 'created_at' },
   portfolio_snapshots: { order: 'month' },
-  portfolio_valuations: { order: 'created_at' },
+  portfolio_valuations: { order: 'updated_at' },
   portfolio_withdrawals: { order: 'created_at' },
   portfolio_daily: { order: 'date', dateCol: 'date' },
   gst_activities: { order: 'date', dateCol: 'date' },
