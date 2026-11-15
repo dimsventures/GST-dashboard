@@ -15,7 +15,7 @@ export async function middleware(request: NextRequest) {
 
   // /api/news/push dan /api/ingest dipanggil tanpa cookie login;
   // route-nya dijaga sendiri pakai CRON_SECRET / INGEST_SECRET, jadi skip auth-cookie di sini.
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth') || pathname === '/api/news/push' || pathname === '/api/ingest') {
+  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth') || pathname === '/api/news/push' || pathname === '/api/ingest' || pathname === '/api/agent/read') {
     return NextResponse.next()
   }
 
